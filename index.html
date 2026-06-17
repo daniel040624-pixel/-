@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>나의 영어 학습 코치 · TOEFL 80+ 12주 프로그램</title>
+<style>
+  :root {
+    --bg: #0f1226;
+    --bg2: #171a35;
+    --card: #1e2347;
+    --card2: #262c57;
+    --line: #323a6e;
+    --txt: #e8eaf6;
+    --muted: #9aa2cf;
+    --accent: #6c7cff;
+    --accent2: #36d1b7;
+    --good: #3ddc84;
+    --warn: #ffcc5c;
+    --bad: #ff6b81;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+    background: linear-gradient(160deg, var(--bg), var(--bg2));
+    color: var(--txt);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  header {
+    text-align: center;
+    padding: 36px 16px 20px;
+  }
+  header h1 { font-size: 1.7rem; letter-spacing: -0.5px; }
+  header p { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
+  .goal-pill {
+    display: inline-block; margin-top: 14px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    color: #0b0e23; font-weight: 700; padding: 6px 18px; border-radius: 999px;
+    font-size: 0.9rem;
+  }
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+    padding: 12px; background: rgba(15,18,38,0.85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  nav button {
+    background: var(--card); color: var(--txt); border: 1px solid var(--line);
+    padding: 8px 14px; border-radius: 999px; cursor: pointer; font-size: 0.85rem;
+    transition: all .15s;
+  }
+  nav button:hover { border-color: var(--accent); }
+  nav button.active { background: var(--accent); color: #0b0e23; font-weight: 700; border-color: var(--accent); }
+  main { max-width: 880px; margin: 0 auto; padding: 24px 16px 80px; }
+  section { display: none; animation: fade .3s ease; }
+  section.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  h2 { font-size: 1.35rem; margin-bottom: 4px; }
+  .sub { color: var(--muted); margin-bottom: 20px; font-size: 0.92rem; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 18px;
+  }
+  .card h3 { font-size: 1.05rem; margin-bottom: 12px; color: var(--accent2); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; }
+  td.num { text-align: center; font-variant-numeric: tabular-nums; }
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+  .tag.good { background: rgba(61,220,132,.15); color: var(--good); }
+  .tag.warn { background: rgba(255,204,92,.15); color: var(--warn); }
+  .tag.bad { background: rgba(255,107,129,.15); color: var(--bad); }
+  .bigscore { font-size: 2.6rem; font-weight: 800; background: linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 620px) { .grid2 { grid-template-columns: 1fr; } }
+  ul.clean { list-style: none; }
+  ul.clean li { padding: 6px 0 6px 24px; position: relative; }
+  ul.clean li::before { content: "→"; position: absolute; left: 0; color: var(--accent); }
+  .routine-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .routine-row:last-child { border: none; }
+  .routine-row .t { color: var(--accent2); font-weight: 700; white-space: nowrap; }
+  .week { border-left: 3px solid var(--line); padding: 4px 0 4px 16px; margin-bottom: 14px; }
+  .week.cur { border-left-color: var(--accent); }
+  .week b { color: var(--accent2); }
+  .quiz-q { font-size: 1.05rem; margin-bottom: 14px; }
+  .opt {
+    display: block; width: 100%; text-align: left; background: var(--card2);
+    border: 1px solid var(--line); color: var(--txt); padding: 12px 14px;
+    border-radius: 10px; margin-bottom: 8px; cursor: pointer; transition: all .12s; font-size: 0.95rem;
+  }
+  .opt:hover { border-color: var(--accent); }
+  .opt.correct { background: rgba(61,220,132,.18); border-color: var(--good); }
+  .opt.wrong { background: rgba(255,107,129,.18); border-color: var(--bad); }
+  .feedback { margin-top: 10px; padding: 12px; border-radius: 10px; font-size: 0.92rem; display: none; }
+  .feedback.show { display: block; }
+  .feedback.ok { background: rgba(61,220,132,.12); border: 1px solid var(--good); }
+  .feedback.no { background: rgba(255,107,129,.12); border: 1px solid var(--bad); }
+  .btn {
+    background: var(--accent); color: #0b0e23; border: none; padding: 10px 18px;
+    border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.9rem;
+  }
+  .btn.ghost { background: transparent; color: var(--txt); border: 1px solid var(--line); }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .flash {
+    perspective: 1000px; cursor: pointer; height: 150px;
+  }
+  .flash-inner { position: relative; width: 100%; height: 100%; transition: transform .5s; transform-style: preserve-3d; }
+  .flash.flipped .flash-inner { transform: rotateY(180deg); }
+  .flash-face {
+    position: absolute; inset: 0; backface-visibility: hidden; border-radius: 12px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 14px; text-align: center; border: 1px solid var(--line);
+  }
+  .flash-front { background: var(--card2); }
+  .flash-front .w { font-size: 1.3rem; font-weight: 800; }
+  .flash-front .pos { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+  .flash-back { background: linear-gradient(140deg,var(--card2),var(--card)); transform: rotateY(180deg); }
+  .flash-back .mean { font-weight: 700; color: var(--accent2); }
+  .flash-back .ex { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
+  input[type=number], input[type=text], textarea {
+    background: var(--card2); border: 1px solid var(--line); color: var(--txt);
+    border-radius: 8px; padding: 8px 10px; font-size: 0.9rem; width: 100%; font-family: inherit;
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  .tracker-input { width: 64px; text-align: center; }
+  .note { color: var(--muted); font-size: 0.82rem; }
+  .delta-up { color: var(--good); }
+  .delta-down { color: var(--bad); }
+  .delta-flat { color: var(--muted); }
+  .prog-bar { height: 10px; background: var(--card2); border-radius: 999px; overflow: hidden; margin-top: 6px; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .6s; }
+  details { background: var(--card2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
+  summary { cursor: pointer; font-weight: 600; }
+  footer { text-align: center; color: var(--muted); font-size: 0.8rem; padding: 24px; }
+  .saved-flash { color: var(--good); font-size: 0.82rem; margin-left: 8px; opacity: 0; transition: opacity .3s; }
+  .saved-flash.show { opacity: 1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎓 나의 영어 학습 코치</h1>
+  <p>3시간/일 · 12주 · 학술 영어로 가는 길</p>
+  <div class="goal-pill">목표: TOEFL 80+ (R20 · L20 · S20 · W20)</div>
+</header>
+
+<nav id="nav"></nav>
+
+<main>
+  <!-- DASHBOARD -->
+  <section id="dashboard" class="active">
+    <h2>대시보드</h2>
+    <p class="sub">0일차 진단 결과와 오늘의 핵심을 한눈에.</p>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>현재 추정 총점</h3>
+        <div class="bigscore" id="dashTotal">30</div>
+        <div class="note">/ 120 · 목표 80</div>
+        <div class="prog-bar"><div class="prog-fill" id="dashBar"></div></div>
+      </div>
+      <div class="card">
+        <h3>최우선 약점 TOP 3</h3>
+        <ul class="clean">
+          <li><b>관사 (a / the)</b> — 진단에서 3/3 오류</li>
+          <li><b>학술 어휘</b> — AWL 단어 거의 없음</li>
+          <li><b>긴 문장 독해</b> — 접속사·구문에서 붕괴</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>강점 (이미 가진 토대)</h3>
+      <ul class="clean">
+        <li>기본 어순(주어+동사+목적어) 정확 — "I drink coffee every morning." ✅</li>
+        <li>현재형·과거형 동사 정확 — "I met a friend yesterday." (met ✅)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>코치의 솔직한 한마디</h3>
+      <p>출발선(~30점)에서 12주 만에 80은 <b>매우 도전적</b>이야. 그래서 두 가지를 지키자:
+      ① <b>하루 3시간을 진짜로 채운다</b>(전부를 좌우함). ② 목표를 <b>"60점대 안정 + 80 사정권"</b>으로 두되,
+      매주 측정해서 빠르면 다시 올린다. 높은 목표는 그대로, 거짓 약속은 없이. 🔥</p>
+    </div>
+  </section>
+
+  <!-- BASELINE -->
+  <section id="baseline">
+    <h2>📊 0일차 진단 (Baseline)</h2>
+    <p class="sub">이 기준은 12주 내내 동일하게 유지해 객관적으로 비교한다.</p>
+    <div class="card">
+      <table id="baselineTable"></table>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section id="plan">
+    <h2>🗓️ 12주 큰 그림 & 일일 루틴</h2>
+    <p class="sub">오늘은 1주차. 매주 7일차에 진척 테스트로 숫자를 확인한다.</p>
+
+    <div class="card">
+      <h3>일일 루틴 (총 180분)</h3>
+      <div id="routine"></div>
+    </div>
+
+    <div class="card">
+      <h3>12주 로드맵</h3>
+      <div id="roadmap"></div>
+    </div>
+  </section>
+
+  <!-- LESSON -->
+  <section id="lesson">
+    <h2>📖 관사 a / the 마스터</h2>
+    <p class="sub">너의 1순위 약점. 규칙 3개 + 퀴즈로 잡는다.</p>
+
+    <div class="card">
+      <h3>규칙 3가지</h3>
+      <p><b>① a = "어떤 하나"</b> (처음 언급, 셀 수 있는 단수)<br>
+      <span class="note">I met <b>a</b> friend. / I have <b>a</b> dog.</span></p>
+      <p style="margin-top:10px"><b>② the = "그거!"</b> (서로 아는 특정한 것)<br>
+      <span class="note">I met a friend. <b>The</b> friend was tall. / Close <b>the</b> door.</span></p>
+      <p style="margin-top:10px"><b>③ 셀 수 없는 것은 보통 관사 없이</b><br>
+      <span class="note">I drink coffee. / I usually exercise.  (✅ 너가 맞게 쓴 패턴)</span></p>
+    </div>
+
+    <div class="card">
+      <h3>퀴즈</h3>
+      <div id="quiz"></div>
+      <div id="quizScore" class="note" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- VOCAB -->
+  <section id="vocab">
+    <h2>🔤 학술 어휘 (AWL)</h2>
+    <p class="sub">카드를 눌러 뒤집어 봐. TOEFL 지문·강의 빈출 단어부터.</p>
+    <div class="grid2" id="vocabGrid"></div>
+  </section>
+
+  <!-- PRACTICE -->
+  <section id="practice">
+    <h2>🗣️ 실전 훈련</h2>
+    <p class="sub">말하기·쓰기를 직접 적어보고, 스스로 점검 리스트로 확인한다.</p>
+
+    <div class="card">
+      <h3>말하기 (30초 즉흥)</h3>
+      <p class="quiz-q" id="speakPrompt"></p>
+      <button class="btn ghost" id="newPrompt">다른 질문</button>
+      <textarea id="speakAns" placeholder="여기에 영어로 답을 적어봐..."></textarea>
+      <div class="card" style="background:var(--card2);margin-top:10px">
+        <b>스스로 점검:</b>
+        <ul class="clean">
+          <li>셀 수 있는 단수 명사 앞에 a/the/my 넣었나?</li>
+          <li>동사 시제 맞나? (현재 vs 과거)</li>
+          <li>문장에 주어와 동사가 다 있나?</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>쓰기 (한→영 작문)</h3>
+      <ol style="padding-left:20px">
+        <li>나는 매주 토요일에 운동한다.</li>
+        <li>어제 나는 도서관에서 책 한 권을 읽었다.</li>
+        <li>그 책은 매우 흥미로웠다.</li>
+      </ol>
+      <textarea id="writeAns" placeholder="3문장을 영어로..."></textarea>
+      <details style="margin-top:10px">
+        <summary>모범 답안 보기 (먼저 스스로 쓴 뒤에!)</summary>
+        <p style="margin-top:8px" class="note">
+        1. I exercise every Saturday.<br>
+        2. Yesterday, I read <b>a</b> book in <b>the</b> library.<br>
+        3. <b>The</b> book was very interesting.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- TRACKER -->
+  <section id="tracker">
+    <h2>📈 성장 추적</h2>
+    <p class="sub">매주 7일차 점수를 입력하면 Baseline 대비 증감이 자동 계산된다. (브라우저에 자동 저장)</p>
+
+    <div class="card">
+      <h3>주간 점수 입력</h3>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+        <label>주차
+          <select id="weekSel"></select>
+        </label>
+        <span class="saved-flash" id="savedFlash">저장됨 ✓</span>
+      </div>
+      <table id="trackerInputTable"></table>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" id="saveWeek">이 주차 저장</button>
+        <button class="btn ghost" id="resetAll">전체 초기화</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>누적 리포트</h3>
+      <table id="reportTable"></table>
+      <p class="note" id="reportComment" style="margin-top:12px"></p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  나만의 영어 학습 코치 · 데이터는 이 브라우저에만 저장됩니다 (localStorage)
+</footer>
+
+<script>
+//==================== 데이터 ====================
+const AREAS = ["Reading","Listening","Speaking","Writing","어휘/문법"];
+const BASELINE = { "Reading":6, "Listening":6, "Speaking":8, "Writing":9, "어휘/문법":7 };
+const BASELINE_NOTE = {
+  "Reading": ["bad","단순 문장은 이해, 학술 지문은 단어·구문에서 전면 막힘"],
+  "Listening": ["bad","직접 미측정 · 독해·어휘 수준과 연동해 보수적 추정"],
+  "Speaking": ["warn","짧은 문장 생성 가능 · 어휘 단순, 관사·동사 선택 오류"],
+  "Writing": ["warn","현재/과거 시제 정확 ✅ · 관사 누락이 주 오류"],
+  "어휘/문법": ["warn","기초 동사·일상어 OK · 학술 어휘(AWL) 거의 없음"]
+};
+
+const ROUTINE = [
+  ["워밍업","20분","구조 분석 + 전날 표현·문법·어휘 퀴즈 복습"],
+  ["본 공부","45분","오늘+이번 주 주제 연결 · AWL 학술 어휘"],
+  ["경기(실전)","60분","역할극 / 30초 말하기 / 질문 답하기 / 주제 설명 / 문장 확장 / 쉐도잉"],
+  ["통합형","35분","읽고→듣고→말/쓰기 (5주차부터 비중↑)"],
+  ["복습","15분","백지 회상 — 오늘 배운 것 말하고 빈틈 보완"],
+  ["마무리","5분","표현 1 + 숙어 1 + 원어민식 문장 1"]
+];
+
+const ROADMAP = [
+  ["1~4주","문장 구조 + 학술 어휘 토대 + 말하기 유창성 · <b>4주차 종합 모의 ①</b>", true],
+  ["5~8주","4영역 형식 적응 + 통합형 본격화 · <b>8주차 종합 모의 ②</b>", false],
+  ["9~12주","실전 모의 반복 + 약점 집중 + 시간 관리 · <b>12주차 최종 모의 ③</b>", false]
+];
+
+const QUIZ = [
+  { q:"I bought ___ book yesterday. (책 한 권 — 처음 언급)", opts:["a","the","(없음)"], ans:0,
+    exp:"처음 언급하는 셀 수 있는 단수 → <b>a</b> book." },
+  { q:"___ book was very interesting. (아까 그 책)", opts:["A","The","(없음)"], ans:1,
+    exp:"서로 아는 특정한 그 책 → <b>The</b> book." },
+  { q:"I drink ___ coffee every morning.", opts:["a","the","(없음)"], ans:2,
+    exp:"coffee는 셀 수 없는 물질, 일반적으로 마심 → 관사 없음. (너가 첫날 맞게 쓴 패턴!)" },
+  { q:"I saw a cat. ___ cat was black.", opts:["A","The","(없음)"], ans:1,
+    exp:"앞에서 나온 바로 그 고양이 → <b>The</b> cat." },
+  { q:"She is ___ student at my school. (학생 한 명)", opts:["a","the","(없음)"], ans:0,
+    exp:"셀 수 있는 단수, 처음 언급 → <b>a</b> student." },
+  { q:"I love ___ music. (음악 일반)", opts:["a","the","(없음)"], ans:2,
+    exp:"music은 셀 수 없는 추상명사, 일반적 → 관사 없음." }
+];
+
+const VOCAB = [
+  ["analyze","동사","분석하다","We need to analyze the data carefully."],
+  ["significant","형용사","중요한, 상당한","There was a significant change in temperature."],
+  ["environment","명사","환경","Pollution harms the environment."],
+  ["research","명사/동사","연구(하다)","Her research focuses on coral reefs."],
+  ["approach","명사/동사","접근(법), 다가가다","This approach solves the problem."],
+  ["factor","명사","요인","Cost is an important factor."],
+  ["process","명사/동사","과정, 처리하다","Photosynthesis is a natural process."],
+  ["require","동사","필요로 하다, 요구하다","Plants require sunlight to grow."],
+  ["evidence","명사","증거","There is strong evidence for this theory."],
+  ["concept","명사","개념","The concept is hard to understand."],
+  ["available","형용사","이용 가능한","Clean water is not always available."],
+  ["impact","명사/동사","영향(을 주다)","Climate has a big impact on farming."]
+];
+
+const PROMPTS = [
+  "What do you do on weekends?",
+  "Describe your favorite food and why you like it.",
+  "What is your hometown like?",
+  "Talk about a book or movie you enjoyed.",
+  "Why do you want to improve your English?",
+  "Describe your daily routine."
+];
+
+//==================== 네비게이션 ====================
+const SECTIONS = [
+  ["dashboard","대시보드"],["baseline","진단"],["plan","계획"],
+  ["lesson","관사 레슨"],["vocab","어휘"],["practice","실전"],["tracker","성장 추적"]
+];
+const nav = document.getElementById("nav");
+SECTIONS.forEach(([id,label],i)=>{
+  const b = document.createElement("button");
+  b.textContent = label; if(i===0) b.classList.add("active");
+  b.onclick = ()=>{
+    document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll("section").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    document.getElementById(id).classList.add("active");
+    window.scrollTo({top:0,behavior:"smooth"});
+  };
+  nav.appendChild(b);
+});
+
+//==================== 대시보드 ====================
+const baseTotal = AREAS.reduce((s,a)=>s+BASELINE[a],0) * (120/150); // 5영역 합(30점만점)→120 환산 근사
+document.getElementById("dashTotal").textContent = Math.round(AREAS.reduce((s,a)=>s+BASELINE[a],0)*4/5);
+document.getElementById("dashBar").style.width = (Math.round(AREAS.reduce((s,a)=>s+BASELINE[a],0)*4/5)/80*100)+"%";
+
+//==================== Baseline 표 ====================
+(function(){
+  const t = document.getElementById("baselineTable");
+  let h = "<tr><th>영역</th><th class='num'>점수(0~30)</th><th>채점 근거</th></tr>";
+  AREAS.forEach(a=>{
+    const [cls,note] = BASELINE_NOTE[a];
+    h += `<tr><td>${a}</td><td class='num'><b>${BASELINE[a]}</b></td><td><span class="tag ${cls}">${note}</span></td></tr>`;
+  });
+  const tot = AREAS.reduce((s,a)=>s+BASELINE[a],0);
+  h += `<tr><td><b>총점 추정</b></td><td class='num'><b>~${Math.round(tot*4/5)}</b></td><td class="note">/120 · 기초 문장은 서지만 학술 영역 진입 전</td></tr>`;
+  t.innerHTML = h;
+})();
+
+//==================== 루틴 & 로드맵 ====================
+(function(){
+  const r = document.getElementById("routine");
+  ROUTINE.forEach(([n,t,d])=>{
+    r.innerHTML += `<div class="routine-row"><span class="t">${n} · ${t}</span><span>${d}</span></div>`;
+  });
+  const rm = document.getElementById("roadmap");
+  ROADMAP.forEach(([w,d,cur])=>{
+    rm.innerHTML += `<div class="week ${cur?'cur':''}"><b>${w}</b> ${cur?'· <span class="tag good">현재</span>':''}<br>${d}</div>`;
+  });
+})();
+
+//==================== 퀴즈 ====================
+(function(){
+  const box = document.getElementById("quiz");
+  let correct = 0, answered = 0;
+  QUIZ.forEach((item,qi)=>{
+    const wrap = document.createElement("div");
+    wrap.style.marginBottom = "20px";
+    wrap.innerHTML = `<div class="quiz-q">${qi+1}. ${item.q}</div>`;
+    const fb = document.createElement("div"); fb.className="feedback";
+    item.opts.forEach((o,oi)=>{
+      const btn = document.createElement("button");
+      btn.className = "opt"; btn.textContent = o;
+      btn.onclick = ()=>{
+        if(wrap.dataset.done) return;
+        wrap.dataset.done = "1"; answered++;
+        const ok = oi===item.ans;
+        if(ok){ btn.classList.add("correct"); correct++; fb.className="feedback show ok"; fb.innerHTML="✅ 정답! "+item.exp; }
+        else {
+          btn.classList.add("wrong");
+          wrap.querySelectorAll(".opt")[item.ans].classList.add("correct");
+          fb.className="feedback show no"; fb.innerHTML="❌ 다시 봐. "+item.exp;
+        }
+        document.getElementById("quizScore").textContent = `점수: ${correct} / ${answered} 정답`;
+      };
+      wrap.appendChild(btn);
+    });
+    wrap.appendChild(fb);
+    box.appendChild(wrap);
+  });
+})();
+
+//==================== 어휘 카드 ====================
+(function(){
+  const g = document.getElementById("vocabGrid");
+  VOCAB.forEach(([w,pos,mean,ex])=>{
+    const c = document.createElement("div");
+    c.className = "flash card"; c.style.padding="0";
+    c.innerHTML = `<div class="flash-inner">
+      <div class="flash-face flash-front"><div class="w">${w}</div><div class="pos">${pos}</div></div>
+      <div class="flash-face flash-back"><div class="mean">${mean}</div><div class="ex">"${ex}"</div></div>
+    </div>`;
+    c.onclick = ()=> c.classList.toggle("flipped");
+    g.appendChild(c);
+  });
+})();
+
+//==================== 실전 ====================
+(function(){
+  const p = document.getElementById("speakPrompt");
+  function rnd(){ p.textContent = PROMPTS[Math.floor(Math.random()*PROMPTS.length)]; }
+  rnd();
+  document.getElementById("newPrompt").onclick = rnd;
+})();
+
+//==================== 성장 추적 (localStorage) ====================
+const STORE_KEY = "englishCoachScores";
+function loadScores(){ try { return JSON.parse(localStorage.getItem(STORE_KEY))||{}; } catch(e){ return {}; } }
+function saveScores(s){ localStorage.setItem(STORE_KEY, JSON.stringify(s)); }
+
+const weekSel = document.getElementById("weekSel");
+for(let w=1; w<=12; w++){ weekSel.innerHTML += `<option value="${w}">${w}주차</option>`; }
+
+function renderInputTable(){
+  const scores = loadScores();
+  const w = weekSel.value;
+  const cur = scores[w] || {};
+  let h = "<tr><th>영역</th><th class='num'>이번 주 점수(0~30)</th></tr>";
+  AREAS.forEach(a=>{
+    const v = (cur[a]!=null)? cur[a] : "";
+    h += `<tr><td>${a}</td><td class='num'><input type="number" min="0" max="30" class="tracker-input" data-area="${a}" value="${v}"></td></tr>`;
+  });
+  document.getElementById("trackerInputTable").innerHTML = h;
+}
+weekSel.onchange = renderInputTable;
+renderInputTable();
+
+document.getElementById("saveWeek").onclick = ()=>{
+  const scores = loadScores();
+  const w = weekSel.value;
+  const obj = {};
+  document.querySelectorAll("#trackerInputTable input").forEach(inp=>{
+    if(inp.value!=="") obj[inp.dataset.area] = Math.max(0,Math.min(30,parseInt(inp.value)));
+  });
+  scores[w] = obj; saveScores(scores);
+  const f = document.getElementById("savedFlash"); f.classList.add("show");
+  setTimeout(()=>f.classList.remove("show"),1500);
+  renderReport();
+};
+
+document.getElementById("resetAll").onclick = ()=>{
+  if(confirm("모든 주간 점수를 지울까요? (Baseline은 유지)")){
+    localStorage.removeItem(STORE_KEY); renderInputTable(); renderReport();
+  }
+};
+
+function renderReport(){
+  const scores = loadScores();
+  const weeks = Object.keys(scores).map(Number).filter(n=>Object.keys(scores[n]).length).sort((a,b)=>a-b);
+  const t = document.getElementById("reportTable");
+  if(weeks.length===0){
+    t.innerHTML = "<tr><td class='note'>아직 입력된 주차가 없어요. 위에서 점수를 저장해 보세요.</td></tr>";
+    document.getElementById("reportComment").textContent = "";
+    return;
+  }
+  const latest = weeks[weeks.length-1];
+  const prev = weeks.length>1 ? weeks[weeks.length-2] : null;
+  let h = `<tr><th>영역</th><th class='num'>Baseline</th>`;
+  if(prev) h += `<th class='num'>${prev}주차</th>`;
+  h += `<th class='num'>${latest}주차</th><th class='num'>증감</th></tr>`;
+  let baseSum=0, latSum=0;
+  AREAS.forEach(a=>{
+    const base = BASELINE[a];
+    const lat = scores[latest][a]!=null? scores[latest][a] : "-";
+    const pv = prev && scores[prev][a]!=null ? scores[prev][a] : null;
+    baseSum += base; if(lat!=="-") latSum += lat;
+    const cmp = (lat!=="-") ? lat - base : 0;
+    const arrow = cmp>0?`<span class="delta-up">▲${cmp}</span>`: cmp<0?`<span class="delta-down">▼${-cmp}</span>`:`<span class="delta-flat">―</span>`;
+    h += `<tr><td>${a}</td><td class='num'>${base}</td>`;
+    if(prev) h += `<td class='num'>${pv!=null?pv:"-"}</td>`;
+    h += `<td class='num'><b>${lat}</b></td><td class='num'>${lat!=="-"?arrow:"-"}</td></tr>`;
+  });
+  const baseTot = Math.round(baseSum*4/5), latTot = Math.round(latSum*4/5);
+  const totCmp = latTot-baseTot;
+  const totArrow = totCmp>0?`<span class="delta-up">▲${totCmp}</span>`:totCmp<0?`<span class="delta-down">▼${-totCmp}</span>`:`―`;
+  h += `<tr><td><b>총점 추정</b></td><td class='num'>${baseTot}</td>`;
+  if(prev) h += `<td class='num'>-</td>`;
+  h += `<td class='num'><b>${latTot}</b></td><td class='num'>${totArrow}</td></tr>`;
+  t.innerHTML = h;
+
+  // 코멘트: 최대 약점 찾기
+  let weak=null, weakGap=999;
+  AREAS.forEach(a=>{ if(scores[latest][a]!=null){ const gap = scores[latest][a]; if(gap<weakGap){weakGap=gap;weak=a;} } });
+  const toGoal = 80 - latTot;
+  document.getElementById("reportComment").innerHTML =
+    `이번 주 최대 약점: <b>${weak||"-"}</b> · 목표 80까지 <b>${toGoal>0?toGoal+"점":"달성! 🎉"}</b> 남음. ` +
+    `다음 주는 ${weak||"약점 영역"} 집중 + 통합형 비중을 높여보자.`;
+}
+renderReport();
+</script>
+</body>
+</html>
