@@ -6,136 +6,113 @@
 <title>나의 영어 학습 코치 · TOEFL 80+ 12주 프로그램</title>
 <style>
   :root {
-    --bg: #0f1226;
-    --bg2: #171a35;
-    --card: #1e2347;
-    --card2: #262c57;
-    --line: #323a6e;
-    --txt: #e8eaf6;
-    --muted: #9aa2cf;
-    --accent: #6c7cff;
-    --accent2: #36d1b7;
-    --good: #3ddc84;
-    --warn: #ffcc5c;
-    --bad: #ff6b81;
-    --radius: 16px;
+    --bg:#0f1226; --bg2:#171a35; --card:#1e2347; --card2:#262c57; --line:#323a6e;
+    --txt:#e8eaf6; --muted:#9aa2cf; --accent:#6c7cff; --accent2:#36d1b7;
+    --good:#3ddc84; --warn:#ffcc5c; --bad:#ff6b81; --radius:16px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-    background: linear-gradient(160deg, var(--bg), var(--bg2));
-    color: var(--txt);
-    line-height: 1.6;
-    min-height: 100vh;
-  }
-  header {
-    text-align: center;
-    padding: 36px 16px 20px;
-  }
-  header h1 { font-size: 1.7rem; letter-spacing: -0.5px; }
-  header p { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
-  .goal-pill {
-    display: inline-block; margin-top: 14px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    color: #0b0e23; font-weight: 700; padding: 6px 18px; border-radius: 999px;
-    font-size: 0.9rem;
-  }
-  nav {
-    position: sticky; top: 0; z-index: 50;
-    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
-    padding: 12px; background: rgba(15,18,38,0.85); backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--line);
-  }
-  nav button {
-    background: var(--card); color: var(--txt); border: 1px solid var(--line);
-    padding: 8px 14px; border-radius: 999px; cursor: pointer; font-size: 0.85rem;
-    transition: all .15s;
-  }
-  nav button:hover { border-color: var(--accent); }
-  nav button.active { background: var(--accent); color: #0b0e23; font-weight: 700; border-color: var(--accent); }
-  main { max-width: 880px; margin: 0 auto; padding: 24px 16px 80px; }
-  section { display: none; animation: fade .3s ease; }
-  section.active { display: block; }
-  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-  h2 { font-size: 1.35rem; margin-bottom: 4px; }
-  .sub { color: var(--muted); margin-bottom: 20px; font-size: 0.92rem; }
-  .card {
-    background: var(--card); border: 1px solid var(--line);
-    border-radius: var(--radius); padding: 20px; margin-bottom: 18px;
-  }
-  .card h3 { font-size: 1.05rem; margin-bottom: 12px; color: var(--accent2); }
-  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); }
-  th { color: var(--muted); font-weight: 600; }
-  td.num { text-align: center; font-variant-numeric: tabular-nums; }
-  .tag { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
-  .tag.good { background: rgba(61,220,132,.15); color: var(--good); }
-  .tag.warn { background: rgba(255,204,92,.15); color: var(--warn); }
-  .tag.bad { background: rgba(255,107,129,.15); color: var(--bad); }
-  .bigscore { font-size: 2.6rem; font-weight: 800; background: linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 620px) { .grid2 { grid-template-columns: 1fr; } }
-  ul.clean { list-style: none; }
-  ul.clean li { padding: 6px 0 6px 24px; position: relative; }
-  ul.clean li::before { content: "→"; position: absolute; left: 0; color: var(--accent); }
-  .routine-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-  .routine-row:last-child { border: none; }
-  .routine-row .t { color: var(--accent2); font-weight: 700; white-space: nowrap; }
-  .week { border-left: 3px solid var(--line); padding: 4px 0 4px 16px; margin-bottom: 14px; }
-  .week.cur { border-left-color: var(--accent); }
-  .week b { color: var(--accent2); }
-  .quiz-q { font-size: 1.05rem; margin-bottom: 14px; }
-  .opt {
-    display: block; width: 100%; text-align: left; background: var(--card2);
-    border: 1px solid var(--line); color: var(--txt); padding: 12px 14px;
-    border-radius: 10px; margin-bottom: 8px; cursor: pointer; transition: all .12s; font-size: 0.95rem;
-  }
-  .opt:hover { border-color: var(--accent); }
-  .opt.correct { background: rgba(61,220,132,.18); border-color: var(--good); }
-  .opt.wrong { background: rgba(255,107,129,.18); border-color: var(--bad); }
-  .feedback { margin-top: 10px; padding: 12px; border-radius: 10px; font-size: 0.92rem; display: none; }
-  .feedback.show { display: block; }
-  .feedback.ok { background: rgba(61,220,132,.12); border: 1px solid var(--good); }
-  .feedback.no { background: rgba(255,107,129,.12); border: 1px solid var(--bad); }
-  .btn {
-    background: var(--accent); color: #0b0e23; border: none; padding: 10px 18px;
-    border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.9rem;
-  }
-  .btn.ghost { background: transparent; color: var(--txt); border: 1px solid var(--line); }
-  .btn:disabled { opacity: .4; cursor: default; }
-  .flash {
-    perspective: 1000px; cursor: pointer; height: 150px;
-  }
-  .flash-inner { position: relative; width: 100%; height: 100%; transition: transform .5s; transform-style: preserve-3d; }
-  .flash.flipped .flash-inner { transform: rotateY(180deg); }
-  .flash-face {
-    position: absolute; inset: 0; backface-visibility: hidden; border-radius: 12px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 14px; text-align: center; border: 1px solid var(--line);
-  }
-  .flash-front { background: var(--card2); }
-  .flash-front .w { font-size: 1.3rem; font-weight: 800; }
-  .flash-front .pos { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
-  .flash-back { background: linear-gradient(140deg,var(--card2),var(--card)); transform: rotateY(180deg); }
-  .flash-back .mean { font-weight: 700; color: var(--accent2); }
-  .flash-back .ex { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
-  input[type=number], input[type=text], textarea {
-    background: var(--card2); border: 1px solid var(--line); color: var(--txt);
-    border-radius: 8px; padding: 8px 10px; font-size: 0.9rem; width: 100%; font-family: inherit;
-  }
-  textarea { min-height: 70px; resize: vertical; }
-  .tracker-input { width: 64px; text-align: center; }
-  .note { color: var(--muted); font-size: 0.82rem; }
-  .delta-up { color: var(--good); }
-  .delta-down { color: var(--bad); }
-  .delta-flat { color: var(--muted); }
-  .prog-bar { height: 10px; background: var(--card2); border-radius: 999px; overflow: hidden; margin-top: 6px; }
-  .prog-fill { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); width: 0; transition: width .6s; }
-  details { background: var(--card2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
-  summary { cursor: pointer; font-weight: 600; }
-  footer { text-align: center; color: var(--muted); font-size: 0.8rem; padding: 24px; }
-  .saved-flash { color: var(--good); font-size: 0.82rem; margin-left: 8px; opacity: 0; transition: opacity .3s; }
-  .saved-flash.show { opacity: 1; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    background:linear-gradient(160deg,var(--bg),var(--bg2)); color:var(--txt); line-height:1.6; min-height:100vh; }
+  header { text-align:center; padding:30px 16px 16px; }
+  header h1 { font-size:1.6rem; letter-spacing:-0.5px; }
+  header p { color:var(--muted); margin-top:6px; font-size:0.92rem; }
+  .goal-pill { display:inline-block; margin-top:12px; background:linear-gradient(90deg,var(--accent),var(--accent2));
+    color:#0b0e23; font-weight:700; padding:6px 18px; border-radius:999px; font-size:0.88rem; }
+  nav { position:sticky; top:0; z-index:50; display:flex; flex-wrap:wrap; gap:6px; justify-content:center;
+    padding:12px; background:rgba(15,18,38,0.9); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  nav button { background:var(--card); color:var(--txt); border:1px solid var(--line); padding:8px 14px;
+    border-radius:999px; cursor:pointer; font-size:0.84rem; transition:all .15s; }
+  nav button:hover { border-color:var(--accent); }
+  nav button.active { background:var(--accent); color:#0b0e23; font-weight:700; border-color:var(--accent); }
+  main { max-width:900px; margin:0 auto; padding:24px 16px 80px; }
+  section { display:none; animation:fade .3s ease; }
+  section.active { display:block; }
+  @keyframes fade { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
+  h2 { font-size:1.3rem; margin-bottom:4px; }
+  .sub { color:var(--muted); margin-bottom:18px; font-size:0.9rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+  .card h3 { font-size:1.02rem; margin-bottom:12px; color:var(--accent2); }
+  table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+  th,td { text-align:left; padding:9px 8px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-weight:600; }
+  td.num,th.num { text-align:center; font-variant-numeric:tabular-nums; }
+  .tag { display:inline-block; padding:2px 9px; border-radius:999px; font-size:0.74rem; font-weight:700; }
+  .tag.good{background:rgba(61,220,132,.15);color:var(--good);}
+  .tag.warn{background:rgba(255,204,92,.15);color:var(--warn);}
+  .tag.bad{background:rgba(255,107,129,.15);color:var(--bad);}
+  .tag.info{background:rgba(108,124,255,.18);color:var(--accent);}
+  .bigscore { font-size:2.4rem; font-weight:800; background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  @media (max-width:640px){ .grid2,.grid3{grid-template-columns:1fr;} }
+  ul.clean { list-style:none; }
+  ul.clean li { padding:5px 0 5px 22px; position:relative; }
+  ul.clean li::before { content:"→"; position:absolute; left:0; color:var(--accent); }
+  .routine-row { display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); align-items:flex-start; }
+  .routine-row:last-child { border:none; }
+  .routine-row .chk { margin-top:4px; transform:scale(1.3); accent-color:var(--accent2); cursor:pointer; }
+  .routine-row .body { flex:1; }
+  .routine-row .t { color:var(--accent2); font-weight:700; }
+  .routine-row .min { color:var(--muted); font-size:0.82rem; }
+  .week { border-left:3px solid var(--line); padding:4px 0 4px 16px; margin-bottom:12px; }
+  .week.cur { border-left-color:var(--accent); }
+  .week b { color:var(--accent2); }
+  .quiz-q { font-size:1.0rem; margin-bottom:12px; }
+  .opt { display:block; width:100%; text-align:left; background:var(--card2); border:1px solid var(--line);
+    color:var(--txt); padding:11px 14px; border-radius:10px; margin-bottom:8px; cursor:pointer; transition:all .12s; font-size:0.92rem; }
+  .opt:hover { border-color:var(--accent); }
+  .opt.correct { background:rgba(61,220,132,.18); border-color:var(--good); }
+  .opt.wrong { background:rgba(255,107,129,.18); border-color:var(--bad); }
+  .feedback { margin-top:8px; padding:11px; border-radius:10px; font-size:0.9rem; display:none; }
+  .feedback.show { display:block; }
+  .feedback.ok { background:rgba(61,220,132,.12); border:1px solid var(--good); }
+  .feedback.no { background:rgba(255,107,129,.12); border:1px solid var(--bad); }
+  .btn { background:var(--accent); color:#0b0e23; border:none; padding:10px 16px; border-radius:10px; font-weight:700; cursor:pointer; font-size:0.88rem; }
+  .btn.ghost { background:transparent; color:var(--txt); border:1px solid var(--line); }
+  .btn.sm { padding:6px 12px; font-size:0.8rem; }
+  .btn:disabled { opacity:.4; cursor:default; }
+  .flash { perspective:1000px; cursor:pointer; height:140px; }
+  .flash-inner { position:relative; width:100%; height:100%; transition:transform .5s; transform-style:preserve-3d; }
+  .flash.flipped .flash-inner { transform:rotateY(180deg); }
+  .flash-face { position:absolute; inset:0; backface-visibility:hidden; border-radius:12px; display:flex;
+    flex-direction:column; align-items:center; justify-content:center; padding:14px; text-align:center; border:1px solid var(--line); }
+  .flash-front { background:var(--card2); }
+  .flash-front .w { font-size:1.25rem; font-weight:800; }
+  .flash-front .pos { color:var(--muted); font-size:0.78rem; margin-top:4px; }
+  .flash-back { background:linear-gradient(140deg,var(--card2),var(--card)); transform:rotateY(180deg); }
+  .flash-back .mean { font-weight:700; color:var(--accent2); }
+  .flash-back .ex { font-size:0.78rem; color:var(--muted); margin-top:8px; }
+  input,select,textarea { background:var(--card2); border:1px solid var(--line); color:var(--txt);
+    border-radius:8px; padding:8px 10px; font-size:0.9rem; font-family:inherit; }
+  textarea { min-height:70px; resize:vertical; width:100%; }
+  .tracker-input { width:60px; text-align:center; }
+  .note { color:var(--muted); font-size:0.82rem; }
+  .delta-up{color:var(--good);} .delta-down{color:var(--bad);} .delta-flat{color:var(--muted);}
+  .prog-bar { height:10px; background:var(--card2); border-radius:999px; overflow:hidden; margin-top:6px; }
+  .prog-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); width:0; transition:width .6s; }
+  details { background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:8px; }
+  summary { cursor:pointer; font-weight:600; }
+  footer { text-align:center; color:var(--muted); font-size:0.8rem; padding:24px; }
+  .saved-flash { color:var(--good); font-size:0.82rem; margin-left:8px; opacity:0; transition:opacity .3s; }
+  .saved-flash.show { opacity:1; }
+  .daynav { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .stat { text-align:center; }
+  .stat .v { font-size:1.6rem; font-weight:800; color:var(--accent2); }
+  .stat .l { font-size:0.78rem; color:var(--muted); }
+  .milestone-banner { background:linear-gradient(90deg,rgba(255,204,92,.2),rgba(255,107,129,.15));
+    border:1px solid var(--warn); border-radius:12px; padding:12px 16px; margin-bottom:14px; }
+  .dot { display:inline-block; width:11px; height:11px; border-radius:3px; background:var(--card2); border:1px solid var(--line); }
+  .dot.done { background:var(--accent2); border-color:var(--accent2); }
+  .dot.test { background:var(--warn); border-color:var(--warn); }
+  .dot.mock { background:var(--bad); border-color:var(--bad); }
+  .cal { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; max-width:340px; }
+  .cal-cell { aspect-ratio:1; border-radius:6px; background:var(--card2); border:1px solid var(--line);
+    font-size:0.7rem; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .cal-cell.done { background:rgba(54,209,183,.25); border-color:var(--accent2); }
+  .cal-cell.today { outline:2px solid var(--accent); }
+  .cal-cell.test { border-color:var(--warn); }
+  .cal-cell.mock { border-color:var(--bad); }
 </style>
 </head>
 <body>
@@ -148,156 +125,143 @@
 <nav id="nav"></nav>
 
 <main>
-  <!-- DASHBOARD -->
-  <section id="dashboard" class="active">
-    <h2>대시보드</h2>
-    <p class="sub">0일차 진단 결과와 오늘의 핵심을 한눈에.</p>
+  <!-- TODAY -->
+  <section id="today" class="active">
+    <h2>오늘의 세션</h2>
+    <p class="sub">시작일 기준으로 며칠 차인지 자동 계산해 그 날의 전체 루틴을 생성합니다.</p>
+
+    <div class="card">
+      <div class="daynav">
+        <button class="btn ghost sm" id="prevDay">◀ 이전</button>
+        <b id="dayLabel" style="font-size:1.05rem"></b>
+        <button class="btn ghost sm" id="nextDay">다음 ▶</button>
+        <button class="btn sm" id="goToday">오늘로</button>
+        <span style="flex:1"></span>
+        <label class="note">세션 길이
+          <select id="sessionLen">
+            <option value="30">30분</option>
+            <option value="60">60분</option>
+            <option value="120">120분</option>
+            <option value="180" selected>180분</option>
+          </select>
+        </label>
+      </div>
+      <div id="milestoneBanner"></div>
+      <div id="dayGoal"></div>
+    </div>
+
+    <div class="card">
+      <h3>오늘의 루틴 <span class="note" id="routineProg"></span></h3>
+      <div id="todayRoutine"></div>
+    </div>
 
     <div class="grid2">
       <div class="card">
+        <h3>오늘의 학술 어휘</h3>
+        <div id="todayVocab"></div>
+      </div>
+      <div class="card">
+        <h3>오늘의 문법 퀴즈</h3>
+        <div id="todayQuiz"></div>
+        <div id="todayQuizScore" class="note" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>오늘의 말하기 + 쓰기</h3>
+      <p class="quiz-q" id="todayPrompt"></p>
+      <textarea id="todaySpeak" placeholder="위 질문에 영어로 답해봐 (말하듯이)..."></textarea>
+      <div class="note" style="margin-top:8px"><b>자가 점검:</b> ① 단수 명사 앞 a/the/my? ② 시제 맞나? ③ 주어+동사 있나?</div>
+    </div>
+
+    <div class="card">
+      <h3>✅ 오늘 세션 마무리</h3>
+      <p class="note">위 루틴을 모두 끝냈으면 완료 처리하세요. 연속 학습(streak)이 기록됩니다.</p>
+      <button class="btn" id="completeDay" style="margin-top:10px">오늘 완료 처리</button>
+      <span class="saved-flash" id="completeFlash">완료! 🔥</span>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="dashboard">
+    <h2>대시보드</h2>
+    <p class="sub">진척 현황 한눈에.</p>
+    <div class="grid3">
+      <div class="card stat"><div class="v" id="statDay">1</div><div class="l">현재 일차 / 84</div></div>
+      <div class="card stat"><div class="v" id="statDone">0</div><div class="l">완료한 세션</div></div>
+      <div class="card stat"><div class="v" id="statStreak">0</div><div class="l">연속 학습일 🔥</div></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
         <h3>현재 추정 총점</h3>
-        <div class="bigscore" id="dashTotal">30</div>
+        <div class="bigscore" id="dashTotal">24</div>
         <div class="note">/ 120 · 목표 80</div>
         <div class="prog-bar"><div class="prog-fill" id="dashBar"></div></div>
       </div>
       <div class="card">
         <h3>최우선 약점 TOP 3</h3>
         <ul class="clean">
-          <li><b>관사 (a / the)</b> — 진단에서 3/3 오류</li>
+          <li><b>관사 (a / the)</b> — 진단 3/3 오류</li>
           <li><b>학술 어휘</b> — AWL 단어 거의 없음</li>
           <li><b>긴 문장 독해</b> — 접속사·구문에서 붕괴</li>
         </ul>
       </div>
     </div>
-
     <div class="card">
-      <h3>강점 (이미 가진 토대)</h3>
-      <ul class="clean">
-        <li>기본 어순(주어+동사+목적어) 정확 — "I drink coffee every morning." ✅</li>
-        <li>현재형·과거형 동사 정확 — "I met a friend yesterday." (met ✅)</li>
-      </ul>
+      <h3>학습 캘린더 (12주 × 7일)</h3>
+      <div style="margin-bottom:8px" class="note">
+        <span class="dot done"></span> 완료 &nbsp; <span class="dot test"></span> 주간 테스트 &nbsp; <span class="dot mock"></span> 종합 모의고사
+      </div>
+      <div class="cal" id="calendar"></div>
     </div>
-
     <div class="card">
-      <h3>코치의 솔직한 한마디</h3>
-      <p>출발선(~30점)에서 12주 만에 80은 <b>매우 도전적</b>이야. 그래서 두 가지를 지키자:
-      ① <b>하루 3시간을 진짜로 채운다</b>(전부를 좌우함). ② 목표를 <b>"60점대 안정 + 80 사정권"</b>으로 두되,
-      매주 측정해서 빠르면 다시 올린다. 높은 목표는 그대로, 거짓 약속은 없이. 🔥</p>
+      <h3>시작일 설정</h3>
+      <p class="note">오늘 며칠 차인지 이 날짜를 기준으로 계산합니다.</p>
+      <input type="date" id="startDate" style="margin-top:8px">
+      <button class="btn sm" id="saveStart" style="margin-left:8px">저장</button>
     </div>
   </section>
 
   <!-- BASELINE -->
   <section id="baseline">
     <h2>📊 0일차 진단 (Baseline)</h2>
-    <p class="sub">이 기준은 12주 내내 동일하게 유지해 객관적으로 비교한다.</p>
-    <div class="card">
-      <table id="baselineTable"></table>
-    </div>
+    <p class="sub">12주 내내 동일 기준으로 비교.</p>
+    <div class="card"><table id="baselineTable"></table></div>
   </section>
 
-  <!-- PLAN -->
-  <section id="plan">
-    <h2>🗓️ 12주 큰 그림 & 일일 루틴</h2>
-    <p class="sub">오늘은 1주차. 매주 7일차에 진척 테스트로 숫자를 확인한다.</p>
-
-    <div class="card">
-      <h3>일일 루틴 (총 180분)</h3>
-      <div id="routine"></div>
-    </div>
-
-    <div class="card">
-      <h3>12주 로드맵</h3>
-      <div id="roadmap"></div>
-    </div>
-  </section>
-
-  <!-- LESSON -->
-  <section id="lesson">
-    <h2>📖 관사 a / the 마스터</h2>
-    <p class="sub">너의 1순위 약점. 규칙 3개 + 퀴즈로 잡는다.</p>
-
-    <div class="card">
-      <h3>규칙 3가지</h3>
-      <p><b>① a = "어떤 하나"</b> (처음 언급, 셀 수 있는 단수)<br>
-      <span class="note">I met <b>a</b> friend. / I have <b>a</b> dog.</span></p>
-      <p style="margin-top:10px"><b>② the = "그거!"</b> (서로 아는 특정한 것)<br>
-      <span class="note">I met a friend. <b>The</b> friend was tall. / Close <b>the</b> door.</span></p>
-      <p style="margin-top:10px"><b>③ 셀 수 없는 것은 보통 관사 없이</b><br>
-      <span class="note">I drink coffee. / I usually exercise.  (✅ 너가 맞게 쓴 패턴)</span></p>
-    </div>
-
-    <div class="card">
-      <h3>퀴즈</h3>
-      <div id="quiz"></div>
-      <div id="quizScore" class="note" style="margin-top:12px"></div>
-    </div>
+  <!-- CURRICULUM -->
+  <section id="curriculum">
+    <h2>🗺️ 12주 전체 커리큘럼</h2>
+    <p class="sub">단계별 목표·주제·문법 초점·마일스톤. 주차 카드를 펼쳐 보세요.</p>
+    <div id="curriculumList"></div>
   </section>
 
   <!-- VOCAB -->
   <section id="vocab">
-    <h2>🔤 학술 어휘 (AWL)</h2>
-    <p class="sub">카드를 눌러 뒤집어 봐. TOEFL 지문·강의 빈출 단어부터.</p>
+    <h2>🔤 학술 어휘 (AWL) 전체</h2>
+    <p class="sub">주차를 선택해 그 주의 단어를 카드로 학습.</p>
+    <div style="margin-bottom:14px">주차 <select id="vocabWeek"></select></div>
     <div class="grid2" id="vocabGrid"></div>
-  </section>
-
-  <!-- PRACTICE -->
-  <section id="practice">
-    <h2>🗣️ 실전 훈련</h2>
-    <p class="sub">말하기·쓰기를 직접 적어보고, 스스로 점검 리스트로 확인한다.</p>
-
-    <div class="card">
-      <h3>말하기 (30초 즉흥)</h3>
-      <p class="quiz-q" id="speakPrompt"></p>
-      <button class="btn ghost" id="newPrompt">다른 질문</button>
-      <textarea id="speakAns" placeholder="여기에 영어로 답을 적어봐..."></textarea>
-      <div class="card" style="background:var(--card2);margin-top:10px">
-        <b>스스로 점검:</b>
-        <ul class="clean">
-          <li>셀 수 있는 단수 명사 앞에 a/the/my 넣었나?</li>
-          <li>동사 시제 맞나? (현재 vs 과거)</li>
-          <li>문장에 주어와 동사가 다 있나?</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>쓰기 (한→영 작문)</h3>
-      <ol style="padding-left:20px">
-        <li>나는 매주 토요일에 운동한다.</li>
-        <li>어제 나는 도서관에서 책 한 권을 읽었다.</li>
-        <li>그 책은 매우 흥미로웠다.</li>
-      </ol>
-      <textarea id="writeAns" placeholder="3문장을 영어로..."></textarea>
-      <details style="margin-top:10px">
-        <summary>모범 답안 보기 (먼저 스스로 쓴 뒤에!)</summary>
-        <p style="margin-top:8px" class="note">
-        1. I exercise every Saturday.<br>
-        2. Yesterday, I read <b>a</b> book in <b>the</b> library.<br>
-        3. <b>The</b> book was very interesting.</p>
-      </details>
-    </div>
   </section>
 
   <!-- TRACKER -->
   <section id="tracker">
     <h2>📈 성장 추적</h2>
-    <p class="sub">매주 7일차 점수를 입력하면 Baseline 대비 증감이 자동 계산된다. (브라우저에 자동 저장)</p>
-
+    <p class="sub">매주 7일차 점수 입력 → Baseline 대비 증감 자동 계산. 4·8·12주는 종합 모의고사.</p>
     <div class="card">
-      <h3>주간 점수 입력</h3>
+      <h3>주간/모의 점수 입력</h3>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
-        <label>주차
-          <select id="weekSel"></select>
-        </label>
+        <label>주차 <select id="weekSel"></select></label>
+        <span id="weekKind" class="tag info"></span>
         <span class="saved-flash" id="savedFlash">저장됨 ✓</span>
       </div>
       <table id="trackerInputTable"></table>
-      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <textarea id="weekMemo" placeholder="이번 주 약점 / 느낀 점 메모..." style="margin-top:12px"></textarea>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn" id="saveWeek">이 주차 저장</button>
         <button class="btn ghost" id="resetAll">전체 초기화</button>
       </div>
     </div>
-
     <div class="card">
       <h3>누적 리포트</h3>
       <table id="reportTable"></table>
@@ -306,263 +270,416 @@
   </section>
 </main>
 
-<footer>
-  나만의 영어 학습 코치 · 데이터는 이 브라우저에만 저장됩니다 (localStorage)
-</footer>
+<footer>나만의 영어 학습 코치 · 모든 데이터는 이 브라우저에만 저장됩니다 (localStorage)</footer>
 
 <script>
-//==================== 데이터 ====================
+//==================== 상수/데이터 ====================
 const AREAS = ["Reading","Listening","Speaking","Writing","어휘/문법"];
-const BASELINE = { "Reading":6, "Listening":6, "Speaking":8, "Writing":9, "어휘/문법":7 };
+const BASELINE = {Reading:6,Listening:6,Speaking:8,Writing:9,"어휘/문법":7};
 const BASELINE_NOTE = {
-  "Reading": ["bad","단순 문장은 이해, 학술 지문은 단어·구문에서 전면 막힘"],
-  "Listening": ["bad","직접 미측정 · 독해·어휘 수준과 연동해 보수적 추정"],
-  "Speaking": ["warn","짧은 문장 생성 가능 · 어휘 단순, 관사·동사 선택 오류"],
-  "Writing": ["warn","현재/과거 시제 정확 ✅ · 관사 누락이 주 오류"],
-  "어휘/문법": ["warn","기초 동사·일상어 OK · 학술 어휘(AWL) 거의 없음"]
+  Reading:["bad","단순 문장은 이해, 학술 지문은 단어·구문에서 전면 막힘"],
+  Listening:["bad","직접 미측정 · 독해·어휘 수준 연동해 보수적 추정"],
+  Speaking:["warn","짧은 문장 생성 가능 · 어휘 단순, 관사·동사 오류"],
+  Writing:["warn","현재/과거 시제 정확 ✅ · 관사 누락이 주 오류"],
+  "어휘/문법":["warn","기초 동사·일상어 OK · 학술 어휘(AWL) 거의 없음"]
+};
+const to120 = s => Math.round(s*4/5); // 5영역(30만점) 합 → 120 환산 근사
+
+// 6블록 루틴 (180분 기준 분배)
+const BLOCKS = [
+  ["워밍업",20,"구조 분석 + 전날 표현·문법·어휘 퀴즈 복습"],
+  ["본 공부",45,"오늘 주제 학습 + 아래 '오늘의 학술 어휘' 익히기"],
+  ["경기(실전)",60,"역할극 / 30초 말하기 / 질문 답하기 / 주제 설명 / 문장 확장 / 쉐도잉"],
+  ["통합형",35,"읽고→듣고→말/쓰기 (5주차부터 비중↑)"],
+  ["복습",15,"백지 회상 — 오늘 배운 것 말하고 빈틈 보완"],
+  ["마무리",5,"표현 1 + 숙어 1 + 원어민식 문장 1"]
+];
+
+// 문법 퀴즈 은행 (주차별 grammarKey로 연결)
+const QUIZ_BANK = {
+  articles:[
+    {q:"I bought ___ book yesterday. (처음 언급)",opts:["a","the","(없음)"],ans:0,exp:"처음 언급한 셀 수 있는 단수 → a book."},
+    {q:"___ book was very interesting. (아까 그 책)",opts:["A","The","(없음)"],ans:1,exp:"서로 아는 특정 → The book."},
+    {q:"I drink ___ coffee every morning.",opts:["a","the","(없음)"],ans:2,exp:"셀 수 없는 물질·일반 → 관사 없음."},
+    {q:"She is ___ student at my school.",opts:["a","the","(없음)"],ans:0,exp:"셀 수 있는 단수·처음 → a student."},
+    {q:"I love ___ music.",opts:["a","the","(없음)"],ans:2,exp:"추상·불가산·일반 → 관사 없음."}
+  ],
+  tense:[
+    {q:"Yesterday I ___ to school.",opts:["go","went","going"],ans:1,exp:"과거(yesterday) → went."},
+    {q:"She ___ English every day.",opts:["study","studies","studied"],ans:1,exp:"3인칭 단수 현재 → studies."},
+    {q:"They ___ a movie last night.",opts:["watch","watched","watches"],ans:1,exp:"과거(last night) → watched."},
+    {q:"I ___ TV when she called.",opts:["watch","was watching","watched"],ans:1,exp:"과거진행: ~하던 중 → was watching."},
+    {q:"He has ___ here since 2020.",opts:["live","lived","living"],ans:1,exp:"현재완료 have/has + p.p. → lived."}
+  ],
+  plural:[
+    {q:"There are three ___ on the table.",opts:["book","books","bookes"],ans:1,exp:"복수 → books."},
+    {q:"I have two ___.",opts:["childs","children","childrens"],ans:1,exp:"불규칙 복수 → children."},
+    {q:"Many ___ live in the sea.",opts:["fish","fishs","fishes"],ans:0,exp:"fish는 단복수 동일."},
+    {q:"She has many ___.",opts:["box","boxs","boxes"],ans:2,exp:"-x로 끝나면 -es → boxes."},
+    {q:"There are several ___.",opts:["citys","cities","cityes"],ans:1,exp:"자음+y → -ies → cities."}
+  ],
+  clause:[
+    {q:"The man ___ lives next door is a doctor.",opts:["who","which","what"],ans:0,exp:"사람 주격 관계대명사 → who."},
+    {q:"This is the book ___ I bought.",opts:["who","that","what"],ans:1,exp:"사물 목적격 → that/which."},
+    {q:"___ it rains, we stay home.",opts:["When","What","Who"],ans:0,exp:"~할 때(시간 접속사) → When."},
+    {q:"I know the reason ___ he left.",opts:["why","which","who"],ans:0,exp:"이유 → why."},
+    {q:"She smiled ___ she was happy.",opts:["because","but","or"],ans:0,exp:"이유 접속사 → because."}
+  ],
+  preposition:[
+    {q:"I will meet you ___ Monday.",opts:["in","on","at"],ans:1,exp:"요일 앞 → on Monday."},
+    {q:"The class starts ___ 9 a.m.",opts:["in","on","at"],ans:2,exp:"정확한 시각 → at 9."},
+    {q:"She was born ___ 1999.",opts:["in","on","at"],ans:0,exp:"연도 → in 1999."},
+    {q:"The book is ___ the table.",opts:["on","in","at"],ans:0,exp:"표면 위 → on."},
+    {q:"He is good ___ math.",opts:["in","at","on"],ans:1,exp:"good at + 분야."}
+  ],
+  connectors:[
+    {q:"It was raining; ___, we went out.",opts:["however","because","so"],ans:0,exp:"대조 → however."},
+    {q:"He studied hard; ___, he passed.",opts:["however","therefore","but"],ans:1,exp:"결과 → therefore."},
+    {q:"___ addition, prices rose.",opts:["In","On","At"],ans:0,exp:"게다가 → In addition."},
+    {q:"___ example, coral needs algae.",opts:["For","In","On"],ans:0,exp:"예시 → For example."},
+    {q:"The plan failed ___ poor funding.",opts:["due to","because","so"],ans:0,exp:"due to + 명사."}
+  ]
 };
 
-const ROUTINE = [
-  ["워밍업","20분","구조 분석 + 전날 표현·문법·어휘 퀴즈 복습"],
-  ["본 공부","45분","오늘+이번 주 주제 연결 · AWL 학술 어휘"],
-  ["경기(실전)","60분","역할극 / 30초 말하기 / 질문 답하기 / 주제 설명 / 문장 확장 / 쉐도잉"],
-  ["통합형","35분","읽고→듣고→말/쓰기 (5주차부터 비중↑)"],
-  ["복습","15분","백지 회상 — 오늘 배운 것 말하고 빈틈 보완"],
-  ["마무리","5분","표현 1 + 숙어 1 + 원어민식 문장 1"]
-];
+// 어휘 풀(주차별 12개) — 짧은 def + 예문
+const VW = {
+1:[["analyze","v","분석하다","We analyze the data."],["significant","adj","중요한","a significant change"],["environment","n","환경","protect the environment"],["research","n/v","연구(하다)","her research on reefs"],["approach","n/v","접근(법)","a new approach"],["factor","n","요인","an important factor"],["process","n/v","과정","a natural process"],["require","v","필요로 하다","Plants require light."],["evidence","n","증거","strong evidence"],["concept","n","개념","a hard concept"],["available","adj","이용 가능한","water is available"],["impact","n/v","영향","a big impact"]],
+2:[["period","n","기간/시대","a long period"],["century","n","세기","the 19th century"],["establish","v","설립/확립하다","establish a rule"],["previous","adj","이전의","the previous year"],["source","n","출처/원천","a reliable source"],["occur","v","발생하다","Wars occur."],["region","n","지역","a dry region"],["decline","n/v","감소(하다)","a sharp decline"],["event","n","사건","a major event"],["tradition","n","전통","an old tradition"],["develop","v","발전시키다","develop a system"],["civilization","n","문명","ancient civilization"]],
+3:[["behavior","n","행동","human behavior"],["perceive","v","인식하다","perceive danger"],["memory","n","기억","short-term memory"],["emotion","n","감정","strong emotion"],["respond","v","반응하다","respond quickly"],["motivation","n","동기","high motivation"],["cognitive","adj","인지의","cognitive skills"],["influence","n/v","영향(주다)","social influence"],["tendency","n","경향","a tendency to forget"],["aware","adj","인식하는","aware of risk"],["stress","n/v","스트레스","reduce stress"],["attitude","n","태도","a positive attitude"]],
+4:[["climate","n","기후","climate change"],["resource","n","자원","natural resources"],["pollution","n","오염","air pollution"],["species","n","종(생물)","an endangered species"],["sustain","v","지속시키다","sustain growth"],["consume","v","소비하다","consume energy"],["reduce","v","줄이다","reduce waste"],["ecosystem","n","생태계","a fragile ecosystem"],["emission","n","배출","carbon emission"],["renewable","adj","재생 가능한","renewable energy"],["global","adj","전 세계의","global warming"],["preserve","v","보존하다","preserve nature"]],
+5:[["create","v","창조하다","create art"],["express","v","표현하다","express feelings"],["technique","n","기법","a painting technique"],["style","n","양식","a unique style"],["culture","n","문화","modern culture"],["aesthetic","adj","미적인","aesthetic value"],["compose","v","작곡/구성하다","compose music"],["audience","n","관객","a large audience"],["interpret","v","해석하다","interpret a poem"],["movement","n","운동/사조","an art movement"],["abstract","adj","추상적인","abstract art"],["represent","v","나타내다","represent ideas"]],
+6:[["device","n","장치","a smart device"],["function","n/v","기능","a key function"],["network","n","망/네트워크","a wireless network"],["data","n","자료","collect data"],["system","n","체계","an operating system"],["innovation","n","혁신","tech innovation"],["efficient","adj","효율적인","efficient design"],["transmit","v","전송하다","transmit signals"],["complex","adj","복잡한","a complex system"],["automatic","adj","자동의","automatic update"],["generate","v","생성하다","generate power"],["component","n","부품/구성요소","a key component"]],
+7:[["economy","n","경제","a strong economy"],["demand","n/v","수요","high demand"],["supply","n/v","공급","limited supply"],["market","n","시장","the stock market"],["invest","v","투자하다","invest money"],["profit","n","이익","make a profit"],["consumer","n","소비자","a smart consumer"],["trade","n/v","무역","global trade"],["currency","n","통화","foreign currency"],["industry","n","산업","the tech industry"],["labor","n","노동","cheap labor"],["benefit","n/v","이익/혜택","a clear benefit"]],
+8:[["planet","n","행성","a distant planet"],["orbit","n/v","궤도","Earth's orbit"],["gravity","n","중력","strong gravity"],["galaxy","n","은하","a spiral galaxy"],["observe","v","관측하다","observe stars"],["theory","n","이론","a scientific theory"],["distance","n","거리","a vast distance"],["radiation","n","복사/방사선","solar radiation"],["matter","n","물질","dark matter"],["expand","v","팽창하다","The universe expands."],["origin","n","기원","the origin of life"],["measure","v","측정하다","measure speed"]],
+9:[["mineral","n","광물","rich minerals"],["surface","n","표면","Earth's surface"],["pressure","n","압력","high pressure"],["layer","n","층","rock layers"],["erosion","n","침식","soil erosion"],["volcano","n","화산","an active volcano"],["sediment","n","퇴적물","river sediment"],["formation","n","형성","rock formation"],["crust","n","지각","the Earth's crust"],["fault","n","단층","a fault line"],["deposit","n/v","퇴적물/쌓다","mineral deposits"],["geology","n","지질학","study geology"]],
+10:[["society","n","사회","modern society"],["community","n","공동체","a local community"],["policy","n","정책","a public policy"],["citizen","n","시민","a good citizen"],["population","n","인구","a growing population"],["urban","adj","도시의","urban areas"],["inequality","n","불평등","income inequality"],["migration","n","이주","mass migration"],["institution","n","기관/제도","a social institution"],["welfare","n","복지","social welfare"],["norm","n","규범","social norms"],["status","n","지위","social status"]],
+11:[["estimate","v","추정하다","estimate cost"],["contrast","n/v","대조","a sharp contrast"],["assume","v","가정하다","assume the worst"],["indicate","v","나타내다","data indicate"],["conclude","v","결론짓다","conclude that"],["range","n","범위","a wide range"],["aspect","n","측면","a key aspect"],["principle","n","원리","a basic principle"],["consequence","n","결과","a serious consequence"],["sufficient","adj","충분한","sufficient time"],["distinct","adj","뚜렷한/별개의","a distinct group"],["framework","n","틀","a useful framework"]],
+12:[["overall","adj/adv","전반적인","overall progress"],["enhance","v","향상시키다","enhance skills"],["demonstrate","v","입증/보여주다","demonstrate ability"],["accurate","adj","정확한","an accurate answer"],["strategy","n","전략","a test strategy"],["priority","n","우선순위","top priority"],["confident","adj","자신 있는","feel confident"],["maintain","v","유지하다","maintain focus"],["achieve","v","달성하다","achieve a goal"],["adapt","v","적응하다","adapt quickly"],["review","n/v","복습/검토","review notes"],["fluent","adj","유창한","become fluent"]]
+};
 
-const ROADMAP = [
-  ["1~4주","문장 구조 + 학술 어휘 토대 + 말하기 유창성 · <b>4주차 종합 모의 ①</b>", true],
-  ["5~8주","4영역 형식 적응 + 통합형 본격화 · <b>8주차 종합 모의 ②</b>", false],
-  ["9~12주","실전 모의 반복 + 약점 집중 + 시간 관리 · <b>12주차 최종 모의 ③</b>", false]
+// 주차별 커리큘럼 메타
+const WEEKS = [
+ {w:1, phase:"1단계 토대", theme:"문장 뼈대 + 관사", subject:"생물(산호 등)", grammar:"관사 a/the", key:"articles", integrated:"가벼운 5문장 글 읽고 따라 말하기", milestone:null},
+ {w:2, phase:"1단계 토대", theme:"시제 + 주어-동사 일치", subject:"역사", grammar:"현재/과거/완료 시제", key:"tense", integrated:"짧은 일화 읽고 과거형으로 요약", milestone:null},
+ {w:3, phase:"1단계 토대", theme:"복문 독해(접속사·관계절)", subject:"심리", grammar:"관계대명사·접속사", key:"clause", integrated:"두 문장을 한 문장으로 연결하기", milestone:null},
+ {w:4, phase:"1단계 토대", theme:"말하기 유창성 + 점검", subject:"환경", grammar:"전치사 in/on/at", key:"preposition", integrated:"통합형 맛보기 + 종합 모의①", milestone:"mock1"},
+ {w:5, phase:"2단계 형식적응", theme:"Reading 형식 적응", subject:"예술", grammar:"연결어(however/therefore)", key:"connectors", integrated:"읽고→요지 말하기", milestone:null},
+ {w:6, phase:"2단계 형식적응", theme:"Listening 노트테이킹", subject:"기술", grammar:"복수·수일치", key:"plural", integrated:"강의 듣고(대본) 노트→재구성", milestone:null},
+ {w:7, phase:"2단계 형식적응", theme:"Speaking 템플릿", subject:"경제", grammar:"관사 복습+심화", key:"articles", integrated:"읽고→듣고→말하기(통합 S)", milestone:null},
+ {w:8, phase:"2단계 형식적응", theme:"Writing 통합/독립 + 점검", subject:"천문", grammar:"시제 복습+심화", key:"tense", integrated:"읽고→듣고→쓰기 + 종합 모의②", milestone:"mock2"},
+ {w:9, phase:"3단계 실전", theme:"실전 모의 R/L 집중", subject:"지질", grammar:"관계절 복습", key:"clause", integrated:"풀세트 R+L 시간 재며 풀기", milestone:null},
+ {w:10, phase:"3단계 실전", theme:"실전 모의 S/W 집중", subject:"사회", grammar:"연결어 복습", key:"connectors", integrated:"풀세트 S+W 템플릿 적용", milestone:null},
+ {w:11, phase:"3단계 실전", theme:"약점 집중 + 시간관리", subject:"종합", grammar:"전치사·연결어 종합", key:"preposition", integrated:"개인 약점 영역 집중 훈련", milestone:null},
+ {w:12, phase:"3단계 실전", theme:"최종 점검 + 최종 모의", subject:"종합", grammar:"전체 복습", key:"articles", integrated:"실전과 동일 조건 최종 모의③", milestone:"mock3"}
 ];
+function weekInfo(w){ return WEEKS[w-1]; }
 
-const QUIZ = [
-  { q:"I bought ___ book yesterday. (책 한 권 — 처음 언급)", opts:["a","the","(없음)"], ans:0,
-    exp:"처음 언급하는 셀 수 있는 단수 → <b>a</b> book." },
-  { q:"___ book was very interesting. (아까 그 책)", opts:["A","The","(없음)"], ans:1,
-    exp:"서로 아는 특정한 그 책 → <b>The</b> book." },
-  { q:"I drink ___ coffee every morning.", opts:["a","the","(없음)"], ans:2,
-    exp:"coffee는 셀 수 없는 물질, 일반적으로 마심 → 관사 없음. (너가 첫날 맞게 쓴 패턴!)" },
-  { q:"I saw a cat. ___ cat was black.", opts:["A","The","(없음)"], ans:1,
-    exp:"앞에서 나온 바로 그 고양이 → <b>The</b> cat." },
-  { q:"She is ___ student at my school. (학생 한 명)", opts:["a","the","(없음)"], ans:0,
-    exp:"셀 수 있는 단수, 처음 언급 → <b>a</b> student." },
-  { q:"I love ___ music. (음악 일반)", opts:["a","the","(없음)"], ans:2,
-    exp:"music은 셀 수 없는 추상명사, 일반적 → 관사 없음." }
-];
+//==================== 저장소 ====================
+const KEY = "englishCoachV2";
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY))||{}; }catch(e){ return {}; } }
+function save(d){ localStorage.setItem(KEY, JSON.stringify(d)); }
+function db(){ const d=load(); d.scores=d.scores||{}; d.done=d.done||{}; d.startDate=d.startDate||todayStr(); return d; }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function dayDiff(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
 
-const VOCAB = [
-  ["analyze","동사","분석하다","We need to analyze the data carefully."],
-  ["significant","형용사","중요한, 상당한","There was a significant change in temperature."],
-  ["environment","명사","환경","Pollution harms the environment."],
-  ["research","명사/동사","연구(하다)","Her research focuses on coral reefs."],
-  ["approach","명사/동사","접근(법), 다가가다","This approach solves the problem."],
-  ["factor","명사","요인","Cost is an important factor."],
-  ["process","명사/동사","과정, 처리하다","Photosynthesis is a natural process."],
-  ["require","동사","필요로 하다, 요구하다","Plants require sunlight to grow."],
-  ["evidence","명사","증거","There is strong evidence for this theory."],
-  ["concept","명사","개념","The concept is hard to understand."],
-  ["available","형용사","이용 가능한","Clean water is not always available."],
-  ["impact","명사/동사","영향(을 주다)","Climate has a big impact on farming."]
-];
-
-const PROMPTS = [
-  "What do you do on weekends?",
-  "Describe your favorite food and why you like it.",
-  "What is your hometown like?",
-  "Talk about a book or movie you enjoyed.",
-  "Why do you want to improve your English?",
-  "Describe your daily routine."
-];
+// 현재 보고 있는 일차
+let viewDay = 1;
+function currentDay(){
+  const d = db();
+  const n = dayDiff(d.startDate, todayStr())+1;
+  return Math.min(84, Math.max(1, n));
+}
 
 //==================== 네비게이션 ====================
-const SECTIONS = [
-  ["dashboard","대시보드"],["baseline","진단"],["plan","계획"],
-  ["lesson","관사 레슨"],["vocab","어휘"],["practice","실전"],["tracker","성장 추적"]
-];
+const SECTIONS = [["today","오늘"],["dashboard","대시보드"],["baseline","진단"],["curriculum","커리큘럼"],["vocab","어휘"],["tracker","성장 추적"]];
 const nav = document.getElementById("nav");
 SECTIONS.forEach(([id,label],i)=>{
-  const b = document.createElement("button");
-  b.textContent = label; if(i===0) b.classList.add("active");
-  b.onclick = ()=>{
-    document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+  const b=document.createElement("button"); b.textContent=label; if(i===0)b.classList.add("active");
+  b.onclick=()=>{ document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
     document.querySelectorAll("section").forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");
-    document.getElementById(id).classList.add("active");
-    window.scrollTo({top:0,behavior:"smooth"});
-  };
+    b.classList.add("active"); document.getElementById(id).classList.add("active");
+    if(id==="dashboard") renderDashboard();
+    window.scrollTo({top:0,behavior:"smooth"}); };
   nav.appendChild(b);
 });
 
-//==================== 대시보드 ====================
-const baseTotal = AREAS.reduce((s,a)=>s+BASELINE[a],0) * (120/150); // 5영역 합(30점만점)→120 환산 근사
-document.getElementById("dashTotal").textContent = Math.round(AREAS.reduce((s,a)=>s+BASELINE[a],0)*4/5);
-document.getElementById("dashBar").style.width = (Math.round(AREAS.reduce((s,a)=>s+BASELINE[a],0)*4/5)/80*100)+"%";
+//==================== 오늘의 세션 엔진 ====================
+function dayMeta(day){
+  const week = Math.ceil(day/7);
+  const dow = ((day-1)%7)+1;        // 1~7
+  const info = weekInfo(week);
+  let kind="study";
+  if(dow===7){ kind = info.milestone ? "mock" : "test"; }
+  return {day,week,dow,info,kind};
+}
 
-//==================== Baseline 표 ====================
-(function(){
-  const t = document.getElementById("baselineTable");
-  let h = "<tr><th>영역</th><th class='num'>점수(0~30)</th><th>채점 근거</th></tr>";
-  AREAS.forEach(a=>{
-    const [cls,note] = BASELINE_NOTE[a];
-    h += `<tr><td>${a}</td><td class='num'><b>${BASELINE[a]}</b></td><td><span class="tag ${cls}">${note}</span></td></tr>`;
-  });
-  const tot = AREAS.reduce((s,a)=>s+BASELINE[a],0);
-  h += `<tr><td><b>총점 추정</b></td><td class='num'><b>~${Math.round(tot*4/5)}</b></td><td class="note">/120 · 기초 문장은 서지만 학술 영역 진입 전</td></tr>`;
-  t.innerHTML = h;
-})();
+function scaledBlocks(total){
+  const factor = total/180;
+  return BLOCKS.map(([n,m,d])=>[n, Math.max(2,Math.round(m*factor)), d]);
+}
 
-//==================== 루틴 & 로드맵 ====================
-(function(){
-  const r = document.getElementById("routine");
-  ROUTINE.forEach(([n,t,d])=>{
-    r.innerHTML += `<div class="routine-row"><span class="t">${n} · ${t}</span><span>${d}</span></div>`;
-  });
-  const rm = document.getElementById("roadmap");
-  ROADMAP.forEach(([w,d,cur])=>{
-    rm.innerHTML += `<div class="week ${cur?'cur':''}"><b>${w}</b> ${cur?'· <span class="tag good">현재</span>':''}<br>${d}</div>`;
-  });
-})();
+function renderToday(){
+  const day = viewDay;
+  const m = dayMeta(day);
+  const d = db();
+  document.getElementById("dayLabel").textContent = `Day ${day} · ${m.week}주차 ${m.dow}일차`;
 
-//==================== 퀴즈 ====================
-(function(){
-  const box = document.getElementById("quiz");
-  let correct = 0, answered = 0;
-  QUIZ.forEach((item,qi)=>{
-    const wrap = document.createElement("div");
-    wrap.style.marginBottom = "20px";
-    wrap.innerHTML = `<div class="quiz-q">${qi+1}. ${item.q}</div>`;
-    const fb = document.createElement("div"); fb.className="feedback";
+  // 마일스톤 배너
+  const mb = document.getElementById("milestoneBanner");
+  if(m.kind==="mock"){
+    const which = {mock1:"①(4주)",mock2:"②(8주)",mock3:"③(12주)"}[m.info.milestone];
+    mb.innerHTML = `<div class="milestone-banner">🏁 <b>종합 모의고사 ${which}</b> — 실제 시험 형식·시간(약 120분)으로 4영역 풀세트. 끝나면 '성장 추적'에 점수 입력!</div>`;
+  } else if(m.kind==="test"){
+    mb.innerHTML = `<div class="milestone-banner">📝 <b>${m.week}주차 진척 테스트</b> — 미니 TOEFL(약 40분). 끝나면 '성장 추적'에 점수 입력!</div>`;
+  } else mb.innerHTML = "";
+
+  // 목표
+  document.getElementById("dayGoal").innerHTML =
+    `<table>
+      <tr><td class="note" style="width:90px">단계</td><td><span class="tag info">${m.info.phase}</span></td></tr>
+      <tr><td class="note">이번 주 주제</td><td><b>${m.info.theme}</b></td></tr>
+      <tr><td class="note">학술 영역</td><td>${m.info.subject}</td></tr>
+      <tr><td class="note">문법 초점</td><td>${m.info.grammar}</td></tr>
+      <tr><td class="note">오늘 목표</td><td>${m.kind==="study" ? "루틴 6블록 완수 + 어휘 4개 + 퀴즈 + 말하기 1회" : (m.kind==="mock"?"종합 모의고사 응시 & 채점":"주간 진척 테스트 응시 & 채점")}</td></tr>
+    </table>`;
+
+  // 루틴
+  const total = parseInt(document.getElementById("sessionLen").value);
+  const blocks = scaledBlocks(total);
+  const doneBlocks = (d.done[day] && d.done[day].blocks) || [];
+  const rt = document.getElementById("todayRoutine");
+  rt.innerHTML = "";
+  blocks.forEach(([n,mins,desc],bi)=>{
+    let detail = desc;
+    if(bi===3) detail = m.info.integrated; // 통합형은 주차별 내용
+    const row = document.createElement("div"); row.className="routine-row";
+    const checked = doneBlocks.includes(bi)?"checked":"";
+    row.innerHTML = `<input type="checkbox" class="chk" ${checked} data-bi="${bi}">
+      <div class="body"><span class="t">${n}</span> <span class="min">· ${mins}분</span><br>
+      <span class="note">${detail}</span></div>`;
+    row.querySelector("input").onchange = (e)=>{
+      const dd = db(); dd.done[day]=dd.done[day]||{blocks:[]};
+      const arr = new Set(dd.done[day].blocks||[]);
+      if(e.target.checked) arr.add(bi); else arr.delete(bi);
+      dd.done[day].blocks=[...arr]; save(dd); updateRoutineProg();
+    };
+    rt.appendChild(row);
+  });
+  updateRoutineProg();
+
+  // 어휘 (study day는 dow별 2개씩, 그 외 복습 4개)
+  const vw = VW[m.week]||VW[1];
+  const tv = document.getElementById("todayVocab"); tv.innerHTML="";
+  let picks;
+  if(m.kind==="study"){ const s=(m.dow-1)*2; picks=vw.slice(s,s+2).concat(vw.slice(Math.max(0,s-2),s)); }
+  else picks=vw.slice(0,4);
+  picks.forEach(([w,pos,mean,ex])=>{
+    tv.innerHTML += `<div style="padding:7px 0;border-bottom:1px solid var(--line)"><b>${w}</b> <span class="note">(${pos})</span> — ${mean}<br><span class="note">"${ex}"</span></div>`;
+  });
+
+  // 퀴즈
+  renderTodayQuiz(m.info.key);
+
+  // 말하기 프롬프트
+  const PROMPTS={ default:["What do you do on weekends?","Describe your daily routine."],
+    "생물(산호 등)":["Why are coral reefs important?","Describe an animal you find interesting."],
+    "역사":["Talk about an important event in your country's history.","If you could visit any past era, when and why?"],
+    "심리":["What motivates you to study?","How do you handle stress?"],
+    "환경":["What can people do to protect the environment?","Describe an environmental problem in your area."],
+    "예술":["Describe a piece of art or music you like.","Is art important in school? Why?"],
+    "기술":["How has technology changed your daily life?","Describe a useful device you own."],
+    "경제":["Do you prefer saving or spending money? Why?","Describe a product you bought recently."],
+    "천문":["Would you travel to space? Why or why not?","Describe something you find amazing about the universe."],
+    "지질":["Describe a natural place you have visited.","Why do earthquakes happen, in your own words?"],
+    "사회":["Describe a problem in your community.","What makes a good citizen?"],
+    "종합":["Summarize what you learned this week.","Explain your test strategy for TOEFL."] };
+  const arr = PROMPTS[m.info.subject]||PROMPTS.default;
+  document.getElementById("todayPrompt").textContent = arr[(day)%arr.length];
+  document.getElementById("todaySpeak").value = (d.done[day] && d.done[day].speak) || "";
+  document.getElementById("todaySpeak").oninput = (e)=>{ const dd=db(); dd.done[day]=dd.done[day]||{blocks:[]}; dd.done[day].speak=e.target.value; save(dd); };
+}
+
+function updateRoutineProg(){
+  const d=db(); const day=viewDay; const total=6;
+  const done=(d.done[day]&&d.done[day].blocks||[]).length;
+  document.getElementById("routineProg").textContent = `(${done}/${total} 완료)`;
+}
+
+function renderTodayQuiz(key){
+  const bank = QUIZ_BANK[key]||QUIZ_BANK.articles;
+  // 3문항 랜덤
+  const items = [...bank].sort(()=>Math.random()-0.5).slice(0,3);
+  const box = document.getElementById("todayQuiz"); box.innerHTML="";
+  let correct=0, answered=0;
+  items.forEach((item,qi)=>{
+    const wrap=document.createElement("div"); wrap.style.marginBottom="16px";
+    wrap.innerHTML=`<div class="quiz-q">${qi+1}. ${item.q}</div>`;
+    const fb=document.createElement("div"); fb.className="feedback";
     item.opts.forEach((o,oi)=>{
-      const btn = document.createElement("button");
-      btn.className = "opt"; btn.textContent = o;
-      btn.onclick = ()=>{
-        if(wrap.dataset.done) return;
-        wrap.dataset.done = "1"; answered++;
-        const ok = oi===item.ans;
-        if(ok){ btn.classList.add("correct"); correct++; fb.className="feedback show ok"; fb.innerHTML="✅ 정답! "+item.exp; }
-        else {
-          btn.classList.add("wrong");
-          wrap.querySelectorAll(".opt")[item.ans].classList.add("correct");
-          fb.className="feedback show no"; fb.innerHTML="❌ 다시 봐. "+item.exp;
-        }
-        document.getElementById("quizScore").textContent = `점수: ${correct} / ${answered} 정답`;
+      const btn=document.createElement("button"); btn.className="opt"; btn.textContent=o;
+      btn.onclick=()=>{ if(wrap.dataset.done)return; wrap.dataset.done="1"; answered++;
+        if(oi===item.ans){btn.classList.add("correct");correct++;fb.className="feedback show ok";fb.innerHTML="✅ 정답! "+item.exp;}
+        else{btn.classList.add("wrong");wrap.querySelectorAll(".opt")[item.ans].classList.add("correct");fb.className="feedback show no";fb.innerHTML="❌ "+item.exp;}
+        document.getElementById("todayQuizScore").textContent=`점수: ${correct}/${answered}`;
       };
       wrap.appendChild(btn);
     });
-    wrap.appendChild(fb);
-    box.appendChild(wrap);
+    wrap.appendChild(fb); box.appendChild(wrap);
   });
-})();
-
-//==================== 어휘 카드 ====================
-(function(){
-  const g = document.getElementById("vocabGrid");
-  VOCAB.forEach(([w,pos,mean,ex])=>{
-    const c = document.createElement("div");
-    c.className = "flash card"; c.style.padding="0";
-    c.innerHTML = `<div class="flash-inner">
-      <div class="flash-face flash-front"><div class="w">${w}</div><div class="pos">${pos}</div></div>
-      <div class="flash-face flash-back"><div class="mean">${mean}</div><div class="ex">"${ex}"</div></div>
-    </div>`;
-    c.onclick = ()=> c.classList.toggle("flipped");
-    g.appendChild(c);
-  });
-})();
-
-//==================== 실전 ====================
-(function(){
-  const p = document.getElementById("speakPrompt");
-  function rnd(){ p.textContent = PROMPTS[Math.floor(Math.random()*PROMPTS.length)]; }
-  rnd();
-  document.getElementById("newPrompt").onclick = rnd;
-})();
-
-//==================== 성장 추적 (localStorage) ====================
-const STORE_KEY = "englishCoachScores";
-function loadScores(){ try { return JSON.parse(localStorage.getItem(STORE_KEY))||{}; } catch(e){ return {}; } }
-function saveScores(s){ localStorage.setItem(STORE_KEY, JSON.stringify(s)); }
-
-const weekSel = document.getElementById("weekSel");
-for(let w=1; w<=12; w++){ weekSel.innerHTML += `<option value="${w}">${w}주차</option>`; }
-
-function renderInputTable(){
-  const scores = loadScores();
-  const w = weekSel.value;
-  const cur = scores[w] || {};
-  let h = "<tr><th>영역</th><th class='num'>이번 주 점수(0~30)</th></tr>";
-  AREAS.forEach(a=>{
-    const v = (cur[a]!=null)? cur[a] : "";
-    h += `<tr><td>${a}</td><td class='num'><input type="number" min="0" max="30" class="tracker-input" data-area="${a}" value="${v}"></td></tr>`;
-  });
-  document.getElementById("trackerInputTable").innerHTML = h;
+  document.getElementById("todayQuizScore").textContent="";
 }
-weekSel.onchange = renderInputTable;
-renderInputTable();
 
-document.getElementById("saveWeek").onclick = ()=>{
-  const scores = loadScores();
-  const w = weekSel.value;
-  const obj = {};
-  document.querySelectorAll("#trackerInputTable input").forEach(inp=>{
-    if(inp.value!=="") obj[inp.dataset.area] = Math.max(0,Math.min(30,parseInt(inp.value)));
-  });
-  scores[w] = obj; saveScores(scores);
-  const f = document.getElementById("savedFlash"); f.classList.add("show");
-  setTimeout(()=>f.classList.remove("show"),1500);
-  renderReport();
+document.getElementById("prevDay").onclick=()=>{ viewDay=Math.max(1,viewDay-1); renderToday(); };
+document.getElementById("nextDay").onclick=()=>{ viewDay=Math.min(84,viewDay+1); renderToday(); };
+document.getElementById("goToday").onclick=()=>{ viewDay=currentDay(); renderToday(); };
+document.getElementById("sessionLen").onchange=renderToday;
+document.getElementById("completeDay").onclick=()=>{
+  const d=db(); const day=viewDay; d.done[day]=d.done[day]||{blocks:[]};
+  d.done[day].completed=true; save(d);
+  const f=document.getElementById("completeFlash"); f.classList.add("show"); setTimeout(()=>f.classList.remove("show"),1500);
+  renderDashboard();
 };
 
-document.getElementById("resetAll").onclick = ()=>{
-  if(confirm("모든 주간 점수를 지울까요? (Baseline은 유지)")){
-    localStorage.removeItem(STORE_KEY); renderInputTable(); renderReport();
+//==================== 대시보드 ====================
+function computeStreak(){
+  const d=db(); let s=0;
+  for(let day=currentDay(); day>=1; day--){ if(d.done[day]&&d.done[day].completed) s++; else if(day<currentDay()) break; }
+  return s;
+}
+function renderDashboard(){
+  const d=db(); const cd=currentDay();
+  document.getElementById("statDay").textContent=cd;
+  const doneCount=Object.values(d.done).filter(x=>x.completed).length;
+  document.getElementById("statDone").textContent=doneCount;
+  document.getElementById("statStreak").textContent=computeStreak();
+  // 점수: 최근 입력 주차 or baseline
+  const weeks=Object.keys(d.scores).map(Number).filter(n=>d.scores[n]&&Object.keys(d.scores[n].vals||{}).length).sort((a,b)=>a-b);
+  let total=to120(AREAS.reduce((s,a)=>s+BASELINE[a],0));
+  if(weeks.length){ const lat=d.scores[weeks[weeks.length-1]].vals; total=to120(AREAS.reduce((s,a)=>s+(lat[a]||0),0)); }
+  document.getElementById("dashTotal").textContent=total;
+  document.getElementById("dashBar").style.width=Math.min(100,total/80*100)+"%";
+  // 캘린더
+  const cal=document.getElementById("calendar"); cal.innerHTML="";
+  for(let day=1; day<=84; day++){
+    const m=dayMeta(day); const cell=document.createElement("div"); cell.className="cal-cell";
+    cell.textContent=day;
+    if(d.done[day]&&d.done[day].completed) cell.classList.add("done");
+    if(m.kind==="test") cell.classList.add("test");
+    if(m.kind==="mock") cell.classList.add("mock");
+    if(day===cd) cell.classList.add("today");
+    cell.title=`Day ${day} · ${m.week}주차`;
+    cell.onclick=()=>{ viewDay=day; document.querySelector("nav button").click(); renderToday(); };
+    cal.appendChild(cell);
   }
+  document.getElementById("startDate").value=d.startDate;
+}
+document.getElementById("saveStart").onclick=()=>{
+  const d=db(); d.startDate=document.getElementById("startDate").value||todayStr(); save(d);
+  viewDay=currentDay(); renderToday(); renderDashboard();
+};
+
+//==================== Baseline ====================
+(function(){
+  const t=document.getElementById("baselineTable");
+  let h="<tr><th>영역</th><th class='num'>점수(0~30)</th><th>채점 근거</th></tr>";
+  AREAS.forEach(a=>{ const[cls,note]=BASELINE_NOTE[a];
+    h+=`<tr><td>${a}</td><td class='num'><b>${BASELINE[a]}</b></td><td><span class="tag ${cls}">${note}</span></td></tr>`; });
+  h+=`<tr><td><b>총점 추정</b></td><td class='num'><b>~${to120(AREAS.reduce((s,a)=>s+BASELINE[a],0))}</b></td><td class="note">/120 · 기초 문장은 서지만 학술 영역 진입 전</td></tr>`;
+  t.innerHTML=h;
+})();
+
+//==================== 커리큘럼 ====================
+(function(){
+  const c=document.getElementById("curriculumList");
+  let phase="";
+  WEEKS.forEach(wk=>{
+    if(wk.phase!==phase){ phase=wk.phase; c.innerHTML+=`<h3 style="color:var(--accent2);margin:16px 0 8px">${phase}</h3>`; }
+    const badge = wk.milestone?`<span class="tag bad">종합 모의 ${ {mock1:"①",mock2:"②",mock3:"③"}[wk.milestone] }</span>`:`<span class="tag warn">7일차 진척 테스트</span>`;
+    c.innerHTML+=`<details><summary>${wk.w}주차 · ${wk.theme} ${badge}</summary>
+      <div style="margin-top:8px"><ul class="clean">
+        <li><b>학술 영역:</b> ${wk.subject}</li>
+        <li><b>문법 초점:</b> ${wk.grammar}</li>
+        <li><b>통합형 과제:</b> ${wk.integrated}</li>
+        <li><b>어휘:</b> ${(VW[wk.w]||[]).map(v=>v[0]).join(", ")}</li>
+      </ul></div></details>`;
+  });
+})();
+
+//==================== 어휘 탭 ====================
+(function(){
+  const sel=document.getElementById("vocabWeek");
+  for(let w=1;w<=12;w++) sel.innerHTML+=`<option value="${w}">${w}주차 · ${weekInfo(w).subject}</option>`;
+  function render(){
+    const w=+sel.value; const g=document.getElementById("vocabGrid"); g.innerHTML="";
+    (VW[w]||[]).forEach(([word,pos,mean,ex])=>{
+      const c=document.createElement("div"); c.className="flash card"; c.style.padding="0";
+      c.innerHTML=`<div class="flash-inner">
+        <div class="flash-face flash-front"><div class="w">${word}</div><div class="pos">${pos}</div></div>
+        <div class="flash-face flash-back"><div class="mean">${mean}</div><div class="ex">"${ex}"</div></div></div>`;
+      c.onclick=()=>c.classList.toggle("flipped"); g.appendChild(c);
+    });
+  }
+  sel.onchange=render; render();
+})();
+
+//==================== 성장 추적 ====================
+const weekSel=document.getElementById("weekSel");
+for(let w=1;w<=12;w++){ const info=weekInfo(w);
+  const label = info.milestone?`${w}주차 (종합 모의 ${ {mock1:"①",mock2:"②",mock3:"③"}[info.milestone] })`:`${w}주차`;
+  weekSel.innerHTML+=`<option value="${w}">${label}</option>`; }
+
+function renderInputTable(){
+  const d=db(); const w=weekSel.value; const cur=(d.scores[w]&&d.scores[w].vals)||{};
+  document.getElementById("weekMemo").value=(d.scores[w]&&d.scores[w].memo)||"";
+  const info=weekInfo(+w);
+  document.getElementById("weekKind").textContent= info.milestone?"종합 모의고사":"주간 진척 테스트";
+  let h="<tr><th>영역</th><th class='num'>점수(0~30)</th></tr>";
+  AREAS.forEach(a=>{ const v=(cur[a]!=null)?cur[a]:"";
+    h+=`<tr><td>${a}</td><td class='num'><input type="number" min="0" max="30" class="tracker-input" data-area="${a}" value="${v}"></td></tr>`; });
+  document.getElementById("trackerInputTable").innerHTML=h;
+}
+weekSel.onchange=renderInputTable;
+
+document.getElementById("saveWeek").onclick=()=>{
+  const d=db(); const w=weekSel.value; const vals={};
+  document.querySelectorAll("#trackerInputTable input").forEach(inp=>{ if(inp.value!=="") vals[inp.dataset.area]=Math.max(0,Math.min(30,parseInt(inp.value))); });
+  d.scores[w]={vals,memo:document.getElementById("weekMemo").value}; save(d);
+  const f=document.getElementById("savedFlash"); f.classList.add("show"); setTimeout(()=>f.classList.remove("show"),1500);
+  renderReport();
+};
+document.getElementById("resetAll").onclick=()=>{
+  if(confirm("주간 점수와 완료 기록을 모두 지울까요? (시작일은 유지)")){ const d=db(); d.scores={}; d.done={}; save(d); renderInputTable(); renderReport(); renderDashboard(); }
 };
 
 function renderReport(){
-  const scores = loadScores();
-  const weeks = Object.keys(scores).map(Number).filter(n=>Object.keys(scores[n]).length).sort((a,b)=>a-b);
-  const t = document.getElementById("reportTable");
-  if(weeks.length===0){
-    t.innerHTML = "<tr><td class='note'>아직 입력된 주차가 없어요. 위에서 점수를 저장해 보세요.</td></tr>";
-    document.getElementById("reportComment").textContent = "";
-    return;
-  }
-  const latest = weeks[weeks.length-1];
-  const prev = weeks.length>1 ? weeks[weeks.length-2] : null;
-  let h = `<tr><th>영역</th><th class='num'>Baseline</th>`;
-  if(prev) h += `<th class='num'>${prev}주차</th>`;
-  h += `<th class='num'>${latest}주차</th><th class='num'>증감</th></tr>`;
-  let baseSum=0, latSum=0;
-  AREAS.forEach(a=>{
-    const base = BASELINE[a];
-    const lat = scores[latest][a]!=null? scores[latest][a] : "-";
-    const pv = prev && scores[prev][a]!=null ? scores[prev][a] : null;
-    baseSum += base; if(lat!=="-") latSum += lat;
-    const cmp = (lat!=="-") ? lat - base : 0;
-    const arrow = cmp>0?`<span class="delta-up">▲${cmp}</span>`: cmp<0?`<span class="delta-down">▼${-cmp}</span>`:`<span class="delta-flat">―</span>`;
-    h += `<tr><td>${a}</td><td class='num'>${base}</td>`;
-    if(prev) h += `<td class='num'>${pv!=null?pv:"-"}</td>`;
-    h += `<td class='num'><b>${lat}</b></td><td class='num'>${lat!=="-"?arrow:"-"}</td></tr>`;
-  });
-  const baseTot = Math.round(baseSum*4/5), latTot = Math.round(latSum*4/5);
-  const totCmp = latTot-baseTot;
-  const totArrow = totCmp>0?`<span class="delta-up">▲${totCmp}</span>`:totCmp<0?`<span class="delta-down">▼${-totCmp}</span>`:`―`;
-  h += `<tr><td><b>총점 추정</b></td><td class='num'>${baseTot}</td>`;
-  if(prev) h += `<td class='num'>-</td>`;
-  h += `<td class='num'><b>${latTot}</b></td><td class='num'>${totArrow}</td></tr>`;
-  t.innerHTML = h;
-
-  // 코멘트: 최대 약점 찾기
-  let weak=null, weakGap=999;
-  AREAS.forEach(a=>{ if(scores[latest][a]!=null){ const gap = scores[latest][a]; if(gap<weakGap){weakGap=gap;weak=a;} } });
-  const toGoal = 80 - latTot;
-  document.getElementById("reportComment").innerHTML =
-    `이번 주 최대 약점: <b>${weak||"-"}</b> · 목표 80까지 <b>${toGoal>0?toGoal+"점":"달성! 🎉"}</b> 남음. ` +
-    `다음 주는 ${weak||"약점 영역"} 집중 + 통합형 비중을 높여보자.`;
+  const d=db(); const weeks=Object.keys(d.scores).map(Number).filter(n=>d.scores[n]&&Object.keys(d.scores[n].vals||{}).length).sort((a,b)=>a-b);
+  const t=document.getElementById("reportTable");
+  if(!weeks.length){ t.innerHTML="<tr><td class='note'>아직 입력된 주차가 없어요. 위에서 점수를 저장해 보세요.</td></tr>"; document.getElementById("reportComment").textContent=""; return; }
+  const latest=weeks[weeks.length-1], prev=weeks.length>1?weeks[weeks.length-2]:null;
+  let h=`<tr><th>영역</th><th class='num'>Baseline</th>`; if(prev)h+=`<th class='num'>${prev}주</th>`; h+=`<th class='num'>${latest}주</th><th class='num'>증감</th></tr>`;
+  let baseSum=0,latSum=0;
+  AREAS.forEach(a=>{ const base=BASELINE[a]; const lat=d.scores[latest].vals[a]!=null?d.scores[latest].vals[a]:"-";
+    const pv=prev&&d.scores[prev].vals[a]!=null?d.scores[prev].vals[a]:null;
+    baseSum+=base; if(lat!=="-")latSum+=lat;
+    const cmp=lat!=="-"?lat-base:0;
+    const arrow=cmp>0?`<span class="delta-up">▲${cmp}</span>`:cmp<0?`<span class="delta-down">▼${-cmp}</span>`:`<span class="delta-flat">―</span>`;
+    h+=`<tr><td>${a}</td><td class='num'>${base}</td>`; if(prev)h+=`<td class='num'>${pv!=null?pv:"-"}</td>`;
+    h+=`<td class='num'><b>${lat}</b></td><td class='num'>${lat!=="-"?arrow:"-"}</td></tr>`; });
+  const baseTot=to120(baseSum),latTot=to120(latSum),totCmp=latTot-baseTot;
+  const totArrow=totCmp>0?`<span class="delta-up">▲${totCmp}</span>`:totCmp<0?`<span class="delta-down">▼${-totCmp}</span>`:`―`;
+  h+=`<tr><td><b>총점 추정</b></td><td class='num'>${baseTot}</td>`; if(prev)h+=`<td class='num'>-</td>`; h+=`<td class='num'><b>${latTot}</b></td><td class='num'>${totArrow}</td></tr>`;
+  t.innerHTML=h;
+  let weak=null,wg=999; AREAS.forEach(a=>{ if(d.scores[latest].vals[a]!=null&&d.scores[latest].vals[a]<wg){wg=d.scores[latest].vals[a];weak=a;} });
+  const toGoal=80-latTot;
+  document.getElementById("reportComment").innerHTML=`이번 주 최대 약점: <b>${weak||"-"}</b> · 목표 80까지 <b>${toGoal>0?toGoal+"점":"달성! 🎉"}</b>. 다음 주는 ${weak||"약점"} 집중 + 통합형 비중↑.`;
 }
+
+//==================== 초기화 ====================
+viewDay=currentDay();
+renderInputTable();
 renderReport();
+renderToday();
+renderDashboard();
 </script>
 </body>
 </html>
