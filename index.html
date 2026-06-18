@@ -182,6 +182,30 @@
     </div>
   </section>
 
+  <!-- COACH -->
+  <section id="coach">
+    <h2>🧭 코치 모드 (단계별 학습)</h2>
+    <p class="sub">오늘의 루틴을 한 단계씩 안내합니다. 각 단계를 끝내면 '다음 단계'를 누르세요.</p>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <b id="coachStepLabel"></b>
+        <span style="flex:1"></span>
+        <span id="coachTimerWrap" style="display:none">
+          <span id="coachTimer" style="font-variant-numeric:tabular-nums;font-weight:700;color:var(--accent2)">00:00</span>
+          <button class="btn ghost sm" id="coachTimerBtn">▶ 시작</button>
+        </span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="coachProgress"></div></div>
+      <h3 id="coachTitle" style="margin-top:14px"></h3>
+      <div id="coachBody"></div>
+      <div style="display:flex;gap:10px;margin-top:18px;align-items:center">
+        <button class="btn ghost" id="coachPrev">◀ 이전</button>
+        <span style="flex:1"></span>
+        <button class="btn" id="coachNext">다음 단계 ▶</button>
+      </div>
+    </div>
+  </section>
+
   <!-- DASHBOARD -->
   <section id="dashboard">
     <h2>대시보드</h2>
@@ -391,14 +415,16 @@ function currentDay(){
 }
 
 //==================== 네비게이션 ====================
-const SECTIONS = [["today","오늘"],["dashboard","대시보드"],["baseline","진단"],["curriculum","커리큘럼"],["vocab","어휘"],["tracker","성장 추적"]];
+const SECTIONS = [["today","오늘"],["coach","코치 모드"],["dashboard","대시보드"],["baseline","진단"],["curriculum","커리큘럼"],["vocab","어휘"],["tracker","성장 추적"]];
 const nav = document.getElementById("nav");
 SECTIONS.forEach(([id,label],i)=>{
   const b=document.createElement("button"); b.textContent=label; if(i===0)b.classList.add("active");
   b.onclick=()=>{ document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
     document.querySelectorAll("section").forEach(x=>x.classList.remove("active"));
     b.classList.add("active"); document.getElementById(id).classList.add("active");
+    if(typeof coachTimer!=="undefined" && coachTimer){ clearInterval(coachTimer); coachTimer=null; }
     if(id==="dashboard") renderDashboard();
+    if(id==="coach") startCoach();
     window.scrollTo({top:0,behavior:"smooth"}); };
   nav.appendChild(b);
 });
@@ -673,6 +699,182 @@ function renderReport(){
   const toGoal=80-latTot;
   document.getElementById("reportComment").innerHTML=`이번 주 최대 약점: <b>${weak||"-"}</b> · 목표 80까지 <b>${toGoal>0?toGoal+"점":"달성! 🎉"}</b>. 다음 주는 ${weak||"약점"} 집중 + 통합형 비중↑.`;
 }
+
+//==================== 코치 모드 (단계별) ====================
+let coachSteps=[], coachIdx=0, coachTimer=null, coachRemain=0;
+
+const WRAP=[
+ ["make sense (말이 되다)","a piece of cake (식은 죽 먹기)","I'm getting the hang of it. (감 잡고 있어.)"],
+ ["look forward to (~을 기대하다)","hit the books (열심히 공부하다)","Let me think about it. (생각 좀 해볼게.)"],
+ ["come up with (생각해내다)","break the ice (어색함을 깨다)","That makes a lot of sense. (정말 일리 있어.)"],
+ ["keep in mind (명심하다)","once in a blue moon (아주 가끔)","I couldn't agree more. (전적으로 동의해.)"],
+ ["figure out (알아내다)","piece of advice (조언 한 마디)","To be honest, ... (솔직히 말하면, ...)"],
+ ["take part in (참여하다)","under the weather (몸이 안 좋은)","It depends on the situation. (상황에 따라 달라.)"],
+ ["point out (지적하다)","on the same page (같은 생각인)","That's exactly what I mean. (내 말이 바로 그거야.)"]
+];
+
+function coachPromptsFor(subject){
+  const M={ "생물(산호 등)":["Why are coral reefs important?","Describe an animal you find interesting."],
+    "역사":["Talk about an important event in your country's history.","If you could visit any past era, when and why?"],
+    "심리":["What motivates you to study?","How do you handle stress?"],
+    "환경":["What can people do to protect the environment?","Describe an environmental problem in your area."],
+    "예술":["Describe a piece of art or music you like.","Is art important in school? Why?"],
+    "기술":["How has technology changed your daily life?","Describe a useful device you own."],
+    "경제":["Do you prefer saving or spending money? Why?","Describe a product you bought recently."],
+    "천문":["Would you travel to space? Why or why not?","Describe something amazing about the universe."],
+    "지질":["Describe a natural place you have visited.","Why do earthquakes happen, in your own words?"],
+    "사회":["Describe a problem in your community.","What makes a good citizen?"],
+    "종합":["Summarize what you learned this week.","Explain your test strategy for TOEFL."] };
+  return M[subject]||["What do you do on weekends?","Describe your daily routine."];
+}
+
+function buildCoachSteps(day){
+  const m=dayMeta(day);
+  const total=parseInt(document.getElementById("sessionLen").value);
+  const blocks=scaledBlocks(total);
+  const vw=VW[m.week]||VW[1];
+  let picks;
+  if(m.kind==="study"){ const s=(m.dow-1)*2; picks=vw.slice(s,s+2).concat(vw.slice(Math.max(0,s-2),s)); }
+  else picks=vw.slice(0,4);
+  if(!picks.length) picks=vw.slice(0,4);
+
+  const steps=[{title:"시작 — 오늘의 목표",min:0,type:"intro",data:m}];
+  if(m.kind!=="study"){
+    steps.push({title:(m.kind==="mock"?"종합 모의고사":"주간 진척 테스트"),min:total,type:"test",data:m});
+  } else {
+    steps.push({title:"워밍업",min:blocks[0][1],type:"warmup",data:m});
+    steps.push({title:"본 공부 · 학술 어휘",min:blocks[1][1],type:"vocab",data:picks});
+    steps.push({title:"실전 · 문법 퀴즈",min:Math.max(2,Math.round(blocks[2][1]/2)),type:"quiz",data:m.info.key});
+    steps.push({title:"실전 · 말하기",min:Math.max(2,Math.round(blocks[2][1]/2)),type:"speak",data:m});
+    steps.push({title:"통합형 훈련",min:blocks[3][1],type:"write",data:m});
+    steps.push({title:"복습 · 백지 회상",min:blocks[4][1],type:"recall",data:picks});
+    steps.push({title:"마무리",min:blocks[5][1],type:"wrap",data:m});
+  }
+  steps.push({title:"완료!",min:0,type:"done",data:m});
+  return steps;
+}
+
+function startCoach(){ if(!viewDay) viewDay=currentDay(); coachSteps=buildCoachSteps(viewDay); coachIdx=0; renderCoachStep(); }
+
+function setCoachTimer(min){ clearInterval(coachTimer); coachTimer=null; coachRemain=min*60; updateTimerDisplay(); document.getElementById("coachTimerBtn").textContent="▶ 시작"; }
+function updateTimerDisplay(){ const el=document.getElementById("coachTimer"); if(!el) return;
+  el.textContent=String(Math.floor(coachRemain/60)).padStart(2,"0")+":"+String(coachRemain%60).padStart(2,"0"); }
+function toggleTimer(){
+  const btn=document.getElementById("coachTimerBtn");
+  if(coachTimer){ clearInterval(coachTimer); coachTimer=null; btn.textContent="▶ 시작"; return; }
+  btn.textContent="⏸ 일시정지";
+  coachTimer=setInterval(()=>{ if(coachRemain>0){ coachRemain--; updateTimerDisplay(); }
+    else { clearInterval(coachTimer); coachTimer=null; btn.textContent="▶ 시작"; el_alert(); } },1000);
+}
+function el_alert(){ const t=document.getElementById("coachTitle"); if(t) t.insertAdjacentHTML("beforeend",' <span class="tag good">시간 종료 ✓</span>'); }
+
+function renderCoachStep(){
+  clearInterval(coachTimer); coachTimer=null;
+  const step=coachSteps[coachIdx], N=coachSteps.length;
+  document.getElementById("coachProgress").style.width=(coachIdx/(N-1)*100)+"%";
+  document.getElementById("coachStepLabel").textContent=`단계 ${coachIdx+1} / ${N}`;
+  document.getElementById("coachTitle").textContent=step.title;
+  const tw=document.getElementById("coachTimerWrap");
+  if(step.min>0){ tw.style.display=""; setCoachTimer(step.min); } else tw.style.display="none";
+  const c=document.getElementById("coachBody"); c.innerHTML="";
+  renderCoachBody(step,c);
+  document.getElementById("coachPrev").disabled=coachIdx===0;
+  document.getElementById("coachNext").style.display=coachIdx===N-1?"none":"";
+}
+
+function renderCoachBody(step,c){
+  const m=step.data;
+  switch(step.type){
+    case "intro":
+      c.innerHTML=`<p>안녕! 오늘은 <b>Day ${m.day} · ${m.week}주차 ${m.dow}일차</b>야. 같이 한 단계씩 가보자. 💪</p>
+        <table style="margin-top:10px">
+          <tr><td class="note" style="width:90px">주제</td><td><b>${m.info.theme}</b></td></tr>
+          <tr><td class="note">학술 영역</td><td>${m.info.subject}</td></tr>
+          <tr><td class="note">문법 초점</td><td>${m.info.grammar}</td></tr>
+        </table>
+        <p class="note" style="margin-top:12px">준비됐으면 '다음 단계 ▶'를 눌러!</p>`;
+      break;
+    case "warmup":
+      c.innerHTML=`<p>먼저 몸을 풀자. 어제 배운 표현이나 단어를 떠올려 <b>영어 문장 1~2개</b>를 만들어봐.</p>
+        <textarea id="coachWarm" placeholder="예: I learned 'analyze'. I can analyze the data."></textarea>
+        <div class="note" style="margin-top:8px"><b>구조 점검:</b> 주어 + 동사 + 목적어가 다 있는지 확인!</div>`;
+      break;
+    case "vocab":{
+      let h=`<p>오늘의 학술 어휘야. 카드를 눌러 뜻을 확인하고, 각 단어로 <b>내 문장</b>을 머릿속으로 만들어봐.</p><div class="grid2" style="margin-top:10px">`;
+      m.forEach(([w,pos,mean,ex])=>{ h+=`<div class="flash card cflash" style="padding:0">
+        <div class="flash-inner"><div class="flash-face flash-front"><div class="w">${w}</div><div class="pos">${pos}</div></div>
+        <div class="flash-face flash-back"><div class="mean">${mean}</div><div class="ex">"${ex}"</div></div></div></div>`; });
+      h+=`</div>`; c.innerHTML=h;
+      c.querySelectorAll(".cflash").forEach(el=>el.onclick=()=>el.classList.toggle("flipped"));
+      break; }
+    case "quiz":{
+      const bank=QUIZ_BANK[m]||QUIZ_BANK.articles;
+      const items=[...bank].sort(()=>Math.random()-0.5).slice(0,3);
+      c.innerHTML=`<p>배운 문법을 확인해보자. 답을 고르면 바로 피드백을 줄게.</p><div id="cquiz"></div><div id="cquizScore" class="note" style="margin-top:10px"></div>`;
+      const box=c.querySelector("#cquiz"); let correct=0,ans=0;
+      items.forEach((item,qi)=>{ const wrap=document.createElement("div"); wrap.style.margin="14px 0";
+        wrap.innerHTML=`<div class="quiz-q">${qi+1}. ${item.q}</div>`;
+        const fb=document.createElement("div"); fb.className="feedback";
+        item.opts.forEach((o,oi)=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=o;
+          b.onclick=()=>{ if(wrap.dataset.d) return; wrap.dataset.d="1"; ans++;
+            if(oi===item.ans){ b.classList.add("correct"); correct++; fb.className="feedback show ok"; fb.innerHTML="✅ 정답! "+item.exp; }
+            else { b.classList.add("wrong"); wrap.querySelectorAll(".opt")[item.ans].classList.add("correct"); fb.className="feedback show no"; fb.innerHTML="❌ "+item.exp; }
+            c.querySelector("#cquizScore").textContent=`점수: ${correct}/${ans}`; };
+          wrap.appendChild(b); });
+        wrap.appendChild(fb); box.appendChild(wrap); });
+      break; }
+    case "speak":{
+      const arr=coachPromptsFor(m.info.subject); const p=arr[m.day%arr.length];
+      c.innerHTML=`<p>이제 입을 풀자. 아래 질문에 <b>영어로 30초</b> 말하듯 답을 적어봐.</p>
+        <p class="quiz-q" style="margin-top:10px">🗣️ ${p}</p>
+        <textarea id="coachSpeak" placeholder="I think..."></textarea>
+        <div class="note" style="margin-top:8px"><b>코치 팁:</b> 시작 표현 → "I think...", "In my opinion...", "For example...". 자가점검: 관사·시제·주어동사!</div>`;
+      break; }
+    case "write":
+      c.innerHTML=`<p>통합형 훈련이야. 오늘 과제: <b>${m.info.integrated}</b></p>
+        <p class="note" style="margin-top:6px">${m.week}주차 주제(${m.info.subject})에 맞춰, 오늘 배운 단어 1~2개를 넣어 <b>3문장</b>으로 써봐.</p>
+        <textarea id="coachWrite" placeholder="여기에 영어로..."></textarea>`;
+      break;
+    case "recall":
+      c.innerHTML=`<p>복습! 화면을 덮는다 생각하고, 오늘 배운 <b>단어와 문장을 기억나는 대로</b> 영어로 적어봐.</p>
+        <textarea id="coachRecall" placeholder="기억나는 단어/문장..."></textarea>
+        <details style="margin-top:10px"><summary>다 적었으면 정답 확인</summary>
+          <p class="note" style="margin-top:8px">${m.map(p=>"<b>"+p[0]+"</b> — "+p[2]).join("<br>")}</p></details>`;
+      break;
+    case "wrap":{
+      const set=WRAP[m.day%WRAP.length];
+      c.innerHTML=`<p>오늘의 마무리 — 원어민식 표현 3종 세트야. 소리 내어 읽어봐!</p>
+        <ul class="clean" style="margin-top:10px">
+          <li><b>표현:</b> ${set[0]}</li>
+          <li><b>숙어:</b> ${set[1]}</li>
+          <li><b>원어민 문장:</b> ${set[2]}</li>
+        </ul>
+        <p class="note" style="margin-top:12px">오늘 체감 한마디(선택):</p>
+        <textarea id="coachMemo" placeholder="오늘 어땠어? 어려웠던 점은?"></textarea>`;
+      break; }
+    case "test":
+      c.innerHTML=`<p>오늘은 <b>${step.title}</b> 날이야. 타이머를 켜고 실제 시험처럼 집중해서 풀어봐.</p>
+        <ul class="clean" style="margin-top:10px">
+          <li>4영역(R·L·S·W)을 같은 채점 기준으로</li>
+          <li>끝나면 '성장 추적' 탭에 점수를 입력 → Baseline 대비 증감 확인</li>
+        </ul>
+        <p class="note" style="margin-top:10px">실제 문제 세트가 필요하면 코치에게 "${m.week}주차 테스트 문제 줘"라고 말해줘.</p>`;
+      break;
+    case "done":{
+      c.innerHTML=`<p style="font-size:1.1rem">🎉 <b>Day ${m.day} 완주!</b> 정말 잘했어.</p>
+        <p style="margin-top:8px">아래 버튼으로 오늘을 완료 처리하면 연속 학습(streak)에 기록돼.</p>
+        <button class="btn" id="coachComplete" style="margin-top:12px">✅ 오늘 완료 처리</button>
+        <span class="saved-flash" id="coachDoneFlash">완료! 🔥</span>
+        <p class="note" style="margin-top:14px">${m.dow===7?"오늘은 테스트 날! '성장 추적' 탭에서 점수를 입력해줘.":"내일 또 같은 시간에 만나자. 꾸준함이 80점을 만든다. 💪"}</p>`;
+      c.querySelector("#coachComplete").onclick=()=>{ const d=db(); d.done[m.day]=d.done[m.day]||{blocks:[]}; d.done[m.day].completed=true; save(d);
+        const f=c.querySelector("#coachDoneFlash"); f.classList.add("show"); setTimeout(()=>f.classList.remove("show"),1500); renderDashboard(); };
+      break; }
+  }
+}
+
+document.getElementById("coachPrev").onclick=()=>{ if(coachIdx>0){ coachIdx--; renderCoachStep(); } };
+document.getElementById("coachNext").onclick=()=>{ if(coachSteps.length && coachIdx<coachSteps.length-1){ coachIdx++; renderCoachStep(); } };
+document.getElementById("coachTimerBtn").onclick=toggleTimer;
 
 //==================== 초기화 ====================
 viewDay=currentDay();
