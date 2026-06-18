@@ -191,6 +191,7 @@
     <div class="card">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
         <b id="coachStepLabel"></b>
+        <label class="note" style="display:flex;align-items:center;gap:5px;margin-left:10px"><input type="checkbox" id="coachIntense" style="transform:scale(1.2);accent-color:var(--accent2)">⚡ 집중 모드</label>
         <span style="flex:1"></span>
         <span id="coachTimerWrap" style="display:none">
           <span id="coachTimer" style="font-variant-numeric:tabular-nums;font-weight:700;color:var(--accent2)">00:00</span>
@@ -738,6 +739,7 @@ function renderReport(){
 
 //==================== 코치 모드 (단계별) ====================
 let coachSteps=[], coachIdx=0, coachTimer=null, coachRemain=0;
+let coachSession={reps:0,correct:0,attempts:0,streak:0,mastered:0};
 
 const WRAP=[
  ["make sense (말이 되다)","a piece of cake (식은 죽 먹기)","I'm getting the hang of it. (감 잡고 있어.)"],
@@ -790,7 +792,59 @@ function buildCoachSteps(day){
   return steps;
 }
 
-function startCoach(){ if(!viewDay) viewDay=currentDay(); coachSteps=buildCoachSteps(viewDay); coachIdx=0; renderCoachStep(); }
+function startCoach(){ if(!viewDay) viewDay=currentDay();
+  coachSession={reps:0,correct:0,attempts:0,streak:0,mastered:0};
+  const ci=document.getElementById("coachIntense"); const d=db(); ci.checked=!!d.coachIntense;
+  ci.onchange=()=>{ const dd=db(); dd.coachIntense=ci.checked; save(dd); renderCoachStep(); };
+  coachSteps=buildCoachSteps(viewDay); coachIdx=0; renderCoachStep(); }
+function isIntense(){ const ci=document.getElementById("coachIntense"); return ci && ci.checked; }
+function coachHud(stepId){
+  return `<div style="display:flex;gap:14px;flex-wrap:wrap;text-align:center;margin-bottom:12px">
+    <div><div class="bighud" id="${stepId}">0</div><div class="note">이 단계 처리</div></div>
+    <div><div class="bighud" id="csAcc">-</div><div class="note">정답률</div></div>
+    <div><div class="bighud" id="csStreak">0</div><div class="note">연속</div></div>
+    <div><div class="bighud" id="csTotal">${coachSession.reps}</div><div class="note">오늘 누적</div></div>
+  </div>`;
+}
+function coachHudUpd(stepId,sc){ const e=id=>document.getElementById(id);
+  if(e(stepId)) e(stepId).textContent=sc;
+  if(e("csAcc")) e("csAcc").textContent=coachSession.attempts?Math.round(coachSession.correct/coachSession.attempts*100)+"%":"-";
+  if(e("csStreak")) e("csStreak").textContent=coachSession.streak;
+  if(e("csTotal")) e("csTotal").textContent=coachSession.reps;
+}
+function coachIntenseVocab(c){
+  const week=dayMeta(viewDay).week; let queue=shuffle((VW[week]||VW[1]).slice()).map(v=>({v})); let sc=0;
+  c.innerHTML=`<p class="note">⚡ 집중 모드: 시간 끝날 때까지 최대한 많이! 답하면 즉시 다음 단어로.</p>`+coachHud("csStep")+`<div id="cdcard" class="card" style="min-height:140px;display:flex;flex-direction:column;justify-content:center"></div>`;
+  const card=c.querySelector("#cdcard");
+  function load(){ const item=queue.shift(); const [w,pos,mean,ex]=item.v;
+    card.innerHTML=`<div class="drill-word">${w}</div><div class="note" style="text-align:center">${pos}</div>
+      <div id="cdrev" style="margin-top:12px;text-align:center"></div>
+      <div id="cdbtn" style="margin-top:14px;text-align:center"><button class="btn" id="cdShow">뜻 보기</button></div>`;
+    card.querySelector("#cdShow").onclick=()=>{
+      card.querySelector("#cdrev").innerHTML=`<div style="font-weight:700;color:var(--accent2)">${mean}</div><div class="note">"${ex}"</div>`;
+      card.querySelector("#cdbtn").innerHTML=`<button class="btn ghost" id="cdNo">✗ 몰라요</button> &nbsp; <button class="btn" id="cdYes">✓ 알아요</button>`;
+      card.querySelector("#cdYes").onclick=()=>{ coachSession.reps++; coachSession.mastered++; sc++; queue.push(item); coachHudUpd("csStep",sc); load(); };
+      card.querySelector("#cdNo").onclick=()=>{ coachSession.reps++; sc++; queue.splice(Math.min(3,queue.length),0,item); coachHudUpd("csStep",sc); load(); };
+    };
+  }
+  load();
+}
+function coachIntenseQuiz(c){
+  const pool=allQuiz(); let sc=0;
+  c.innerHTML=`<p class="note">⚡ 집중 모드: 빠르게! 답하면 0.5초 뒤 다음 문제로.</p>`+coachHud("csStep")+`<div id="cdq"></div>`;
+  const box=c.querySelector("#cdq");
+  function load(){ const item=pool[Math.floor(Math.random()*pool.length)];
+    box.innerHTML=`<div class="quiz-q">${item.q}</div><div id="cdopts" style="margin-top:12px"></div><div id="cdfb" class="note" style="margin-top:8px"></div>`;
+    const ob=box.querySelector("#cdopts");
+    item.opts.forEach((o,oi)=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=(oi+1)+". "+o;
+      b.onclick=()=>{ if(ob.dataset.d)return; ob.dataset.d="1"; coachSession.reps++; coachSession.attempts++; sc++;
+        if(oi===item.ans){ b.classList.add("correct"); coachSession.correct++; coachSession.streak++; }
+        else { b.classList.add("wrong"); ob.querySelectorAll(".opt")[item.ans].classList.add("correct"); coachSession.streak=0; box.querySelector("#cdfb").innerHTML=item.exp; }
+        coachHudUpd("csStep",sc); setTimeout(load,550); };
+      ob.appendChild(b); });
+  }
+  load();
+}
 
 function setCoachTimer(min){ clearInterval(coachTimer); coachTimer=null; coachRemain=min*60; updateTimerDisplay(); document.getElementById("coachTimerBtn").textContent="▶ 시작"; }
 function updateTimerDisplay(){ const el=document.getElementById("coachTimer"); if(!el) return;
@@ -836,6 +890,7 @@ function renderCoachBody(step,c){
         <div class="note" style="margin-top:8px"><b>구조 점검:</b> 주어 + 동사 + 목적어가 다 있는지 확인!</div>`;
       break;
     case "vocab":{
+      if(isIntense()){ coachIntenseVocab(c); break; }
       let h=`<p>오늘의 학술 어휘야. 카드를 눌러 뜻을 확인하고, 각 단어로 <b>내 문장</b>을 머릿속으로 만들어봐.</p><div class="grid2" style="margin-top:10px">`;
       m.forEach(([w,pos,mean,ex])=>{ h+=`<div class="flash card cflash" style="padding:0">
         <div class="flash-inner"><div class="flash-face flash-front"><div class="w">${w}</div><div class="pos">${pos}</div></div>
@@ -844,6 +899,7 @@ function renderCoachBody(step,c){
       c.querySelectorAll(".cflash").forEach(el=>el.onclick=()=>el.classList.toggle("flipped"));
       break; }
     case "quiz":{
+      if(isIntense()){ coachIntenseQuiz(c); break; }
       const bank=QUIZ_BANK[m]||QUIZ_BANK.articles;
       const items=[...bank].sort(()=>Math.random()-0.5).slice(0,3);
       c.innerHTML=`<p>배운 문법을 확인해보자. 답을 고르면 바로 피드백을 줄게.</p><div id="cquiz"></div><div id="cquizScore" class="note" style="margin-top:10px"></div>`;
@@ -864,12 +920,14 @@ function renderCoachBody(step,c){
       c.innerHTML=`<p>이제 입을 풀자. 아래 질문에 <b>영어로 30초</b> 말하듯 답을 적어봐.</p>
         <p class="quiz-q" style="margin-top:10px">🗣️ ${p}</p>
         <textarea id="coachSpeak" placeholder="I think..."></textarea>
-        <div class="note" style="margin-top:8px"><b>코치 팁:</b> 시작 표현 → "I think...", "In my opinion...", "For example...". 자가점검: 관사·시제·주어동사!</div>`;
+        <div class="note" style="margin-top:8px"><b>코치 팁:</b> 시작 표현 → "I think...", "In my opinion...", "For example...". 자가점검: 관사·시제·주어동사!</div>
+        ${isIntense()?'<div class="note" style="margin-top:6px">⚡ 집중: 같은 질문에 답을 바꿔가며, 시간 안에 최대한 여러 번 말해봐!</div>':''}`;
       break; }
     case "write":
       c.innerHTML=`<p>통합형 훈련이야. 오늘 과제: <b>${m.info.integrated}</b></p>
         <p class="note" style="margin-top:6px">${m.week}주차 주제(${m.info.subject})에 맞춰, 오늘 배운 단어 1~2개를 넣어 <b>3문장</b>으로 써봐.</p>
-        <textarea id="coachWrite" placeholder="여기에 영어로..."></textarea>`;
+        <textarea id="coachWrite" placeholder="여기에 영어로..."></textarea>
+        ${isIntense()?'<div class="note" style="margin-top:6px">⚡ 집중: 제한시간 안에 문장 수를 최대한 늘려봐!</div>':''}`;
       break;
     case "recall":
       c.innerHTML=`<p>복습! 화면을 덮는다 생각하고, 오늘 배운 <b>단어와 문장을 기억나는 대로</b> 영어로 적어봐.</p>
@@ -898,6 +956,7 @@ function renderCoachBody(step,c){
       break;
     case "done":{
       c.innerHTML=`<p style="font-size:1.1rem">🎉 <b>Day ${m.day} 완주!</b> 정말 잘했어.</p>
+        ${coachSession.reps?`<p class="note" style="margin-top:6px">⚡ 오늘 집중 처리량: <b>${coachSession.reps}</b>문항 · 정답률 ${coachSession.attempts?Math.round(coachSession.correct/coachSession.attempts*100):0}% · 외운 단어 ${coachSession.mastered}</p>`:""}
         <p style="margin-top:8px">아래 버튼으로 오늘을 완료 처리하면 연속 학습(streak)에 기록돼.</p>
         <button class="btn" id="coachComplete" style="margin-top:12px">✅ 오늘 완료 처리</button>
         <span class="saved-flash" id="coachDoneFlash">완료! 🔥</span>
