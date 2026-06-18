@@ -100,6 +100,8 @@
   .stat { text-align:center; }
   .stat .v { font-size:1.6rem; font-weight:800; color:var(--accent2); }
   .stat .l { font-size:0.78rem; color:var(--muted); }
+  .bighud { font-size:1.7rem; font-weight:800; color:var(--accent2); font-variant-numeric:tabular-nums; }
+  .drill-word { font-size:2rem; font-weight:800; text-align:center; }
   .milestone-banner { background:linear-gradient(90deg,rgba(255,204,92,.2),rgba(255,107,129,.15));
     border:1px solid var(--warn); border-radius:12px; padding:12px 16px; margin-bottom:14px; }
   .dot { display:inline-block; width:11px; height:11px; border-radius:3px; background:var(--card2); border:1px solid var(--line); }
@@ -204,6 +206,38 @@
         <button class="btn" id="coachNext">다음 단계 ▶</button>
       </div>
     </div>
+  </section>
+
+  <!-- DRILL -->
+  <section id="drill">
+    <h2>⚡ 집중 훈련 (시간 대비 최대 학습량)</h2>
+    <p class="sub">제한 시간 안에 쉬는 틈 없이 최대한 많은 문항을 처리합니다. 답하면 즉시 다음으로 넘어가요.</p>
+
+    <div class="card" id="drillSetup">
+      <h3>설정</h3>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <label>시간 <select id="drillMins"><option>5</option><option selected>10</option><option>15</option><option>20</option><option>30</option></select> 분</label>
+        <label>집중 영역 <select id="drillFocus"><option value="mix">혼합</option><option value="vocab">어휘</option><option value="grammar">문법</option></select></label>
+        <button class="btn" id="drillStart">시작 ⚡</button>
+      </div>
+      <div id="drillBest" class="note" style="margin-top:14px"></div>
+      <div class="note" style="margin-top:8px">⌨️ 키보드로 더 빠르게: 숫자 <b>1·2·3</b> = 보기 선택 / <b>스페이스</b> = 뜻 보기·알아요 / <b>N</b> = 몰라요</div>
+    </div>
+
+    <div id="drillRun" style="display:none">
+      <div class="card" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;text-align:center">
+        <div><div class="bighud" id="drillTime">10:00</div><div class="note">남은 시간</div></div>
+        <div><div class="bighud" id="hudReps">0</div><div class="note">처리량</div></div>
+        <div><div class="bighud" id="hudAcc">-</div><div class="note">정답률</div></div>
+        <div><div class="bighud" id="hudVocab">0</div><div class="note">외운 단어</div></div>
+        <div><div class="bighud" id="hudPace">0</div><div class="note">분당 처리</div></div>
+        <div><div class="bighud" id="hudStreak">0</div><div class="note">연속 정답</div></div>
+      </div>
+      <div class="card" id="drillCard" style="min-height:180px;display:flex;flex-direction:column;justify-content:center"></div>
+      <button class="btn ghost sm" id="drillStop">중단하고 결과 보기</button>
+    </div>
+
+    <div id="drillReport" style="display:none"></div>
   </section>
 
   <!-- DASHBOARD -->
@@ -415,7 +449,7 @@ function currentDay(){
 }
 
 //==================== 네비게이션 ====================
-const SECTIONS = [["today","오늘"],["coach","코치 모드"],["dashboard","대시보드"],["baseline","진단"],["curriculum","커리큘럼"],["vocab","어휘"],["tracker","성장 추적"]];
+const SECTIONS = [["today","오늘"],["coach","코치 모드"],["drill","⚡ 집중"],["dashboard","대시보드"],["baseline","진단"],["curriculum","커리큘럼"],["vocab","어휘"],["tracker","성장 추적"]];
 const nav = document.getElementById("nav");
 SECTIONS.forEach(([id,label],i)=>{
   const b=document.createElement("button"); b.textContent=label; if(i===0)b.classList.add("active");
@@ -423,8 +457,10 @@ SECTIONS.forEach(([id,label],i)=>{
     document.querySelectorAll("section").forEach(x=>x.classList.remove("active"));
     b.classList.add("active"); document.getElementById(id).classList.add("active");
     if(typeof coachTimer!=="undefined" && coachTimer){ clearInterval(coachTimer); coachTimer=null; }
+    if(typeof drillTick!=="undefined" && drillTick){ clearInterval(drillTick); drillTick=null; }
     if(id==="dashboard") renderDashboard();
     if(id==="coach") startCoach();
+    if(id==="drill"){ refreshDrillSetup(); showDrillView("setup"); }
     window.scrollTo({top:0,behavior:"smooth"}); };
   nav.appendChild(b);
 });
@@ -875,6 +911,112 @@ function renderCoachBody(step,c){
 document.getElementById("coachPrev").onclick=()=>{ if(coachIdx>0){ coachIdx--; renderCoachStep(); } };
 document.getElementById("coachNext").onclick=()=>{ if(coachSteps.length && coachIdx<coachSteps.length-1){ coachIdx++; renderCoachStep(); } };
 document.getElementById("coachTimerBtn").onclick=toggleTimer;
+
+//==================== 집중 훈련 (스피드 드릴) ====================
+let drillState=null, drillTick=null;
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function fmt(ms){ ms=Math.max(0,ms); return String(Math.floor(ms/60000)).padStart(2,"0")+":"+String(Math.floor(ms/1000)%60).padStart(2,"0"); }
+function allVocabUpTo(week){ let a=[]; for(let w=1;w<=(week||12);w++){ (VW[w]||[]).forEach(x=>a.push(x)); } return a.length?a:allVocabUpTo(12); }
+function allQuiz(){ let a=[]; Object.values(QUIZ_BANK).forEach(arr=>arr.forEach(q=>a.push(q))); return a; }
+function drillBest(){ const d=db(); return (d.drill&&d.drill.best)||null; }
+
+function showDrillView(v){
+  document.getElementById("drillSetup").style.display=v==="setup"?"":"none";
+  document.getElementById("drillRun").style.display=v==="run"?"":"none";
+  document.getElementById("drillReport").style.display=v==="report"?"":"none";
+}
+function refreshDrillSetup(){
+  const b=drillBest(); const d=db(); const tot=(d.drill&&d.drill.totalReps)||0;
+  document.getElementById("drillBest").innerHTML=(b?`🏆 최고 기록: <b>${b.reps}문항</b> (${b.mins}분 · 정답률 ${b.acc}% · 분당 ${b.rpm})`:"아직 기록이 없어요. 첫 세션을 시작해보세요!")+`<br>📚 누적 처리량: <b>${tot}</b>문항`;
+}
+
+function startDrill(){
+  const mins=parseInt(document.getElementById("drillMins").value);
+  const focus=document.getElementById("drillFocus").value;
+  const week=dayMeta(currentDay()).week;
+  drillState={ end:Date.now()+mins*60000, mins, focus, reps:0, correct:0, attempts:0,
+    streak:0, maxStreak:0, mastered:0, vq:shuffle(allVocabUpTo(week)).map(v=>({v})), qpool:allQuiz() };
+  showDrillView("run"); flashHud();
+  clearInterval(drillTick); drillTick=setInterval(drillTimer,200);
+  nextDrillItem();
+}
+function drillTimer(){ if(!drillState) return; document.getElementById("drillTime").textContent=fmt(drillState.end-Date.now());
+  flashHud(); if(Date.now()>=drillState.end) endDrill(); }
+function flashHud(){ const s=drillState; if(!s) return;
+  document.getElementById("hudReps").textContent=s.reps;
+  document.getElementById("hudAcc").textContent=s.attempts?Math.round(s.correct/s.attempts*100)+"%":"-";
+  document.getElementById("hudVocab").textContent=s.mastered;
+  document.getElementById("hudStreak").textContent=s.streak;
+  const elapsedMin=(s.mins*60-Math.max(0,(s.end-Date.now())/1000))/60;
+  document.getElementById("hudPace").textContent=elapsedMin>0.05?(s.reps/elapsedMin).toFixed(1):"0";
+}
+function nextDrillItem(){
+  if(!drillState||Date.now()>=drillState.end) return endDrill();
+  const f=drillState.focus;
+  const type = f==="vocab"?"v" : f==="grammar"?"q" : (drillState.reps%2===0?"v":"q");
+  if(type==="v" && drillState.vq.length) renderDrillVocab(); else renderDrillQuiz();
+}
+function renderDrillVocab(){
+  const q=drillState.vq; const item=q.shift(); const [w,pos,mean,ex]=item.v;
+  const c=document.getElementById("drillCard");
+  c.innerHTML=`<div class="drill-word">${w}</div><div class="note" style="text-align:center">${pos}</div>
+    <div id="drillReveal" style="margin-top:14px;text-align:center"></div>
+    <div id="drillBtns" style="margin-top:18px;text-align:center"><button class="btn" id="dShow">뜻 보기 (스페이스)</button></div>`;
+  document.getElementById("dShow").onclick=()=>{
+    document.getElementById("drillReveal").innerHTML=`<div style="font-weight:700;color:var(--accent2);font-size:1.15rem">${mean}</div><div class="note">"${ex}"</div>`;
+    document.getElementById("drillBtns").innerHTML=`<button class="btn ghost" id="dNo">✗ 몰라요 (N)</button> &nbsp; <button class="btn" id="dYes">✓ 알아요 (Space)</button>`;
+    document.getElementById("dYes").onclick=()=>{ drillState.reps++; drillState.mastered++; q.push(item); flashHud(); nextDrillItem(); };
+    document.getElementById("dNo").onclick=()=>{ drillState.reps++; q.splice(Math.min(3,q.length),0,item); flashHud(); nextDrillItem(); };
+  };
+}
+function renderDrillQuiz(){
+  const item=drillState.qpool[Math.floor(Math.random()*drillState.qpool.length)];
+  const c=document.getElementById("drillCard");
+  c.innerHTML=`<div class="quiz-q" style="font-size:1.05rem">${item.q}</div><div id="dOpts" style="margin-top:14px"></div><div id="dFb" class="note" style="margin-top:8px"></div>`;
+  const box=c.querySelector("#dOpts");
+  item.opts.forEach((o,oi)=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=(oi+1)+". "+o;
+    b.onclick=()=>{ if(box.dataset.d) return; box.dataset.d="1"; drillState.reps++; drillState.attempts++;
+      if(oi===item.ans){ b.classList.add("correct"); drillState.correct++; drillState.streak++; drillState.maxStreak=Math.max(drillState.maxStreak,drillState.streak); }
+      else { b.classList.add("wrong"); box.querySelectorAll(".opt")[item.ans].classList.add("correct"); drillState.streak=0; c.querySelector("#dFb").innerHTML=item.exp; }
+      flashHud(); setTimeout(nextDrillItem,550); };
+    box.appendChild(b); });
+}
+function endDrill(){
+  clearInterval(drillTick); drillTick=null; const s=drillState; if(!s) return; drillState=null;
+  const acc=s.attempts?Math.round(s.correct/s.attempts*100):0; const rpm=(s.reps/s.mins).toFixed(1);
+  const d=db(); d.drill=d.drill||{best:null,totalReps:0,sessions:[]};
+  d.drill.totalReps+=s.reps;
+  let pb=""; if(!d.drill.best||s.reps>d.drill.best.reps){ d.drill.best={reps:s.reps,acc,mins:s.mins,rpm}; pb=' <span class="tag good">🏆 신기록!</span>'; }
+  d.drill.sessions.push({t:todayStr(),reps:s.reps,acc,mins:s.mins}); save(d);
+  document.getElementById("drillReport").innerHTML=`<div class="card">
+    <h3>세션 결과${pb}</h3>
+    <div class="grid3">
+      <div class="stat"><div class="v">${s.reps}</div><div class="l">총 처리량 (${s.mins}분)</div></div>
+      <div class="stat"><div class="v">${rpm}</div><div class="l">분당 처리</div></div>
+      <div class="stat"><div class="v">${acc}%</div><div class="l">정답률</div></div>
+      <div class="stat"><div class="v">${s.mastered}</div><div class="l">외운 단어</div></div>
+      <div class="stat"><div class="v">${s.maxStreak}</div><div class="l">최고 연속 정답</div></div>
+      <div class="stat"><div class="v">${d.drill.totalReps}</div><div class="l">누적 처리량</div></div>
+    </div>
+    <p class="note" style="margin-top:14px">${acc>=80?"정확도가 높아! 다음엔 시간을 늘리거나 속도를 올려 처리량을 더 키워보자.":"정확도부터 다지자. 틀린 유형을 '오늘' 탭에서 복습하면 다음 세션 속도가 빨라져."}</p>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="drillAgain">한 번 더 ⚡</button>
+      <button class="btn ghost" id="drillBack">설정으로</button>
+    </div></div>`;
+  document.getElementById("drillAgain").onclick=startDrill;
+  document.getElementById("drillBack").onclick=()=>{ refreshDrillSetup(); showDrillView("setup"); };
+  showDrillView("report");
+}
+document.getElementById("drillStart").onclick=startDrill;
+document.getElementById("drillStop").onclick=endDrill;
+document.addEventListener("keydown",e=>{
+  if(!drillState||!document.getElementById("drill").classList.contains("active")) return;
+  const k=e.key;
+  if(k===" "||k==="Enter"){ const sh=document.getElementById("dShow"),ye=document.getElementById("dYes");
+    if(ye){ e.preventDefault(); ye.click(); } else if(sh){ e.preventDefault(); sh.click(); } }
+  else if(k==="1"||k==="2"||k==="3"){ const o=document.querySelectorAll("#dOpts .opt"); if(o[+k-1]) o[+k-1].click(); }
+  else if(k==="n"||k==="N"){ const no=document.getElementById("dNo"); if(no) no.click(); }
+});
 
 //==================== 초기화 ====================
 viewDay=currentDay();
