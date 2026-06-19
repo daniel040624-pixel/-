@@ -391,7 +391,7 @@
         <button class="btn" id="drillStart"><span data-ic="bolt"></span> 시작</button>
       </div>
       <div id="drillBest" class="note" style="margin-top:14px"></div>
-      <div class="note" style="margin-top:8px">⌨️ 키보드로 더 빠르게: 숫자 <b>1·2·3</b> = 보기 선택 / <b>스페이스</b> = 뜻 보기·알아요 / <b>N</b> = 몰라요</div>
+      <div class="note" style="margin-top:8px">⌨️ 키보드: 숫자 <b>1·2·3</b> = 보기 선택 / <b>스페이스·→</b> = 뜻 보기·알아요·다음 문제 / <b>N</b> = 몰라요<br>문제를 풀면 해설을 보는 동안 <b>타이머가 멈추고</b>, 직접 넘길 때까지 기다립니다.</div>
     </div>
 
     <div id="drillRun" style="display:none">
@@ -1249,8 +1249,10 @@ function startDrill(){
   clearInterval(drillTick); drillTick=setInterval(drillTimer,200);
   nextDrillItem();
 }
-function drillTimer(){ if(!drillState) return; document.getElementById("drillTime").textContent=fmt(drillState.end-Date.now());
+function drillTimer(){ if(!drillState||drillState.paused) return; document.getElementById("drillTime").textContent=fmt(drillState.end-Date.now());
   flashHud(); if(Date.now()>=drillState.end) endDrill(); }
+function pauseDrill(){ if(drillState&&!drillState.paused){ drillState.paused=true; drillState.pauseAt=Date.now(); } }
+function resumeDrill(){ if(drillState&&drillState.paused){ drillState.end+=Date.now()-drillState.pauseAt; drillState.paused=false; } }
 function flashHud(){ const s=drillState; if(!s) return;
   document.getElementById("hudReps").textContent=s.reps;
   document.getElementById("hudAcc").textContent=s.attempts?Math.round(s.correct/s.attempts*100)+"%":"-";
@@ -1285,9 +1287,13 @@ function renderDrillQuiz(){
   const box=c.querySelector("#dOpts");
   item.opts.forEach((o,oi)=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=(oi+1)+". "+o;
     b.onclick=()=>{ if(box.dataset.d) return; box.dataset.d="1"; drillState.reps++; drillState.attempts++;
-      if(oi===item.ans){ b.classList.add("correct"); drillState.correct++; drillState.streak++; drillState.maxStreak=Math.max(drillState.maxStreak,drillState.streak); }
-      else { b.classList.add("wrong"); box.querySelectorAll(".opt")[item.ans].classList.add("correct"); drillState.streak=0; c.querySelector("#dFb").innerHTML=item.exp; }
-      flashHud(); setTimeout(nextDrillItem,550); };
+      const ok=oi===item.ans;
+      if(ok){ b.classList.add("correct"); drillState.correct++; drillState.streak++; drillState.maxStreak=Math.max(drillState.maxStreak,drillState.streak); }
+      else { b.classList.add("wrong"); box.querySelectorAll(".opt")[item.ans].classList.add("correct"); drillState.streak=0; }
+      c.querySelector("#dFb").innerHTML=(ok?svgIcon('check')+" 정답! ":svgIcon('x')+" ")+item.exp;
+      flashHud(); pauseDrill();
+      c.querySelector("#dFb").insertAdjacentHTML("afterend",`<div style="margin-top:16px;text-align:center"><button class="btn" id="dNext">다음 문제 ▶ (스페이스)</button></div>`);
+      document.getElementById("dNext").onclick=()=>{ resumeDrill(); nextDrillItem(); }; };
     box.appendChild(b); });
 }
 function endDrill(){
@@ -1322,8 +1328,8 @@ document.addEventListener("keydown",e=>{
   if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
   if(!drillState||!document.getElementById("drill").classList.contains("active")) return;
   const k=e.key;
-  if(k===" "||k==="Enter"){ const sh=document.getElementById("dShow"),ye=document.getElementById("dYes");
-    if(ye){ e.preventDefault(); ye.click(); } else if(sh){ e.preventDefault(); sh.click(); } }
+  if(k===" "||k==="Enter"||k==="ArrowRight"){ const nx=document.getElementById("dNext"),sh=document.getElementById("dShow"),ye=document.getElementById("dYes");
+    if(nx){ e.preventDefault(); nx.click(); } else if(ye){ e.preventDefault(); ye.click(); } else if(sh){ e.preventDefault(); sh.click(); } }
   else if(k==="1"||k==="2"||k==="3"){ const o=document.querySelectorAll("#dOpts .opt"); if(o[+k-1]) o[+k-1].click(); }
   else if(k==="n"||k==="N"){ const no=document.getElementById("dNo"); if(no) no.click(); }
 });
