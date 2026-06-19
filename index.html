@@ -1341,6 +1341,58 @@ function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.fl
 function fmt(ms){ ms=Math.max(0,ms); return String(Math.floor(ms/60000)).padStart(2,"0")+":"+String(Math.floor(ms/1000)%60).padStart(2,"0"); }
 function allVocabUpTo(week){ let a=[]; for(let w=1;w<=(week||12);w++){ (VW[w]||[]).forEach(x=>a.push(x)); } return a.length?a:allVocabUpTo(12); }
 function allQuiz(){ let a=[]; Object.values(QUIZ_BANK).forEach(arr=>arr.forEach(q=>a.push(q))); return a; }
+
+//==================== 무제한 문제 생성기 (템플릿 × 단어 풀) ====================
+const _rand=a=>a[Math.floor(Math.random()*a.length)];
+// 정답 + 오답으로 보기 3개를 섞어 {opts,ans} 반환
+function _mc(correct,distractors){ const opts=shuffle([correct,...distractors]); return {opts,ans:opts.indexOf(correct)}; }
+const GEN_DATA={
+  vowelNouns:["apple","orange","egg","umbrella","island","eagle","onion","ant","oven","elephant","owl","animal"],
+  consNouns:["book","car","dog","table","pen","house","phone","cat","desk","ball","tree","river","school","garden","letter","picture","window","teacher","student","computer"],
+  // [base, 3인칭단수, 과거]
+  verbs:[["study","studies","studied"],["watch","watches","watched"],["go","goes","went"],["play","plays","played"],["teach","teaches","taught"],["write","writes","wrote"],["eat","eats","ate"],["run","runs","ran"],["finish","finishes","finished"],["carry","carries","carried"],["fix","fixes","fixed"],["catch","catches","caught"],["buy","buys","bought"],["bring","brings","brought"],["clean","cleans","cleaned"],["open","opens","opened"],["call","calls","called"],["cook","cooks","cooked"],["sing","sings","sang"]],
+  atTime:["7 a.m.","noon","midnight","3 o'clock","9:30","dawn","night","sunrise"],
+  onTime:["Monday","Friday","my birthday","July 4th","Sunday morning","New Year's Day","Tuesday","weekends"],
+  inTime:["May","2020","winter","the morning","the 1990s","summer","October","the afternoon","the evening"],
+  singSubj:["The student","My brother","Each player","Every child","The team","One of the boys","Mathematics","The news","This report","My teacher"],
+  plurSubj:["The students","My brothers","Both players","These books","Many people","The children","My friends","Several cars","Those ideas","The workers"],
+  // [원급, 비교급, 최상급]
+  adjs:[["big","bigger","biggest"],["small","smaller","smallest"],["fast","faster","fastest"],["slow","slower","slowest"],["tall","taller","tallest"],["old","older","oldest"],["young","younger","youngest"],["cheap","cheaper","cheapest"],["expensive","more expensive","most expensive"],["interesting","more interesting","most interesting"],["important","more important","most important"],["easy","easier","easiest"],["happy","happier","happiest"],["good","better","best"],["bad","worse","worst"],["heavy","heavier","heaviest"],["strong","stronger","strongest"],["beautiful","more beautiful","most beautiful"]],
+  gerVerbs:["enjoy","avoid","finish","mind","suggest","keep","practice","consider","admit","deny","miss","quit"],
+  infVerbs:["decide","want","hope","plan","agree","refuse","promise","learn","choose","manage","offer","expect","need"],
+  // [원형, -ing형]
+  comps:[["read","reading"],["play","playing"],["eat","eating"],["study","studying"],["travel","traveling"],["write","writing"],["swim","swimming"],["cook","cooking"],["dance","dancing"],["run","running"],["drive","driving"],["paint","painting"],["sing","singing"],["work","working"],["clean","cleaning"]],
+  // {s:단수, c:정답복수, w:[오답1,오답2]}
+  plurals:[{s:"city",c:"cities",w:["citys","cityes"]},{s:"box",c:"boxes",w:["boxs","boxies"]},{s:"child",c:"children",w:["childs","childrens"]},{s:"man",c:"men",w:["mans","mens"]},{s:"woman",c:"women",w:["womans","womens"]},{s:"tooth",c:"teeth",w:["tooths","teeths"]},{s:"foot",c:"feet",w:["foots","feets"]},{s:"leaf",c:"leaves",w:["leafs","leafes"]},{s:"knife",c:"knives",w:["knifes","knifs"]},{s:"baby",c:"babies",w:["babys","babyes"]},{s:"party",c:"parties",w:["partys","partyes"]},{s:"bus",c:"buses",w:["buss","busies"]},{s:"dish",c:"dishes",w:["dishs","dishies"]},{s:"watch",c:"watches",w:["watchs","watchies"]},{s:"photo",c:"photos",w:["photoes","photoss"]},{s:"potato",c:"potatoes",w:["potatos","potatoess"]},{s:"fish",c:"fish",w:["fishes","fishs"]},{s:"sheep",c:"sheep",w:["sheeps","sheepes"]},{s:"mouse",c:"mice",w:["mouses","mouse"]},{s:"person",c:"people",w:["persons","peoples"]},{s:"analysis",c:"analyses",w:["analysises","analysis"]}]
+};
+const QUIZ_GENERATORS=[
+  function genArticle(){ const g=GEN_DATA; const vowel=Math.random()<0.5; const n=vowel?_rand(g.vowelNouns):_rand(g.consNouns);
+    const correct=vowel?"an":"a"; const t=_mc(correct,["a","an","the"].filter(x=>x!==correct));
+    return {q:`I saw ___ ${n}. (처음 언급)`,opts:t.opts,ans:t.ans,exp:`처음 언급한 셀 수 있는 단수 → a/an (the는 특정한 것). "${n}"는 ${vowel?"모음 소리로 시작 → an":"자음 소리로 시작 → a"}.`}; },
+  function genTense3rd(){ const v=_rand(GEN_DATA.verbs); const subj=_rand(["She","He","My friend","The teacher","My sister","Tom"]);
+    const t=_mc(v[1],[v[0],v[2]]); return {q:`${subj} ___ every day.`,opts:t.opts,ans:t.ans,exp:`3인칭 단수 현재 → ${v[1]}.`}; },
+  function genTensePast(){ const v=_rand(GEN_DATA.verbs); const subj=_rand(["I","We","They","You"]);
+    const t=_mc(v[2],[v[0],v[1]]); return {q:`${subj} ___ yesterday.`,opts:t.opts,ans:t.ans,exp:`과거(yesterday) → ${v[2]}.`}; },
+  function genPrepTime(){ const g=GEN_DATA; const r=Math.random(); let expr,correct;
+    if(r<0.34){ expr=_rand(g.atTime); correct="at"; } else if(r<0.67){ expr=_rand(g.onTime); correct="on"; } else { expr=_rand(g.inTime); correct="in"; }
+    const t=_mc(correct,["in","on","at"].filter(x=>x!==correct));
+    return {q:`The class starts ___ ${expr}.`,opts:t.opts,ans:t.ans,exp:`시간 전치사: at+시각, on+요일/날짜, in+월/연도/때 → "${correct} ${expr}".`}; },
+  function genAgreement(){ const sing=Math.random()<0.5; const subj=sing?_rand(GEN_DATA.singSubj):_rand(GEN_DATA.plurSubj);
+    const correct=sing?"is":"are"; const t=_mc(correct,["is","are","was"].filter(x=>x!==correct));
+    return {q:`${subj} ___ very important.`,opts:t.opts,ans:t.ans,exp:`주어가 ${sing?"단수 → is":"복수 → are"}.`}; },
+  function genComparative(){ const a=_rand(GEN_DATA.adjs); const t=_mc(a[1],[a[0],a[2]]);
+    return {q:`This one is ___ than that one.`,opts:t.opts,ans:t.ans,exp:`than과 함께 → 비교급 "${a[1]}".`}; },
+  function genSuperlative(){ const a=_rand(GEN_DATA.adjs); const t=_mc(a[2],[a[0],a[1]]);
+    return {q:`It is the ___ of all.`,opts:t.opts,ans:t.ans,exp:`the ... of all → 최상급 "${a[2]}".`}; },
+  function genVerbal(){ const g=GEN_DATA; const ger=Math.random()<0.5; const mv=ger?_rand(g.gerVerbs):_rand(g.infVerbs);
+    const c=_rand(g.comps); const subj=_rand(["I","We","They","You"]); const correct=ger?c[1]:("to "+c[0]);
+    const t=_mc(correct,[c[0],ger?("to "+c[0]):c[1]]);
+    return {q:`${subj} ${mv} ___.`,opts:t.opts,ans:t.ans,exp:`"${mv}" 뒤에는 ${ger?"동명사(-ing)":"to부정사"} → ${correct}.`}; },
+  function genPlural(){ const p=_rand(GEN_DATA.plurals); const tmpl=_rand([`There are three ___ here.`,`I have two ___.`,`She bought five ___.`,`Several ___ are missing.`]);
+    const t=_mc(p.c,p.w); return {q:tmpl,opts:t.opts,ans:t.ans,exp:`"${p.s}"의 올바른 복수형 → ${p.c}.`}; }
+];
+// 세션 내 중복 없이 새 문제 생성 (문제 텍스트 + 정답으로 고유 판별)
+function genUniqueQuiz(seen){ for(let i=0;i<80;i++){ const q=_rand(QUIZ_GENERATORS)(); const key=q.q+"||"+q.opts[q.ans]; if(!seen||!seen.has(key)){ if(seen) seen.add(key); return q; } } return _rand(QUIZ_GENERATORS)(); }
 function drillBest(){ const d=db(); return (d.drill&&d.drill.best)||null; }
 
 function showDrillView(v){
@@ -1358,7 +1410,7 @@ function startDrill(){
   const focus=document.getElementById("drillFocus").value;
   const week=dayMeta(currentDay()).week;
   drillState={ end:Date.now()+mins*60000, mins, focus, reps:0, correct:0, attempts:0,
-    streak:0, maxStreak:0, mastered:0, vq:shuffle(allVocabUpTo(week)).map(v=>({v})), qpool:shuffle(allQuiz()), qi:0 };
+    streak:0, maxStreak:0, mastered:0, vq:shuffle(allVocabUpTo(week)).map(v=>({v})), seenQ:new Set() };
   showDrillView("run"); flashHud();
   clearInterval(drillTick); drillTick=setInterval(drillTimer,200);
   nextDrillItem();
@@ -1396,8 +1448,7 @@ function renderDrillVocab(){
 }
 function renderDrillQuiz(){
   const s=drillState;
-  if(s.qi>=s.qpool.length){ s.qpool=shuffle(s.qpool); s.qi=0; }
-  const item=s.qpool[s.qi++];
+  const item=genUniqueQuiz(s.seenQ);
   const c=document.getElementById("drillCard");
   c.innerHTML=`<div class="quiz-q" style="font-size:1.05rem">${item.q}</div><div id="dOpts" style="margin-top:14px"></div><div id="dFb" class="note" style="margin-top:8px"></div>`;
   const box=c.querySelector("#dOpts");
