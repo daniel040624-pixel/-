@@ -66,22 +66,57 @@
   body::before{ content:""; position:fixed; inset:0; z-index:-2; background:var(--bg); }
   /* flat clean background — no grain or glow (minimal) */
   /* ── Typography ── */
-  header { text-align:center; padding:var(--space-12) var(--space-4) var(--space-6); }
-  header h1 { font-family:var(--font-display); color:var(--text-strong); font-weight:var(--fw-extrabold); font-size:clamp(2.1rem,6vw,3rem); letter-spacing:-0.02em; line-height:var(--lh-tight); }
-  header p { color:var(--text-muted); margin-top:var(--space-2); font-size:var(--text-sm); }
+  /* ── Icon system (simple monochrome line icons) ── */
+  .ic { display:inline-flex; width:1em; height:1em; flex:none; vertical-align:-0.14em; }
+  .ic svg, svg.ic { width:1em; height:1em; display:block; }
+  /* ── Top bar + right-aligned menu ── */
+  .topbar { position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; gap:var(--space-4);
+    padding:var(--space-3) clamp(var(--space-4),4vw,var(--space-8)); background:color-mix(in srgb, var(--bg) 80%, transparent);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-bottom:1px solid var(--border); }
+  .brand { display:inline-flex; align-items:center; gap:var(--space-2); background:none; border:none; cursor:pointer; padding:var(--space-1);
+    font-family:var(--font-display); font-weight:var(--fw-bold); font-size:var(--text-base); color:var(--text-strong); letter-spacing:-0.01em; }
+  .brand .brandmark { font-size:1.25rem; color:var(--accent); }
+  .menu-toggle { display:none; align-items:center; justify-content:center; width:40px; height:40px; border-radius:var(--radius-md);
+    background:var(--surface); border:1px solid var(--border); color:var(--text); cursor:pointer; font-size:1.25rem; }
   h2 { font-family:var(--font-display); color:var(--text-strong); font-weight:var(--fw-bold); font-size:clamp(1.7rem,3.6vw,var(--text-3xl)); margin-bottom:var(--space-1); line-height:1.2; letter-spacing:-0.015em; }
   .sub { color:var(--text-muted); margin-bottom:var(--space-6); font-size:var(--text-sm); max-width:62ch; }
   /* ── Goal pill (hero duotone moment) ── */
   .goal-pill { display:inline-block; margin-top:var(--space-4); background:linear-gradient(95deg,var(--brand-500),var(--brand-amber));
     color:var(--accent-ink); font-weight:var(--fw-semibold); padding:var(--space-2) var(--space-5); border-radius:var(--radius-full); font-size:var(--text-sm); box-shadow:var(--shadow-brand); }
-  /* ── Navigation (tab bar) ── */
-  nav { position:sticky; top:0; z-index:50; display:flex; flex-wrap:wrap; gap:var(--space-2); justify-content:center;
-    padding:var(--space-3); background:color-mix(in srgb, var(--n-50) 82%, transparent); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); }
-  nav button { display:inline-flex; align-items:center; min-height:40px; background:var(--surface); color:var(--text-muted); border:1px solid var(--border); padding:0 var(--space-4);
-    border-radius:var(--radius-full); cursor:pointer; font:var(--fw-medium) var(--text-sm)/1 var(--font-sans); transition:color var(--dur) var(--ease),background var(--dur) var(--ease),border-color var(--dur) var(--ease),transform var(--dur) var(--ease); }
-  nav button:hover { border-color:var(--border-strong); background:var(--surface-2); color:var(--text); }
-  nav button:focus-visible { outline:none; box-shadow:0 0 0 3px var(--ring); }
-  nav button.active { background:var(--accent); color:var(--accent-ink); font-weight:var(--fw-semibold); border-color:var(--accent); box-shadow:var(--shadow-brand); }
+  /* ── Right-aligned menu bar ── */
+  nav.menubar { display:flex; flex-wrap:wrap; gap:var(--space-1); justify-content:flex-end; align-items:center; }
+  nav.menubar button { display:inline-flex; align-items:center; gap:6px; min-height:36px; background:none; color:var(--text-muted);
+    border:1px solid transparent; padding:0 var(--space-3); border-radius:var(--radius-md); cursor:pointer;
+    font:var(--fw-medium) var(--text-sm)/1 var(--font-sans); letter-spacing:-0.005em;
+    transition:color var(--dur) var(--ease),background var(--dur) var(--ease),border-color var(--dur) var(--ease); }
+  nav.menubar button .ic { font-size:1.05rem; opacity:.85; }
+  nav.menubar button:hover { background:var(--surface-2); color:var(--text); }
+  nav.menubar button:focus-visible { outline:none; box-shadow:0 0 0 3px var(--ring); }
+  nav.menubar button.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:var(--fw-semibold); }
+  nav.menubar button.active .ic { opacity:1; }
+  @media (max-width:780px){
+    .menu-toggle { display:inline-flex; }
+    nav.menubar { position:absolute; top:calc(100% + 6px); right:clamp(var(--space-4),4vw,var(--space-8)); flex-direction:column; align-items:stretch;
+      min-width:200px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg);
+      padding:var(--space-2); display:none; }
+    nav.menubar.open { display:flex; }
+    nav.menubar button { justify-content:flex-start; width:100%; min-height:42px; }
+  }
+  /* ── Cover (landing) ── */
+  .cover { animation:fade var(--dur-slow) var(--ease); }
+  .cover-inner { min-height:min(78vh,640px); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:var(--space-8) 0; }
+  .cover-kicker { display:inline-flex; align-items:center; gap:6px; font-size:var(--text-sm); font-weight:var(--fw-semibold); color:var(--text-muted);
+    border:1px solid var(--border); border-radius:var(--radius-full); padding:6px var(--space-4); }
+  .cover-kicker .ic { font-size:1rem; color:var(--accent); }
+  .cover-title { font-family:var(--font-display); color:var(--text-strong); font-weight:var(--fw-extrabold);
+    font-size:clamp(2.4rem,7vw,4rem); line-height:1.08; letter-spacing:-0.03em; margin-top:var(--space-6); }
+  .cover-sub { color:var(--text-muted); font-size:var(--text-lg); max-width:52ch; margin-top:var(--space-5); line-height:1.55; }
+  .cover-actions { display:flex; gap:var(--space-3); flex-wrap:wrap; justify-content:center; margin-top:var(--space-8); }
+  .cover-stats { display:flex; gap:var(--space-10); margin-top:var(--space-12); flex-wrap:wrap; justify-content:center; }
+  .cstat-v { font-family:var(--font-display); font-size:var(--text-3xl); font-weight:var(--fw-bold); color:var(--text-strong); line-height:1; font-variant-numeric:tabular-nums; }
+  .cstat-l { color:var(--text-muted); font-size:var(--text-sm); margin-top:6px; }
+  .cover-goal { margin-top:var(--space-10); font-size:var(--text-sm); font-weight:var(--fw-semibold); color:var(--text); }
+  .cover-goal span { color:var(--text-subtle); font-weight:var(--fw-regular); margin-left:6px; }
   main { max-width:880px; margin:0 auto; padding:var(--space-8) var(--space-4) var(--space-16); }
   section { display:none; animation:fade var(--dur-slow) var(--ease); }
   section.active { display:block; }
@@ -149,6 +184,8 @@
   .btn.danger { background:var(--danger); color:#fff; }
   .btn.danger:hover { background:var(--danger-fg); box-shadow:none; }
   .btn.sm { min-height:36px; padding:0 var(--space-3); font-size:var(--text-xs); }
+  .btn.lg { min-height:52px; padding:0 var(--space-6); font-size:var(--text-base); border-radius:var(--radius-md); }
+  .btn .ic { font-size:1.1em; }
   /* ── Flashcards ── */
   .flash { perspective:1000px; cursor:pointer; height:140px; }
   .flash-inner { position:relative; width:100%; height:100%; transition:transform var(--dur-slow) var(--ease); transform-style:preserve-3d; }
@@ -233,17 +270,34 @@
 </style>
 </head>
 <body>
-<header>
-  <h1>🎓 나의 영어 학습 코치</h1>
-  <p>3시간/일 · 12주 · 학술 영어로 가는 길</p>
-  <div class="goal-pill">목표: TOEFL 80+ (R20 · L20 · S20 · W20)</div>
+<header class="topbar">
+  <button class="brand" id="brandBtn" aria-label="홈으로"><span class="brandmark" data-ic="cap"></span><span>영어 학습 코치</span></button>
+  <button class="menu-toggle" id="menuToggle" aria-label="메뉴 열기" aria-expanded="false" data-ic="menu"></button>
+  <nav id="nav" class="menubar" aria-label="섹션 메뉴"></nav>
 </header>
 
-<nav id="nav"></nav>
-
 <main>
+  <!-- COVER -->
+  <section id="cover" class="active cover">
+    <div class="cover-inner">
+      <span class="cover-kicker"><span data-ic="cap"></span> 3시간/일 · 12주 · 학술 영어</span>
+      <h1 class="cover-title">매일 한 걸음,<br>완성되는 영어 실력</h1>
+      <p class="cover-sub">진단부터 데일리 루틴, 집중 훈련, 성장 추적까지 — TOEFL 80+로 가는 길을 하나의 코치 안에서.</p>
+      <div class="cover-actions">
+        <button class="btn lg" id="coverStart"><span data-ic="bolt"></span> 오늘 학습 시작</button>
+        <button class="btn ghost lg" id="coverDash"><span data-ic="grid"></span> 대시보드</button>
+      </div>
+      <div class="cover-stats">
+        <div class="cstat"><div class="cstat-v" id="coverDay">1</div><div class="cstat-l">현재 일차 / 84</div></div>
+        <div class="cstat"><div class="cstat-v" id="coverStreak">0</div><div class="cstat-l">연속 학습</div></div>
+        <div class="cstat"><div class="cstat-v" id="coverDone">0</div><div class="cstat-l">완료 세션</div></div>
+      </div>
+      <div class="cover-goal">목표 · TOEFL 80+ <span>R20 · L20 · S20 · W20</span></div>
+    </div>
+  </section>
+
   <!-- TODAY -->
-  <section id="today" class="active">
+  <section id="today">
     <h2>오늘의 세션</h2>
     <p class="sub">시작일 기준으로 며칠 차인지 자동 계산해 그 날의 전체 루틴을 생성합니다.</p>
 
@@ -292,21 +346,21 @@
     </div>
 
     <div class="card">
-      <h3>✅ 오늘 세션 마무리</h3>
+      <h3><span data-ic="check"></span> 오늘 세션 마무리</h3>
       <p class="note">위 루틴을 모두 끝냈으면 완료 처리하세요. 연속 학습(streak)이 기록됩니다.</p>
       <button class="btn" id="completeDay" style="margin-top:10px">오늘 완료 처리</button>
-      <span class="saved-flash" id="completeFlash">완료! 🔥</span>
+      <span class="saved-flash" id="completeFlash">완료!</span>
     </div>
   </section>
 
   <!-- COACH -->
   <section id="coach">
-    <h2>🧭 코치 모드 (단계별 학습)</h2>
+    <h2><span data-ic="compass"></span> 코치 모드 (단계별 학습)</h2>
     <p class="sub">오늘의 루틴을 한 단계씩 안내합니다. 각 단계를 끝내면 '다음 단계'를 누르세요.</p>
     <div class="card">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
         <b id="coachStepLabel"></b>
-        <label class="note" style="display:flex;align-items:center;gap:5px;margin-left:10px"><input type="checkbox" id="coachIntense" style="transform:scale(1.2);accent-color:var(--brand-700)">⚡ 집중 모드</label>
+        <label class="note" style="display:flex;align-items:center;gap:5px;margin-left:10px"><input type="checkbox" id="coachIntense" style="transform:scale(1.2);accent-color:var(--brand-700)"><span data-ic="bolt"></span> 집중 모드</label>
         <span style="flex:1"></span>
         <span id="coachTimerWrap" style="display:none">
           <span id="coachTimer" style="font-variant-numeric:tabular-nums;font-weight:700;color:var(--brand-700)">00:00</span>
@@ -326,7 +380,7 @@
 
   <!-- DRILL -->
   <section id="drill">
-    <h2>⚡ 집중 훈련 (시간 대비 최대 학습량)</h2>
+    <h2><span data-ic="bolt"></span> 집중 훈련 (시간 대비 최대 학습량)</h2>
     <p class="sub">제한 시간 안에 쉬는 틈 없이 최대한 많은 문항을 처리합니다. 답하면 즉시 다음으로 넘어가요.</p>
 
     <div class="card" id="drillSetup">
@@ -334,7 +388,7 @@
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
         <label>시간 <select id="drillMins"><option>5</option><option selected>10</option><option>15</option><option>20</option><option>30</option></select> 분</label>
         <label>집중 영역 <select id="drillFocus"><option value="mix">혼합</option><option value="vocab">어휘</option><option value="grammar">문법</option></select></label>
-        <button class="btn" id="drillStart">시작 ⚡</button>
+        <button class="btn" id="drillStart"><span data-ic="bolt"></span> 시작</button>
       </div>
       <div id="drillBest" class="note" style="margin-top:14px"></div>
       <div class="note" style="margin-top:8px">⌨️ 키보드로 더 빠르게: 숫자 <b>1·2·3</b> = 보기 선택 / <b>스페이스</b> = 뜻 보기·알아요 / <b>N</b> = 몰라요</div>
@@ -363,7 +417,7 @@
     <div class="grid3">
       <div class="card stat"><div class="v" id="statDay">1</div><div class="l">현재 일차 / 84</div></div>
       <div class="card stat"><div class="v" id="statDone">0</div><div class="l">완료한 세션</div></div>
-      <div class="card stat"><div class="v" id="statStreak">0</div><div class="l">연속 학습일 🔥</div></div>
+      <div class="card stat"><div class="v" id="statStreak">0</div><div class="l">연속 학습일 <span data-ic="flame"></span></div></div>
     </div>
     <div class="grid2">
       <div class="card">
@@ -398,21 +452,21 @@
 
   <!-- BASELINE -->
   <section id="baseline">
-    <h2>📊 0일차 진단 (Baseline)</h2>
+    <h2><span data-ic="activity"></span> 0일차 진단 (Baseline)</h2>
     <p class="sub">12주 내내 동일 기준으로 비교.</p>
     <div class="card"><table id="baselineTable"></table></div>
   </section>
 
   <!-- CURRICULUM -->
   <section id="curriculum">
-    <h2>🗺️ 12주 전체 커리큘럼</h2>
+    <h2><span data-ic="list"></span> 12주 전체 커리큘럼</h2>
     <p class="sub">단계별 목표·주제·문법 초점·마일스톤. 주차 카드를 펼쳐 보세요.</p>
     <div id="curriculumList"></div>
   </section>
 
   <!-- VOCAB -->
   <section id="vocab">
-    <h2>🔤 학술 어휘 (AWL) 전체</h2>
+    <h2><span data-ic="book"></span> 학술 어휘 (AWL) 전체</h2>
     <p class="sub">주차를 선택해 그 주의 단어를 카드로 학습.</p>
     <div style="margin-bottom:14px">주차 <select id="vocabWeek"></select></div>
     <div class="grid2" id="vocabGrid"></div>
@@ -420,7 +474,7 @@
 
   <!-- TRACKER -->
   <section id="tracker">
-    <h2>📈 성장 추적</h2>
+    <h2><span data-ic="trending"></span> 성장 추적</h2>
     <p class="sub">매주 7일차 점수 입력 → Baseline 대비 증감 자동 계산. 4·8·12주는 종합 모의고사.</p>
     <div class="card">
       <h3>주간/모의 점수 입력</h3>
@@ -446,11 +500,11 @@
 
 <footer>나만의 영어 학습 코치 · 모든 데이터는 이 브라우저에만 저장됩니다 (localStorage)<br><span style="color:var(--text-strong);font-weight:var(--fw-bold)">◐ 라이트 모노크롬 v3 · 2026-06-19</span></footer>
 
-<button class="chat-fab" id="chatFab" title="코치에게 질문">💬</button>
+<button class="chat-fab" id="chatFab" title="코치에게 질문" aria-label="코치에게 질문" data-ic="message"></button>
 <div class="chat-panel" id="chatPanel">
-  <div class="chat-head"><b>🧑‍🏫 코치 챗봇</b><span style="flex:1"></span>
-    <button class="btn ghost sm" id="chatCfg">⚙️</button>
-    <button class="btn ghost sm" id="chatClose">✕</button></div>
+  <div class="chat-head"><b><span data-ic="message"></span> 코치 챗봇</b><span style="flex:1"></span>
+    <button class="btn ghost sm" id="chatCfg" aria-label="설정" data-ic="settings"></button>
+    <button class="btn ghost sm" id="chatClose" aria-label="닫기" data-ic="close"></button></div>
   <div id="chatCfgBox" style="display:none;padding:10px;border-bottom:1px solid var(--line);font-size:0.84rem">
     <div class="note">AI 연결(선택): Claude API 키를 넣으면 자유 질문도 답해줘. 안 넣어도 기본 도우미는 작동해.</div>
     <input type="password" id="chatKey" placeholder="sk-ant-..." style="margin-top:6px;width:100%">
@@ -463,11 +517,39 @@
   <div class="chat-msgs" id="chatMsgs"></div>
   <div class="chat-input">
     <textarea id="chatInput" placeholder="질문 입력 (예: a랑 the 차이 뭐야?)"></textarea>
-    <button class="btn" id="chatSend">↑</button>
+    <button class="btn" id="chatSend" aria-label="보내기" data-ic="up"></button>
   </div>
 </div>
 
 <script>
+//==================== 아이콘 시스템 (심플 라인 아이콘) ====================
+const ICONS = {
+  cap:'<path d="M2 8 12 3l10 5-10 5L2 8Z"/><path d="M6 10.5V15c0 1.2 2.7 2.5 6 2.5s6-1.3 6-2.5v-4.5"/><path d="M22 8v5"/>',
+  calendar:'<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>',
+  compass:'<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2.2 5.3-5.3 2.2 2.2-5.3 5.3-2.2Z"/>',
+  bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/>',
+  grid:'<rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/>',
+  activity:'<path d="M2 12h4l3 8 5-16 3 8h5"/>',
+  list:'<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+  book:'<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H20v15H6.5A1.5 1.5 0 0 0 5 19.5V4.5Z"/><path d="M5 19.5A1.5 1.5 0 0 1 6.5 18H20v3H6.5A1.5 1.5 0 0 1 5 19.5Z"/>',
+  trending:'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  flame:'<path d="M12 3s5 4 5 9a5 5 0 0 1-10 0c0-1.4.5-2.6 1.2-3.5C9 9.6 9 11 10.5 11.5 12 12 11 8 12 3Z"/>',
+  check:'<circle cx="12" cy="12" r="9"/><path d="m8.3 12 2.6 2.6 4.8-5.2"/>',
+  x:'<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/>',
+  edit:'<path d="M4 20h4L18.5 9.5a2 2 0 0 0-2.8-2.8L5 17.2V20Z"/><path d="m14 8 2.8 2.8"/>',
+  flag:'<path d="M5 21V4M5 4.5h12l-2.2 3.5L17 11.5H5"/>',
+  trophy:'<path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 6.5H4.5V8a3 3 0 0 0 3 3M17 6.5h2.5V8a3 3 0 0 1-3 3M9.5 20h5M12 13v3.5"/>',
+  layers:'<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/>',
+  message:'<path d="M20.5 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 20.5 12Z"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v2M12 19.5v2M4.2 7l1.7 1M18.1 16l1.7 1M19.8 7l-1.7 1M5.9 16l-1.7 1M2.5 12h2M19.5 12h2"/>',
+  close:'<path d="M6 6l12 12M18 6 6 18"/>',
+  up:'<path d="M12 19V6M6 12l6-6 6 6"/>',
+  play:'<path d="M7 4.5v15l13-7.5-13-7.5Z"/>',
+  menu:'<path d="M3 6.5h18M3 12h18M3 17.5h18"/>'
+};
+function svgIcon(name,extra){ return `<svg class="ic ${extra||''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]||''}</svg>`; }
+function hydrateIcons(root){ (root||document).querySelectorAll('[data-ic]').forEach(el=>{ el.classList.add('ic'); el.innerHTML=svgIcon(el.dataset.ic); el.removeAttribute('data-ic'); }); }
+
 //==================== 상수/데이터 ====================
 const AREAS = ["Reading","Listening","Speaking","Writing","어휘/문법"];
 const BASELINE = {Reading:6,Listening:6,Speaking:8,Writing:9,"어휘/문법":7};
@@ -586,21 +668,38 @@ function currentDay(){
 }
 
 //==================== 네비게이션 ====================
-const SECTIONS = [["today","오늘"],["coach","코치 모드"],["drill","⚡ 집중"],["dashboard","대시보드"],["baseline","진단"],["curriculum","커리큘럼"],["vocab","어휘"],["tracker","성장 추적"]];
+const SECTIONS = [["today","오늘","calendar"],["coach","코치 모드","compass"],["drill","집중","bolt"],["dashboard","대시보드","grid"],["baseline","진단","activity"],["curriculum","커리큘럼","list"],["vocab","어휘","book"],["tracker","성장 추적","trending"]];
 const nav = document.getElementById("nav");
-SECTIONS.forEach(([id,label],i)=>{
-  const b=document.createElement("button"); b.textContent=label; if(i===0)b.classList.add("active");
-  b.onclick=()=>{ document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
-    document.querySelectorAll("section").forEach(x=>x.classList.remove("active"));
-    b.classList.add("active"); document.getElementById(id).classList.add("active");
-    if(typeof coachTimer!=="undefined" && coachTimer){ clearInterval(coachTimer); coachTimer=null; }
-    if(typeof drillTick!=="undefined" && drillTick){ clearInterval(drillTick); drillTick=null; }
-    if(id==="dashboard") renderDashboard();
-    if(id==="coach") startCoach();
-    if(id==="drill"){ refreshDrillSetup(); showDrillView("setup"); }
-    window.scrollTo({top:0,behavior:"smooth"}); };
+function navigate(id){
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active", x.dataset.view===id));
+  document.querySelectorAll("section").forEach(x=>x.classList.toggle("active", x.id===id));
+  if(typeof coachTimer!=="undefined" && coachTimer){ clearInterval(coachTimer); coachTimer=null; }
+  if(typeof drillTick!=="undefined" && drillTick){ clearInterval(drillTick); drillTick=null; }
+  if(id==="cover") renderCover();
+  if(id==="dashboard") renderDashboard();
+  if(id==="coach") startCoach();
+  if(id==="drill"){ refreshDrillSetup(); showDrillView("setup"); }
+  nav.classList.remove("open");
+  document.getElementById("menuToggle").setAttribute("aria-expanded","false");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+SECTIONS.forEach(([id,label,icon])=>{
+  const b=document.createElement("button"); b.dataset.view=id;
+  b.innerHTML=svgIcon(icon)+`<span>${label}</span>`;
+  b.onclick=()=>navigate(id);
   nav.appendChild(b);
 });
+function renderCover(){
+  const d=db();
+  const done=Object.values(d.done).filter(x=>x&&x.completed).length;
+  document.getElementById("coverDay").textContent=currentDay();
+  document.getElementById("coverStreak").textContent=(typeof computeStreak==="function"?computeStreak():0);
+  document.getElementById("coverDone").textContent=done;
+}
+document.getElementById("brandBtn").onclick=()=>navigate("cover");
+document.getElementById("menuToggle").onclick=function(){ const open=nav.classList.toggle("open"); this.setAttribute("aria-expanded",open?"true":"false"); };
+document.getElementById("coverStart").onclick=()=>navigate("today");
+document.getElementById("coverDash").onclick=()=>navigate("dashboard");
 
 //==================== 오늘의 세션 엔진 ====================
 function dayMeta(day){
@@ -627,9 +726,9 @@ function renderToday(){
   const mb = document.getElementById("milestoneBanner");
   if(m.kind==="mock"){
     const which = {mock1:"①(4주)",mock2:"②(8주)",mock3:"③(12주)"}[m.info.milestone];
-    mb.innerHTML = `<div class="milestone-banner">🏁 <b>종합 모의고사 ${which}</b> — 실제 시험 형식·시간(약 120분)으로 4영역 풀세트. 끝나면 '성장 추적'에 점수 입력!</div>`;
+    mb.innerHTML = `<div class="milestone-banner">${svgIcon('flag')} <b>종합 모의고사 ${which}</b> — 실제 시험 형식·시간(약 120분)으로 4영역 풀세트. 끝나면 '성장 추적'에 점수 입력!</div>`;
   } else if(m.kind==="test"){
-    mb.innerHTML = `<div class="milestone-banner">📝 <b>${m.week}주차 진척 테스트</b> — 미니 TOEFL(약 40분). 끝나면 '성장 추적'에 점수 입력!</div>`;
+    mb.innerHTML = `<div class="milestone-banner">${svgIcon('edit')} <b>${m.week}주차 진척 테스트</b> — 미니 TOEFL(약 40분). 끝나면 '성장 추적'에 점수 입력!</div>`;
   } else mb.innerHTML = "";
 
   // 목표
@@ -717,8 +816,8 @@ function renderTodayQuiz(key){
     item.opts.forEach((o,oi)=>{
       const btn=document.createElement("button"); btn.className="opt"; btn.textContent=o;
       btn.onclick=()=>{ if(wrap.dataset.done)return; wrap.dataset.done="1"; answered++;
-        if(oi===item.ans){btn.classList.add("correct");correct++;fb.className="feedback show ok";fb.innerHTML="✅ 정답! "+item.exp;}
-        else{btn.classList.add("wrong");wrap.querySelectorAll(".opt")[item.ans].classList.add("correct");fb.className="feedback show no";fb.innerHTML="❌ "+item.exp;}
+        if(oi===item.ans){btn.classList.add("correct");correct++;fb.className="feedback show ok";fb.innerHTML=svgIcon('check')+" 정답! "+item.exp;}
+        else{btn.classList.add("wrong");wrap.querySelectorAll(".opt")[item.ans].classList.add("correct");fb.className="feedback show no";fb.innerHTML=svgIcon('x')+" "+item.exp;}
         document.getElementById("todayQuizScore").textContent=`점수: ${correct}/${answered}`;
       };
       wrap.appendChild(btn);
@@ -870,7 +969,7 @@ function renderReport(){
   t.innerHTML=h;
   let weak=null,wg=999; AREAS.forEach(a=>{ if(d.scores[latest].vals[a]!=null&&d.scores[latest].vals[a]<wg){wg=d.scores[latest].vals[a];weak=a;} });
   const toGoal=80-latTot;
-  document.getElementById("reportComment").innerHTML=`이번 주 최대 약점: <b>${weak||"-"}</b> · 목표 80까지 <b>${toGoal>0?toGoal+"점":"달성! 🎉"}</b>. 다음 주는 ${weak||"약점"} 집중 + 통합형 비중↑.`;
+  document.getElementById("reportComment").innerHTML=`이번 주 최대 약점: <b>${weak||"-"}</b> · 목표 80까지 <b>${toGoal>0?toGoal+"점":"달성!"}</b>. 다음 주는 ${weak||"약점"} 집중 + 통합형 비중↑.`;
 }
 
 //==================== 코치 모드 (단계별) ====================
@@ -957,7 +1056,7 @@ function gRecall(){ const w=randVocabWord(); return {prompt:`복습! "<b>${w[0]}
 
 function evaluateEnglish(t){
   t=(t||"").trim();
-  if(!t) return {ok:false, html:"✗ 비어 있어. 한 문장이라도 영어로 써줘!"};
+  if(!t) return {ok:false, html:svgIcon('x')+" 비어 있어. 한 문장이라도 영어로 써줘!"};
   const words=t.split(/\s+/); const issues=[], good=[];
   if(words.length<3) issues.push("너무 짧아 — 주어+동사+목적어를 갖춘 한 문장으로 만들어봐.");
   else good.push(`길이 OK (${words.length}단어)`);
@@ -985,7 +1084,7 @@ function renderFreeResponse(c, gen){
   let sc=0;
   function load(){
     const g=gen();
-    c.innerHTML=`<p class="quiz-q">📝 ${g.prompt}</p>${g.hint?`<div class="note" style="margin-bottom:8px">${g.hint}</div>`:""}
+    c.innerHTML=`<p class="quiz-q">${svgIcon('edit')} ${g.prompt}</p>${g.hint?`<div class="note" style="margin-bottom:8px">${g.hint}</div>`:""}
       <textarea id="frInput" placeholder="영어로 답해봐..."></textarea>
       <div style="margin-top:10px"><button class="btn" id="frEval">제출하고 피드백 받기</button></div>
       <div id="frFb" class="feedback" style="margin-top:10px"></div>
@@ -1013,7 +1112,7 @@ function renderVocabLoop(c){
       <div id="vbtn" style="margin-top:14px;text-align:center"><button class="btn" id="vShow">뜻 보기</button></div>`;
     card.querySelector("#vShow").onclick=()=>{
       card.querySelector("#vrev").innerHTML=`<div style="font-weight:700;color:var(--brand-700)">${mean}</div><div class="note">"${ex}"</div>`;
-      card.querySelector("#vbtn").innerHTML=`<button class="btn ghost" id="vNo">✗ 다시</button> &nbsp; <button class="btn" id="vYes">✓ 외웠어요</button>`;
+      card.querySelector("#vbtn").innerHTML=`<button class="btn ghost" id="vNo">${svgIcon('x')} 다시</button> &nbsp; <button class="btn" id="vYes">${svgIcon('check')} 외웠어요</button>`;
       card.querySelector("#vYes").onclick=()=>{ sc++; coachSession.reps++; coachSession.mastered++; queue.push(item); if(intense)coachHudUpd("csStep",sc); load(); };
       card.querySelector("#vNo").onclick=()=>{ sc++; coachSession.reps++; queue.splice(Math.min(3,queue.length),0,item); if(intense)coachHudUpd("csStep",sc); load(); };
     };
@@ -1033,8 +1132,8 @@ function renderQuizLoop(c, key){
     item.opts.forEach((o,oi)=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=(oi+1)+". "+o;
       b.onclick=()=>{ if(ob.dataset.d)return; ob.dataset.d="1"; sc++; coachSession.reps++; coachSession.attempts++;
         const fb=box.querySelector("#qfb");
-        if(oi===item.ans){ b.classList.add("correct"); coachSession.correct++; coachSession.streak++; fb.className="feedback show ok"; fb.innerHTML="✅ 정답! "+item.exp; }
-        else { b.classList.add("wrong"); ob.querySelectorAll(".opt")[item.ans].classList.add("correct"); coachSession.streak=0; fb.className="feedback show no"; fb.innerHTML="❌ "+item.exp; }
+        if(oi===item.ans){ b.classList.add("correct"); coachSession.correct++; coachSession.streak++; fb.className="feedback show ok"; fb.innerHTML=svgIcon('check')+" 정답! "+item.exp; }
+        else { b.classList.add("wrong"); ob.querySelectorAll(".opt")[item.ans].classList.add("correct"); coachSession.streak=0; fb.className="feedback show no"; fb.innerHTML=svgIcon('x')+" "+item.exp; }
         if(intense){ coachHudUpd("csStep",sc); setTimeout(load,650); }
         else { box.querySelector("#qnext").innerHTML=`<button class="btn" id="qn">다음 문제 ▶ (${sc})</button>`; box.querySelector("#qn").onclick=load; } };
       ob.appendChild(b); });
@@ -1106,11 +1205,11 @@ function renderCoachBody(step,c){
         <p class="note" style="margin-top:10px">실제 문제 세트가 필요하면 코치에게 "${m.week}주차 테스트 문제 줘"라고 말해줘.</p>`;
       break;
     case "done":{
-      c.innerHTML=`<p style="font-size:1.1rem">🎉 <b>Day ${m.day} 완주!</b> 정말 잘했어.</p>
-        ${coachSession.reps?`<p class="note" style="margin-top:6px">⚡ 오늘 집중 처리량: <b>${coachSession.reps}</b>문항 · 정답률 ${coachSession.attempts?Math.round(coachSession.correct/coachSession.attempts*100):0}% · 외운 단어 ${coachSession.mastered}</p>`:""}
+      c.innerHTML=`<p style="font-size:1.1rem;display:flex;align-items:center;gap:8px">${svgIcon('trophy')} <b>Day ${m.day} 완주!</b> 정말 잘했어.</p>
+        ${coachSession.reps?`<p class="note" style="margin-top:6px">${svgIcon('bolt')} 오늘 집중 처리량: <b>${coachSession.reps}</b>문항 · 정답률 ${coachSession.attempts?Math.round(coachSession.correct/coachSession.attempts*100):0}% · 외운 단어 ${coachSession.mastered}</p>`:""}
         <p style="margin-top:8px">아래 버튼으로 오늘을 완료 처리하면 연속 학습(streak)에 기록돼.</p>
-        <button class="btn" id="coachComplete" style="margin-top:12px">✅ 오늘 완료 처리</button>
-        <span class="saved-flash" id="coachDoneFlash">완료! 🔥</span>
+        <button class="btn" id="coachComplete" style="margin-top:12px">${svgIcon('check')} 오늘 완료 처리</button>
+        <span class="saved-flash" id="coachDoneFlash">완료!</span>
         <p class="note" style="margin-top:14px">${m.dow===7?"오늘은 테스트 날! '성장 추적' 탭에서 점수를 입력해줘.":"내일 또 같은 시간에 만나자. 꾸준함이 80점을 만든다. 💪"}</p>`;
       c.querySelector("#coachComplete").onclick=()=>{ const d=db(); d.done[m.day]=d.done[m.day]||{blocks:[]}; d.done[m.day].completed=true; save(d);
         const f=c.querySelector("#coachDoneFlash"); f.classList.add("show"); setTimeout(()=>f.classList.remove("show"),1500); renderDashboard(); };
@@ -1137,7 +1236,7 @@ function showDrillView(v){
 }
 function refreshDrillSetup(){
   const b=drillBest(); const d=db(); const tot=(d.drill&&d.drill.totalReps)||0;
-  document.getElementById("drillBest").innerHTML=(b?`🏆 최고 기록: <b>${b.reps}문항</b> (${b.mins}분 · 정답률 ${b.acc}% · 분당 ${b.rpm})`:"아직 기록이 없어요. 첫 세션을 시작해보세요!")+`<br>📚 누적 처리량: <b>${tot}</b>문항`;
+  document.getElementById("drillBest").innerHTML=(b?`${svgIcon('trophy')} 최고 기록: <b>${b.reps}문항</b> (${b.mins}분 · 정답률 ${b.acc}% · 분당 ${b.rpm})`:"아직 기록이 없어요. 첫 세션을 시작해보세요!")+`<br>${svgIcon('layers')} 누적 처리량: <b>${tot}</b>문항`;
 }
 
 function startDrill(){
@@ -1174,7 +1273,7 @@ function renderDrillVocab(){
     <div id="drillBtns" style="margin-top:18px;text-align:center"><button class="btn" id="dShow">뜻 보기 (스페이스)</button></div>`;
   document.getElementById("dShow").onclick=()=>{
     document.getElementById("drillReveal").innerHTML=`<div style="font-weight:700;color:var(--brand-700);font-size:1.15rem">${mean}</div><div class="note">"${ex}"</div>`;
-    document.getElementById("drillBtns").innerHTML=`<button class="btn ghost" id="dNo">✗ 몰라요 (N)</button> &nbsp; <button class="btn" id="dYes">✓ 알아요 (Space)</button>`;
+    document.getElementById("drillBtns").innerHTML=`<button class="btn ghost" id="dNo">${svgIcon('x')} 몰라요 (N)</button> &nbsp; <button class="btn" id="dYes">${svgIcon('check')} 알아요 (Space)</button>`;
     document.getElementById("dYes").onclick=()=>{ drillState.reps++; drillState.mastered++; q.push(item); flashHud(); nextDrillItem(); };
     document.getElementById("dNo").onclick=()=>{ drillState.reps++; q.splice(Math.min(3,q.length),0,item); flashHud(); nextDrillItem(); };
   };
@@ -1196,7 +1295,7 @@ function endDrill(){
   const acc=s.attempts?Math.round(s.correct/s.attempts*100):0; const rpm=(s.reps/s.mins).toFixed(1);
   const d=db(); d.drill=d.drill||{best:null,totalReps:0,sessions:[]};
   d.drill.totalReps+=s.reps;
-  let pb=""; if(!d.drill.best||s.reps>d.drill.best.reps){ d.drill.best={reps:s.reps,acc,mins:s.mins,rpm}; pb=' <span class="tag good">🏆 신기록!</span>'; }
+  let pb=""; if(!d.drill.best||s.reps>d.drill.best.reps){ d.drill.best={reps:s.reps,acc,mins:s.mins,rpm}; pb=' <span class="tag good">'+svgIcon('trophy')+' 신기록!</span>'; }
   d.drill.sessions.push({t:todayStr(),reps:s.reps,acc,mins:s.mins}); save(d);
   document.getElementById("drillReport").innerHTML=`<div class="card">
     <h3>세션 결과${pb}</h3>
@@ -1210,7 +1309,7 @@ function endDrill(){
     </div>
     <p class="note" style="margin-top:14px">${acc>=80?"정확도가 높아! 다음엔 시간을 늘리거나 속도를 올려 처리량을 더 키워보자.":"정확도부터 다지자. 틀린 유형을 '오늘' 탭에서 복습하면 다음 세션 속도가 빨라져."}</p>
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn" id="drillAgain">한 번 더 ⚡</button>
+      <button class="btn" id="drillAgain">${svgIcon('bolt')} 한 번 더</button>
       <button class="btn ghost" id="drillBack">설정으로</button>
     </div></div>`;
   document.getElementById("drillAgain").onclick=startDrill;
@@ -1281,10 +1380,12 @@ chatAdd("a","안녕! 👋 문제 풀다 막히면 여기에 바로 물어봐.\n�
 
 //==================== 초기화 ====================
 viewDay=currentDay();
+hydrateIcons();
 renderInputTable();
 renderReport();
 renderToday();
 renderDashboard();
+renderCover();
 </script>
 </body>
 </html>
