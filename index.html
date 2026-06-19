@@ -451,12 +451,6 @@
   </section>
 
   <!-- BASELINE -->
-  <section id="baseline">
-    <h2><span data-ic="activity"></span> 0일차 진단 (Baseline)</h2>
-    <p class="sub">12주 내내 동일 기준으로 비교.</p>
-    <div class="card"><table id="baselineTable"></table></div>
-  </section>
-
   <!-- CURRICULUM -->
   <section id="curriculum">
     <h2><span data-ic="list"></span> 12주 전체 커리큘럼</h2>
@@ -472,29 +466,57 @@
     <div class="grid2" id="vocabGrid"></div>
   </section>
 
-  <!-- TRACKER -->
-  <section id="tracker">
-    <h2><span data-ic="trending"></span> 성장 추적</h2>
-    <p class="sub">매주 7일차 점수 입력 → Baseline 대비 증감 자동 계산. 4·8·12주는 종합 모의고사.</p>
-    <div class="card">
-      <h3>주간/모의 점수 입력</h3>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
-        <label>주차 <select id="weekSel"></select></label>
-        <span id="weekKind" class="tag info"></span>
-        <span class="saved-flash" id="savedFlash">저장됨 ✓</span>
+  <!-- ASSESS (진단 & 성장 통합) -->
+  <section id="assess">
+    <h2><span data-ic="trending"></span> 진단 & 성장</h2>
+    <p class="sub">시험을 보면 자동으로 채점되어 그 주차 기록으로 저장되고, 성장 표와 주차별 리포트가 자동으로 만들어집니다. 0일차 진단(Baseline)이 비교 기준이에요.</p>
+
+    <div class="card" id="examCard">
+      <div id="examIntro">
+        <h3><span data-ic="edit"></span> <span id="examKindTitle">진척 테스트</span> &nbsp;<span id="examWeekTag" class="tag info"></span></h3>
+        <p class="note" id="examDesc" style="margin-top:6px"></p>
+        <div id="examSectionsList" style="margin-top:10px"></div>
+        <button class="btn" id="examStart" style="margin-top:16px"><span data-ic="play"></span> 시험 시작</button>
+        <div id="examLast" class="note" style="margin-top:12px"></div>
       </div>
-      <table id="trackerInputTable"></table>
-      <textarea id="weekMemo" placeholder="이번 주 약점 / 느낀 점 메모..." style="margin-top:12px"></textarea>
-      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn" id="saveWeek">이 주차 저장</button>
-        <button class="btn ghost" id="resetAll">전체 초기화</button>
+      <div id="examRun" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <b id="examSecLabel"></b><span class="note" id="examProgText"></span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" id="examProg"></div></div>
+        <div id="examBody" style="margin-top:16px"></div>
       </div>
+      <div id="examResult" style="display:none"></div>
     </div>
+
     <div class="card">
-      <h3>누적 리포트</h3>
-      <table id="reportTable"></table>
-      <p class="note" id="reportComment" style="margin-top:12px"></p>
+      <h3><span data-ic="trending"></span> 성장 기록 (주차별)</h3>
+      <div style="overflow-x:auto"><table id="growthTable"></table></div>
+      <p class="note" id="growthComment" style="margin-top:12px"></p>
     </div>
+
+    <div class="card">
+      <h3><span data-ic="list"></span> 주차별 자동 리포트</h3>
+      <div id="weeklyReports"></div>
+    </div>
+
+    <details class="card" style="padding:0">
+      <summary style="padding:var(--space-6);cursor:pointer;font-weight:var(--fw-semibold)">실제 시험 점수 직접 입력 / 수정</summary>
+      <div style="padding:0 var(--space-6) var(--space-6)">
+        <p class="note" style="margin-bottom:12px">실제 TOEFL·모의고사 점수가 있으면 영역별(0~30)로 직접 입력해 그 주차에 저장할 수 있어요.</p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+          <label>주차 <select id="weekSel"></select></label>
+          <span id="weekKind" class="tag info"></span>
+          <span class="saved-flash" id="savedFlash">저장됨 ✓</span>
+        </div>
+        <table id="trackerInputTable"></table>
+        <textarea id="weekMemo" placeholder="이번 주 약점 / 느낀 점 메모..." style="margin-top:12px"></textarea>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" id="saveWeek">이 주차 저장</button>
+          <button class="btn ghost" id="resetAll">전체 초기화</button>
+        </div>
+      </div>
+    </details>
   </section>
 </main>
 
@@ -782,7 +804,7 @@ function currentDay(){
 }
 
 //==================== 네비게이션 ====================
-const SECTIONS = [["today","오늘","calendar"],["coach","코치 모드","compass"],["drill","집중","bolt"],["dashboard","대시보드","grid"],["baseline","진단","activity"],["curriculum","커리큘럼","list"],["vocab","어휘","book"],["tracker","성장 추적","trending"]];
+const SECTIONS = [["today","오늘","calendar"],["coach","코치 모드","compass"],["drill","집중","bolt"],["dashboard","대시보드","grid"],["curriculum","커리큘럼","list"],["vocab","어휘","book"],["assess","진단 & 성장","trending"]];
 const nav = document.getElementById("nav");
 function navigate(id){
   document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active", x.dataset.view===id));
@@ -793,6 +815,7 @@ function navigate(id){
   if(id==="dashboard") renderDashboard();
   if(id==="coach") startCoach();
   if(id==="drill"){ refreshDrillSetup(); showDrillView("setup"); }
+  if(id==="assess") renderAssess();
   nav.classList.remove("open");
   document.getElementById("menuToggle").setAttribute("aria-expanded","false");
   window.scrollTo({top:0,behavior:"smooth"});
@@ -990,15 +1013,6 @@ document.getElementById("saveStart").onclick=()=>{
   viewDay=currentDay(); renderToday(); renderDashboard();
 };
 
-//==================== Baseline ====================
-(function(){
-  const t=document.getElementById("baselineTable");
-  let h="<tr><th>영역</th><th class='num'>점수(0~30)</th><th>채점 근거</th></tr>";
-  AREAS.forEach(a=>{ const[cls,note]=BASELINE_NOTE[a];
-    h+=`<tr><td>${a}</td><td class='num'><b>${BASELINE[a]}</b></td><td><span class="tag ${cls}">${note}</span></td></tr>`; });
-  h+=`<tr><td><b>총점 추정</b></td><td class='num'><b>~${to120(AREAS.reduce((s,a)=>s+BASELINE[a],0))}</b></td><td class="note">/120 · 기초 문장은 서지만 학술 영역 진입 전</td></tr>`;
-  t.innerHTML=h;
-})();
 
 //==================== 커리큘럼 ====================
 (function(){
@@ -1034,7 +1048,7 @@ document.getElementById("saveStart").onclick=()=>{
   sel.onchange=render; render();
 })();
 
-//==================== 성장 추적 ====================
+//==================== 진단 & 성장 (통합) ====================
 const weekSel=document.getElementById("weekSel");
 for(let w=1;w<=12;w++){ const info=weekInfo(w);
   const label = info.milestone?`${w}주차 (종합 모의 ${ {mock1:"①",mock2:"②",mock3:"③"}[info.milestone] })`:`${w}주차`;
@@ -1051,40 +1065,238 @@ function renderInputTable(){
   document.getElementById("trackerInputTable").innerHTML=h;
 }
 weekSel.onchange=renderInputTable;
-
 document.getElementById("saveWeek").onclick=()=>{
   const d=db(); const w=weekSel.value; const vals={};
   document.querySelectorAll("#trackerInputTable input").forEach(inp=>{ if(inp.value!=="") vals[inp.dataset.area]=Math.max(0,Math.min(30,parseInt(inp.value))); });
-  d.scores[w]={vals,memo:document.getElementById("weekMemo").value}; save(d);
+  d.scores[w]={vals,memo:document.getElementById("weekMemo").value,date:todayStr()}; save(d);
   const f=document.getElementById("savedFlash"); f.classList.add("show"); setTimeout(()=>f.classList.remove("show"),1500);
-  renderReport();
+  renderAssess(); renderDashboard();
 };
 document.getElementById("resetAll").onclick=()=>{
-  if(confirm("주간 점수와 완료 기록을 모두 지울까요? (시작일은 유지)")){ const d=db(); d.scores={}; d.done={}; save(d); renderInputTable(); renderReport(); renderDashboard(); }
+  if(confirm("주간 점수와 완료 기록을 모두 지울까요? (시작일은 유지)")){ const d=db(); d.scores={}; d.done={}; save(d); renderAssess(); renderDashboard(); }
 };
 
-function renderReport(){
-  const d=db(); const weeks=Object.keys(d.scores).map(Number).filter(n=>d.scores[n]&&Object.keys(d.scores[n].vals||{}).length).sort((a,b)=>a-b);
-  const t=document.getElementById("reportTable");
-  if(!weeks.length){ t.innerHTML="<tr><td class='note'>아직 입력된 주차가 없어요. 위에서 점수를 저장해 보세요.</td></tr>"; document.getElementById("reportComment").textContent=""; return; }
-  const latest=weeks[weeks.length-1], prev=weeks.length>1?weeks[weeks.length-2]:null;
-  let h=`<tr><th>영역</th><th class='num'>Baseline</th>`; if(prev)h+=`<th class='num'>${prev}주</th>`; h+=`<th class='num'>${latest}주</th><th class='num'>증감</th></tr>`;
-  let baseSum=0,latSum=0;
-  AREAS.forEach(a=>{ const base=BASELINE[a]; const lat=d.scores[latest].vals[a]!=null?d.scores[latest].vals[a]:"-";
-    const pv=prev&&d.scores[prev].vals[a]!=null?d.scores[prev].vals[a]:null;
-    baseSum+=base; if(lat!=="-")latSum+=lat;
-    const cmp=lat!=="-"?lat-base:0;
-    const arrow=cmp>0?`<span class="delta-up">▲${cmp}</span>`:cmp<0?`<span class="delta-down">▼${-cmp}</span>`:`<span class="delta-flat">―</span>`;
-    h+=`<tr><td>${a}</td><td class='num'>${base}</td>`; if(prev)h+=`<td class='num'>${pv!=null?pv:"-"}</td>`;
-    h+=`<td class='num'><b>${lat}</b></td><td class='num'>${lat!=="-"?arrow:"-"}</td></tr>`; });
-  const baseTot=to120(baseSum),latTot=to120(latSum),totCmp=latTot-baseTot;
-  const totArrow=totCmp>0?`<span class="delta-up">▲${totCmp}</span>`:totCmp<0?`<span class="delta-down">▼${-totCmp}</span>`:`―`;
-  h+=`<tr><td><b>총점 추정</b></td><td class='num'>${baseTot}</td>`; if(prev)h+=`<td class='num'>-</td>`; h+=`<td class='num'><b>${latTot}</b></td><td class='num'>${totArrow}</td></tr>`;
-  t.innerHTML=h;
-  let weak=null,wg=999; AREAS.forEach(a=>{ if(d.scores[latest].vals[a]!=null&&d.scores[latest].vals[a]<wg){wg=d.scores[latest].vals[a];weak=a;} });
-  const toGoal=80-latTot;
-  document.getElementById("reportComment").innerHTML=`이번 주 최대 약점: <b>${weak||"-"}</b> · 목표 80까지 <b>${toGoal>0?toGoal+"점":"달성!"}</b>. 다음 주는 ${weak||"약점"} 집중 + 통합형 비중↑.`;
+// ── 시험 콘텐츠 은행 ──
+const READING_BANK=[
+  {p:"Photosynthesis is the process by which green plants use sunlight to make food from carbon dioxide and water. During this process, plants release oxygen into the air.",qs:[
+    {q:"What do plants release during photosynthesis?",opts:["Oxygen","Carbon dioxide","Sugar"],ans:0},
+    {q:"What do plants use to make food?",opts:["Sunlight","Soil only","Moonlight"],ans:0}]},
+  {p:"The Industrial Revolution began in Britain in the late 18th century. New machines allowed factories to produce goods much faster than before, changing how people lived and worked.",qs:[
+    {q:"Where did the Industrial Revolution begin?",opts:["Britain","France","China"],ans:0},
+    {q:"What did the new machines do?",opts:["Produced goods faster","Slowed down work","Closed factories"],ans:0}]},
+  {p:"Coral reefs are home to thousands of marine species. However, rising ocean temperatures can cause corals to lose their color, a process called bleaching, which often leads to their death.",qs:[
+    {q:"What is bleaching?",opts:["Corals losing color","Corals growing","Fish migrating"],ans:0},
+    {q:"What causes bleaching?",opts:["Rising temperatures","More fish","Less sunlight"],ans:0}]},
+  {p:"Sleep plays a vital role in memory. While we sleep, the brain organizes the information gathered during the day and stores important memories for the long term.",qs:[
+    {q:"What does the brain do during sleep?",opts:["Organizes information","Stops working","Forgets everything"],ans:0},
+    {q:"Sleep is especially important for ___.",opts:["memory","height","digestion only"],ans:0}]},
+  {p:"Volcanoes form when molten rock, called magma, rises to the surface. When it erupts, the magma is known as lava, which cools and hardens into new rock.",qs:[
+    {q:"What is magma called after it erupts?",opts:["Lava","Ash","Ice"],ans:0},
+    {q:"What happens to lava as it cools?",opts:["It hardens into rock","It turns to water","It disappears"],ans:0}]}
+];
+const LISTEN_BANK=[
+  {s:"She bought three new books yesterday.",d:["She brought three new books yesterday.","She bought three new looks yesterday."]},
+  {s:"The meeting starts at nine in the morning.",d:["The meeting starts at five in the morning.","The meeting starts at nine in the evening."]},
+  {s:"He has lived in this city for ten years.",d:["He has lived in this city for ten weeks.","He had left this city ten years ago."]},
+  {s:"They are planning to travel next summer.",d:["They are planning to travel next winter.","They were planning to travel last summer."]},
+  {s:"Could you please pass me the salt?",d:["Could you please pass me the salad?","Would you mind closing the door?"]},
+  {s:"The library is closed on Sundays.",d:["The library is closed on Mondays.","The library is open on Sundays."]},
+  {s:"I usually drink coffee without sugar.",d:["I usually drink coffee with sugar.","I rarely drink coffee without sugar."]},
+  {s:"The train was delayed because of heavy rain.",d:["The train was delayed because of heavy snow.","The bus arrived early despite the rain."]}
+];
+const WRITING_PROMPTS=[
+  "어제 한 일을 영어 한 문장으로 써보세요. (과거시제)",
+  "좋아하는 음식과 그 이유를 영어 한 문장으로 써보세요.",
+  "당신의 하루 일과를 영어 한 문장으로 설명해보세요.",
+  "가보고 싶은 나라와 이유를 영어 한 문장으로 써보세요."
+];
+const SPEAKING_PROMPTS=[
+  "Describe your favorite hobby in two sentences.",
+  "Talk about what you did last weekend.",
+  "Explain why learning English is important to you.",
+  "Describe your hometown briefly."
+];
+const SEC_LABEL={Reading:"독해",Listening:"듣기","어휘/문법":"어휘·문법",Writing:"작문",Speaking:"말하기"};
+
+function examWeek(){ return Math.max(1, Math.min(12, dayMeta(currentDay()).week)); }
+function ttsAvailable(){ try{ return "speechSynthesis" in window; }catch(e){ return false; } }
+function speakText(t){ try{ if(ttsAvailable()){ window.speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang="en-US"; u.rate=0.95; window.speechSynthesis.speak(u); return true; } }catch(e){} return false; }
+
+let examState=null;
+function buildExamItems(wk){
+  const items=[]; const meanPool=allVocabUpTo(wk).map(v=>v[2]);
+  // 독해 2지문 × 2문항
+  shuffle(READING_BANK).slice(0,2).forEach(P=>{ P.qs.forEach(qq=>{ const t=_mc(qq.opts[qq.ans],qq.opts.filter((_,i)=>i!==qq.ans));
+    items.push({type:"mc",area:"Reading",passage:P.p,q:qq.q,opts:t.opts,ans:t.ans}); }); });
+  // 듣기 4
+  shuffle(LISTEN_BANK).slice(0,4).forEach(L=>{ const t=_mc(L.s,L.d); items.push({type:"listen",area:"Listening",s:L.s,opts:t.opts,ans:t.ans}); });
+  // 어휘 4 + 문법 4
+  shuffle(allVocabUpTo(wk)).slice(0,4).forEach(v=>{ const dis=shuffle(meanPool.filter(m=>m!==v[2])).slice(0,2); const t=_mc(v[2],dis);
+    items.push({type:"mc",area:"어휘/문법",q:`"<b>${v[0]}</b>" (${v[1]}) 의 뜻은?`,opts:t.opts,ans:t.ans}); });
+  const seen=new Set(); for(let i=0;i<4;i++){ const g=genUniqueQuiz(seen); items.push({type:"mc",area:"어휘/문법",q:g.q,opts:g.opts,ans:g.ans}); }
+  // 작문 2
+  shuffle(WRITING_PROMPTS).slice(0,2).forEach(p=>items.push({type:"write",area:"Writing",prompt:p}));
+  // 말하기 2
+  shuffle(SPEAKING_PROMPTS).slice(0,2).forEach(p=>items.push({type:"speak",area:"Speaking",topic:p}));
+  return items;
 }
+function startExam(){
+  const wk=examWeek();
+  examState={ wk, items:buildExamItems(wk), i:0,
+    acc:{Reading:{c:0,t:0},Listening:{c:0,t:0},"어휘/문법":{c:0,t:0}}, write:{sum:0,n:0}, speak:{sum:0,n:0} };
+  document.getElementById("examIntro").style.display="none";
+  document.getElementById("examResult").style.display="none";
+  document.getElementById("examRun").style.display="block";
+  renderExamItem();
+}
+function recordMC(area,ok){ const a=examState.acc[area]; a.t++; if(ok)a.c++; }
+function nextExamItem(){ examState.i++; renderExamItem(); }
+function renderExamItem(){
+  const s=examState; if(s.i>=s.items.length) return finishExam();
+  const it=s.items[s.i]; const total=s.items.length;
+  document.getElementById("examProg").style.width=(s.i/total*100)+"%";
+  document.getElementById("examProgText").textContent=`${s.i+1} / ${total}`;
+  document.getElementById("examSecLabel").innerHTML=`${svgIcon('edit')} ${SEC_LABEL[it.area]} 영역`;
+  const b=document.getElementById("examBody");
+  if(it.type==="mc"){
+    b.innerHTML=(it.passage?`<div class="card" style="background:var(--surface-2);margin-bottom:12px">${it.passage}</div>`:"")+
+      `<p class="quiz-q">${it.q}</p><div id="exOpts" style="margin-top:12px"></div>`;
+    const box=b.querySelector("#exOpts");
+    it.opts.forEach((o,oi)=>{ const btn=document.createElement("button"); btn.className="opt"; btn.textContent=(oi+1)+". "+o;
+      btn.onclick=()=>{ if(box.dataset.d)return; box.dataset.d="1"; recordMC(it.area,oi===it.ans); nextExamItem(); };
+      box.appendChild(btn); });
+  } else if(it.type==="listen"){
+    const canTTS=ttsAvailable();
+    b.innerHTML=`<p class="quiz-q">🔊 들은 문장을 고르세요.</p>
+      <div style="margin:12px 0;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ${canTTS?'':'ghost'}" id="exPlay">${svgIcon('play')} ${canTTS?'다시 듣기':'음성 미지원 — 텍스트 보기'}</button>
+      </div>
+      <div id="exHeard" class="note" style="margin-bottom:8px;${canTTS?'display:none':''}">${canTTS?'':'"'+it.s+'"'}</div>
+      <div id="exOpts"></div>`;
+    const box=b.querySelector("#exOpts");
+    it.opts.forEach((o,oi)=>{ const btn=document.createElement("button"); btn.className="opt"; btn.textContent=(oi+1)+". "+o;
+      btn.onclick=()=>{ if(box.dataset.d)return; box.dataset.d="1"; recordMC(it.area,oi===it.ans); nextExamItem(); };
+      box.appendChild(btn); });
+    document.getElementById("exPlay").onclick=()=>{ if(canTTS) speakText(it.s); else document.getElementById("exHeard").style.display="block"; };
+    if(canTTS) setTimeout(()=>speakText(it.s),250);
+  } else if(it.type==="write"){
+    b.innerHTML=`<p class="quiz-q">✍️ ${it.prompt}</p>
+      <textarea id="exWrite" placeholder="여기에 영어로 한 문장 쓰기..." style="margin-top:10px"></textarea>
+      <div id="exWfb" class="feedback" style="margin-top:10px"></div>
+      <button class="btn" id="exWsubmit" style="margin-top:12px">제출하고 다음 ▶</button>`;
+    document.getElementById("exWsubmit").onclick=()=>{
+      const txt=document.getElementById("exWrite").value.trim(); const r=evaluateEnglish(txt);
+      s.write.sum+=(r.score||0); s.write.n++;
+      const fb=document.getElementById("exWfb"); fb.className="feedback show "+(r.ok?"ok":"no"); fb.innerHTML=r.html;
+      const btn=document.getElementById("exWsubmit"); btn.textContent="다음 ▶"; btn.onclick=nextExamItem;
+    };
+  } else if(it.type==="speak"){
+    b.innerHTML=`<p class="quiz-q">🗣️ 아래 주제를 영어로 소리 내어 말해보세요.</p>
+      <div class="card" style="background:var(--surface-2);margin:12px 0"><b>${it.topic}</b></div>
+      ${ttsAvailable()?`<button class="btn ghost sm" id="exSpeakEx">${svgIcon('play')} 주제 듣기</button>`:''}
+      <p class="note" style="margin:12px 0 8px">말한 뒤, 스스로 평가해 주세요 (발음 자동 채점은 불가):</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" data-sp="26">유창하게 말함</button>
+        <button class="btn secondary" data-sp="18">더듬지만 전달됨</button>
+        <button class="btn ghost" data-sp="9">많이 막힘</button>
+      </div>`;
+    if(ttsAvailable()){ const ex=document.getElementById("exSpeakEx"); if(ex) ex.onclick=()=>speakText(it.topic); }
+    b.querySelectorAll("[data-sp]").forEach(btn=>btn.onclick=()=>{ s.speak.sum+=parseInt(btn.dataset.sp); s.speak.n++; nextExamItem(); });
+  }
+}
+function finishExam(){
+  const s=examState; const pct=a=>a.t?Math.round(a.c/a.t*30):0;
+  const vals={
+    Reading:pct(s.acc.Reading), Listening:pct(s.acc.Listening),
+    Speaking:s.speak.n?Math.round(s.speak.sum/s.speak.n):0,
+    Writing:s.write.n?Math.round(s.write.sum/s.write.n/5*30):0,
+    "어휘/문법":pct(s.acc["어휘/문법"]) };
+  AREAS.forEach(a=>{ vals[a]=Math.max(0,Math.min(30,vals[a])); });
+  const d=db(); d.scores[s.wk]={vals,memo:"자동 채점 (시험)",auto:true,date:todayStr()}; save(d);
+  const tot=to120(AREAS.reduce((x,a)=>x+vals[a],0)); const baseTot=to120(AREAS.reduce((x,a)=>x+BASELINE[a],0)); const delta=tot-baseTot;
+  document.getElementById("examProg").style.width="100%";
+  document.getElementById("examRun").style.display="none";
+  const r=document.getElementById("examResult"); r.style.display="block";
+  let rows=AREAS.map(a=>{ const cmp=vals[a]-BASELINE[a]; const arr=cmp>0?`<span class="delta-up">▲${cmp}</span>`:cmp<0?`<span class="delta-down">▼${-cmp}</span>`:`―`;
+    return `<tr><td>${a}</td><td class='num'>${BASELINE[a]}</td><td class='num'><b>${vals[a]}</b></td><td class='num'>${arr}</td></tr>`; }).join("");
+  r.innerHTML=`<h3 style="display:flex;align-items:center;gap:8px">${svgIcon('check')} ${s.wk}주차 시험 완료 — 자동 저장됨</h3>
+    <div class="bigscore" style="margin:8px 0">${tot}<span style="font-size:1rem;color:var(--text-muted)"> / 120</span></div>
+    <p class="note">0일차 대비 <b>${delta>=0?'+'+delta:delta}점</b> (Baseline ${baseTot} → ${tot})</p>
+    <table style="margin-top:14px"><tr><th>영역</th><th class='num'>Baseline</th><th class='num'>이번</th><th class='num'>증감</th></tr>${rows}</table>
+    <p class="note" style="margin-top:12px">성장 표와 주차별 리포트가 자동으로 갱신됐어요. ↓</p>
+    <button class="btn" id="examAgain" style="margin-top:12px">${svgIcon('play')} 다시 보기</button>`;
+  document.getElementById("examAgain").onclick=()=>{ document.getElementById("examResult").style.display="none"; renderExamIntro(); };
+  examState=null;
+  renderGrowth(); renderWeeklyReports(); renderInputTable(); renderDashboard();
+}
+function renderExamIntro(){
+  const wk=examWeek(); const info=weekInfo(wk); const milestone=!!info.milestone;
+  document.getElementById("examIntro").style.display="block";
+  document.getElementById("examRun").style.display="none";
+  document.getElementById("examKindTitle").textContent=milestone?"종합 모의고사":"주간 진척 테스트";
+  document.getElementById("examWeekTag").textContent=`${wk}주차`;
+  document.getElementById("examDesc").textContent=milestone
+    ? "전 영역 풀세트로 현재 실력을 진단합니다. 끝나면 점수가 자동 저장돼요."
+    : "독해·듣기·어휘·문법·작문·말하기를 빠르게 점검합니다. 끝나면 점수가 자동 저장돼요.";
+  document.getElementById("examSectionsList").innerHTML=
+    ["Reading","Listening","어휘/문법","Writing","Speaking"].map(a=>`<span class="tag info" style="margin:2px 4px 2px 0">${SEC_LABEL[a]}</span>`).join("")
+    + `<span class="note" style="display:block;margin-top:8px">총 20문항 · 약 10분</span>`;
+  const d=db(); const rec=d.scores[wk];
+  document.getElementById("examLast").innerHTML= rec
+    ? `최근 응시: <b>${rec.date||"-"}</b> · 총점 <b>${to120(AREAS.reduce((x,a)=>x+(rec.vals[a]||0),0))}/120</b>${rec.auto?' (자동 채점)':' (직접 입력)'}`
+    : "아직 이 주차 기록이 없어요. 시험을 보면 자동으로 저장됩니다.";
+}
+function recordedWeeks(){ const d=db(); return Object.keys(d.scores).map(Number).filter(n=>d.scores[n]&&Object.keys(d.scores[n].vals||{}).length).sort((a,b)=>a-b); }
+function weekTotal(w){ const d=db(); const v=d.scores[w].vals; return to120(AREAS.reduce((x,a)=>x+(v[a]||0),0)); }
+function renderGrowth(){
+  const d=db(); const weeks=recordedWeeks(); const t=document.getElementById("growthTable"); if(!t) return;
+  let head=`<tr><th>영역</th><th class='num'>0일차</th>`+weeks.map(w=>`<th class='num'>${w}주</th>`).join("")+`<th class='num'>증감</th></tr>`;
+  let body=AREAS.map(a=>{ const last=weeks.length?d.scores[weeks[weeks.length-1]].vals[a]:null; const cmp=last!=null?last-BASELINE[a]:null;
+    const arr=cmp==null?"-":cmp>0?`<span class="delta-up">▲${cmp}</span>`:cmp<0?`<span class="delta-down">▼${-cmp}</span>`:`―`;
+    return `<tr><td>${a}</td><td class='num'>${BASELINE[a]}</td>`+weeks.map(w=>`<td class='num'>${d.scores[w].vals[a]!=null?d.scores[w].vals[a]:"-"}</td>`).join("")+`<td class='num'>${arr}</td></tr>`; }).join("");
+  const baseTot=to120(AREAS.reduce((x,a)=>x+BASELINE[a],0));
+  const lastTot=weeks.length?weekTotal(weeks[weeks.length-1]):null; const tc=lastTot!=null?lastTot-baseTot:null;
+  const tArr=tc==null?"-":tc>0?`<span class="delta-up">▲${tc}</span>`:tc<0?`<span class="delta-down">▼${-tc}</span>`:`―`;
+  body+=`<tr><td><b>총점 /120</b></td><td class='num'><b>${baseTot}</b></td>`+weeks.map(w=>`<td class='num'><b>${weekTotal(w)}</b></td>`).join("")+`<td class='num'>${tArr}</td></tr>`;
+  t.innerHTML=head+body;
+  const gc=document.getElementById("growthComment");
+  if(!weeks.length){ gc.textContent="아직 기록이 없어요. 위에서 시험을 보면 주차별로 자동 기록됩니다."; return; }
+  const lw=weeks[weeks.length-1]; const v=d.scores[lw].vals; let weak=null,wg=999; AREAS.forEach(a=>{ if((v[a]!=null?v[a]:0)<wg){wg=v[a]!=null?v[a]:0;weak=a;} });
+  const toGoal=80-lastTot;
+  gc.innerHTML=`최신 ${lw}주차 총점 <b>${lastTot}/120</b> · 최대 약점 <b>${weak}</b> · 목표 80까지 <b>${toGoal>0?toGoal+"점":"달성!"}</b>`;
+}
+function weeklyReportText(w){
+  const d=db(); const weeks=recordedWeeks(); const idx=weeks.indexOf(w); const prev=idx>0?weeks[idx-1]:null;
+  const v=d.scores[w].vals; const tot=weekTotal(w); const baseTot=to120(AREAS.reduce((x,a)=>x+BASELINE[a],0));
+  const dBase=tot-baseTot; const dPrev=prev!=null?tot-weekTotal(prev):null;
+  let weak=null,wg=999,strong=null,sg=-1; AREAS.forEach(a=>{ const sc=v[a]!=null?v[a]:0; if(sc<wg){wg=sc;weak=a;} if(sc>sg){sg=sc;strong=a;} });
+  const info=weekInfo(w);
+  let improved=null; if(prev!=null){ let best=-99; AREAS.forEach(a=>{ const c=(v[a]||0)-(d.scores[prev].vals[a]||0); if(c>best){best=c;improved=a;} }); if(best<=0) improved=null; }
+  const rows=AREAS.map(a=>{ const cmp=(v[a]||0)-BASELINE[a]; const arr=cmp>0?`<span class="delta-up">▲${cmp}</span>`:cmp<0?`<span class="delta-down">▼${-cmp}</span>`:`―`;
+    return `<tr><td>${a}</td><td class='num'>${v[a]!=null?v[a]:"-"}</td><td class='num'>${arr}</td></tr>`; }).join("");
+  return `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+      <span class="bigscore" style="font-size:var(--text-2xl)">${tot}</span><span class="note">/120</span>
+      <span class="tag ${dBase>=0?'good':'bad'}">0일차 대비 ${dBase>=0?'+'+dBase:dBase}</span>
+      ${dPrev!=null?`<span class="tag info">직전 대비 ${dPrev>=0?'+'+dPrev:dPrev}</span>`:''}
+      ${d.scores[w].auto?'<span class="tag info">자동 채점</span>':'<span class="tag warn">직접 입력</span>'}</div>
+    <table style="margin-bottom:10px"><tr><th>영역</th><th class='num'>점수</th><th class='num'>vs 0일차</th></tr>${rows}</table>
+    <p class="note">📌 <b>약점:</b> ${weak} (${wg}/30) · <b>강점:</b> ${strong} (${sg}/30)${improved?` · 직전 대비 가장 향상: <b>${improved}</b>`:''}</p>
+    <p class="note" style="margin-top:6px">📝 <b>처방:</b> 다음 주는 <b>${weak}</b> 집중 + 이번 주 문법 초점(<b>${info.grammar}</b>) 복습. 목표 80까지 <b>${80-tot>0?(80-tot)+"점":"달성!"}</b> 남았어요.</p>`;
+}
+function renderWeeklyReports(){
+  const box=document.getElementById("weeklyReports"); if(!box) return; const weeks=recordedWeeks();
+  if(!weeks.length){ box.innerHTML=`<p class="note">아직 리포트가 없어요. 시험을 보면 주차별 리포트가 자동으로 생성됩니다.</p>`; return; }
+  box.innerHTML=weeks.slice().reverse().map((w,i)=>{ const info=weekInfo(w);
+    return `<details ${i===0?'open':''} style="border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:10px">
+      <summary style="cursor:pointer;font-weight:var(--fw-semibold)">${w}주차 리포트 · ${info.theme} ${info.milestone?'<span class="tag bad">종합 모의</span>':''}</summary>
+      <div style="margin-top:10px">${weeklyReportText(w)}</div></details>`; }).join("");
+}
+function renderAssess(){
+  const wk=examWeek(); if(weekSel && !weekSel.dataset.init){ weekSel.value=wk; weekSel.dataset.init="1"; }
+  renderExamIntro(); renderGrowth(); renderWeeklyReports(); renderInputTable();
+}
+document.getElementById("examStart").onclick=startExam;
+function renderReport(){ renderGrowth(); renderWeeklyReports(); }
 
 //==================== 코치 모드 (단계별) ====================
 let coachSteps=[], coachIdx=0, coachTimer=null, coachRemain=0;
@@ -1191,7 +1403,7 @@ function evaluateEnglish(t){
   else html+=`<div style="margin-top:6px">완벽에 가까워! 아주 좋아 👏</div>`;
   if(fixed!==t) html+=`<div class="note" style="margin-top:8px">교정 제안: <b>${fixed}</b></div>`;
   html+=`<div class="note" style="margin-top:8px">※ 자동 점검은 기본 항목(대문자·문장부호·관사·a·an·철자 반복)만 봐. 더 깊은 피드백은 코치에게 문장을 보내줘!</div>`;
-  return {ok: issues.length===0, html};
+  return {ok: issues.length===0, html, score};
 }
 
 function renderFreeResponse(c, gen){
@@ -1561,8 +1773,7 @@ chatAdd("a","안녕! 👋 문제 풀다 막히면 여기에 바로 물어봐.\n�
 //==================== 초기화 ====================
 viewDay=currentDay();
 hydrateIcons();
-renderInputTable();
-renderReport();
+renderAssess();
 renderToday();
 renderDashboard();
 renderCover();
