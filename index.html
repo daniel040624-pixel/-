@@ -102,6 +102,16 @@
   .stat .l { font-size:0.78rem; color:var(--muted); }
   .bighud { font-size:1.7rem; font-weight:800; color:var(--accent2); font-variant-numeric:tabular-nums; }
   .drill-word { font-size:2rem; font-weight:800; text-align:center; }
+  .chat-fab{position:fixed;right:18px;bottom:18px;z-index:100;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0b0e23;border:none;font-size:1.5rem;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+  .chat-panel{position:fixed;right:18px;bottom:84px;z-index:100;width:340px;max-width:calc(100vw - 36px);height:460px;max-height:calc(100vh - 120px);background:var(--card);border:1px solid var(--line);border-radius:16px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  .chat-panel.open{display:flex}
+  .chat-head{padding:12px 14px;background:var(--card2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .chat-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+  .cmsg{max-width:88%;padding:9px 12px;border-radius:12px;font-size:0.88rem;line-height:1.5;word-break:break-word}
+  .cmsg.u{align-self:flex-end;background:var(--accent);color:#0b0e23;border-bottom-right-radius:3px}
+  .cmsg.a{align-self:flex-start;background:var(--card2);border:1px solid var(--line);border-bottom-left-radius:3px}
+  .chat-input{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line)}
+  .chat-input textarea{min-height:38px;max-height:90px}
   .milestone-banner { background:linear-gradient(90deg,rgba(255,204,92,.2),rgba(255,107,129,.15));
     border:1px solid var(--warn); border-radius:12px; padding:12px 16px; margin-bottom:14px; }
   .dot { display:inline-block; width:11px; height:11px; border-radius:3px; background:var(--card2); border:1px solid var(--line); }
@@ -330,6 +340,27 @@
 </main>
 
 <footer>나만의 영어 학습 코치 · 모든 데이터는 이 브라우저에만 저장됩니다 (localStorage)</footer>
+
+<button class="chat-fab" id="chatFab" title="코치에게 질문">💬</button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head"><b>🧑‍🏫 코치 챗봇</b><span style="flex:1"></span>
+    <button class="btn ghost sm" id="chatCfg">⚙️</button>
+    <button class="btn ghost sm" id="chatClose">✕</button></div>
+  <div id="chatCfgBox" style="display:none;padding:10px;border-bottom:1px solid var(--line);font-size:0.84rem">
+    <div class="note">AI 연결(선택): Claude API 키를 넣으면 자유 질문도 답해줘. 안 넣어도 기본 도우미는 작동해.</div>
+    <input type="password" id="chatKey" placeholder="sk-ant-..." style="margin-top:6px;width:100%">
+    <div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <select id="chatModel"><option value="claude-haiku-4-5-20251001">빠름 (Haiku)</option><option value="claude-sonnet-4-6">정확 (Sonnet)</option></select>
+      <button class="btn sm" id="chatSaveKey">저장</button>
+    </div>
+    <div class="note" style="margin-top:6px">키는 이 브라우저에만 저장되고, 요청은 Anthropic으로 직접 전송돼.</div>
+  </div>
+  <div class="chat-msgs" id="chatMsgs"></div>
+  <div class="chat-input">
+    <textarea id="chatInput" placeholder="질문 입력 (예: a랑 the 차이 뭐야?)"></textarea>
+    <button class="btn" id="chatSend">↑</button>
+  </div>
+</div>
 
 <script>
 //==================== 상수/데이터 ====================
@@ -1084,6 +1115,7 @@ function endDrill(){
 document.getElementById("drillStart").onclick=startDrill;
 document.getElementById("drillStop").onclick=endDrill;
 document.addEventListener("keydown",e=>{
+  if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
   if(!drillState||!document.getElementById("drill").classList.contains("active")) return;
   const k=e.key;
   if(k===" "||k==="Enter"){ const sh=document.getElementById("dShow"),ye=document.getElementById("dYes");
@@ -1091,6 +1123,56 @@ document.addEventListener("keydown",e=>{
   else if(k==="1"||k==="2"||k==="3"){ const o=document.querySelectorAll("#dOpts .opt"); if(o[+k-1]) o[+k-1].click(); }
   else if(k==="n"||k==="N"){ const no=document.getElementById("dNo"); if(no) no.click(); }
 });
+
+//==================== 코치 챗봇 ====================
+const GRAMMAR_HELP=[
+ {k:["관사","a 랑","a랑","a 와","a와","a/the","the 차이","article"], t:"📌 관사 (a/an/the)\n• a/an = '어떤 하나' (처음 언급, 셀 수 있는 단수): I have a dog.\n• the = '그거!' (서로 아는 특정): Close the door.\n• 셀 수 없는 것은 보통 관사 없이: I drink coffee.\n• 모음 소리 앞에서 a→an: an apple."},
+ {k:["시제","과거","현재완료","현재형","tense","과거형"], t:"📌 시제\n• 현재: I study every day. (3인칭 단수는 -s → He studies)\n• 과거: I studied yesterday. (불규칙: go→went, meet→met)\n• 현재완료: I have studied since 2020."},
+ {k:["전치사","in on at","in/on/at","preposition","전치사"], t:"📌 시간 전치사\n• at + 시각: at 9 a.m.\n• on + 요일/날짜: on Monday\n• in + 월/연도/계절: in May, in 2020."},
+ {k:["복수","plural","-s 붙","복수형"], t:"📌 복수형\n• 기본 +s: book→books\n• -s,-x,-ch,-sh +es: box→boxes\n• 자음+y → -ies: city→cities\n• 불규칙: child→children, fish→fish."},
+ {k:["듣기","쉐도잉","리스닝","listening","발음"], t:"📌 듣기/쉐도잉\n• 0.75배속으로 듣고 따라 말하기 → 점차 1.0~1.25배.\n• 안 들린 단어는 받아쓰기 후 스크립트와 대조."},
+ {k:["점수","공부법","어떻게 공부","계획","전략","80"], t:"📌 80점 전략\n• 매일 '코치 모드' 6단계 + '집중 모드'로 처리량↑.\n• 7일차 진척 테스트로 약점 확인 → 다음 주 그 영역 집중.\n• 1순위 약점(관사)은 매일 영작으로 교정."}
+];
+let chatHistory=[];
+function looksEnglish(s){ const han=(s.match(/[가-힣]/g)||[]).length; const lat=(s.match(/[a-zA-Z]/g)||[]).length; return han===0 && lat>=3 && s.trim().split(/\s+/).length>=2; }
+function chatAdd(role,text){ const d=document.createElement("div"); d.className="cmsg "+(role==="u"?"u":"a");
+  if(role==="u") d.textContent=text; else d.innerHTML=String(text).replace(/\n/g,"<br>");
+  const box=document.getElementById("chatMsgs"); box.appendChild(d); box.scrollTop=box.scrollHeight; return d; }
+function offlineAnswer(q){
+  const s=q.trim();
+  if(looksEnglish(s)) return "✏️ 문장 점검:<br>"+evaluateEnglish(s).html;
+  const low=s.toLowerCase();
+  for(const g of GRAMMAR_HELP){ if(g.k.some(k=>low.includes(k.toLowerCase()))) return g.t; }
+  for(let w=1;w<=12;w++){ for(const [word,pos,mean,ex] of (VW[w]||[])){ if(low.includes(word.toLowerCase())) return `📖 ${word} (${pos})\n뜻: ${mean}\n예: ${ex}`; } }
+  return "기본 도우미가 도와줄 수 있는 것:\n• 영어 문장을 보내면 자동 첨삭\n• \"a랑 the 차이\", \"과거형\", \"전치사\", \"복수형\"\n• 단어 뜻 (예: analyze)\n\n자유로운 질문은 ⚙️에서 Claude API 키를 넣으면 AI가 답해줘!";
+}
+async function aiAnswer(key,model){
+  const SYS="You are a warm, encouraging English tutor for a Korean beginner aiming for TOEFL 80+. Explain mainly in Korean with short, simple English examples. The learner's biggest weakness is English articles (a/an/the). Keep answers concise and practical. If the user pastes an English sentence, gently correct it and explain why in Korean.";
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+    headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model,max_tokens:700,system:SYS,messages:chatHistory.slice(-8)})});
+  const j=await res.json();
+  if(j.error) throw new Error(j.error.message||"API error");
+  return (j.content&&j.content[0]&&j.content[0].text)||"(빈 응답)";
+}
+async function doChatSend(){
+  const inp=document.getElementById("chatInput"); const q=inp.value.trim(); if(!q) return;
+  chatAdd("u",q); inp.value=""; chatHistory.push({role:"user",content:q});
+  const d=db();
+  if(d.apiKey){ const wait=chatAdd("a","…생각 중");
+    try{ const ans=await aiAnswer(d.apiKey,d.apiModel||"claude-haiku-4-5-20251001"); wait.innerHTML=String(ans).replace(/\n/g,"<br>"); chatHistory.push({role:"assistant",content:ans}); }
+    catch(e){ wait.innerHTML="(AI 연결 실패: "+(e.message||"")+")<br>기본 도우미로 답할게:<br><br>"+offlineAnswer(q).replace(/\n/g,"<br>"); } }
+  else chatAdd("a", offlineAnswer(q));
+}
+document.getElementById("chatFab").onclick=()=>document.getElementById("chatPanel").classList.toggle("open");
+document.getElementById("chatClose").onclick=()=>document.getElementById("chatPanel").classList.remove("open");
+document.getElementById("chatCfg").onclick=()=>{ const b=document.getElementById("chatCfgBox"); b.style.display=b.style.display==="none"?"":"none";
+  const d=db(); document.getElementById("chatKey").value=d.apiKey||""; document.getElementById("chatModel").value=d.apiModel||"claude-haiku-4-5-20251001"; };
+document.getElementById("chatSaveKey").onclick=()=>{ const d=db(); d.apiKey=document.getElementById("chatKey").value.trim(); d.apiModel=document.getElementById("chatModel").value; save(d);
+  document.getElementById("chatCfgBox").style.display="none"; chatAdd("a", d.apiKey?"✅ AI 연결됨! 이제 무엇이든 물어봐.":"AI 키를 비웠어. 기본 도우미로 작동해."); };
+document.getElementById("chatSend").onclick=doChatSend;
+document.getElementById("chatInput").addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); doChatSend(); } });
+chatAdd("a","안녕! 👋 문제 풀다 막히면 여기에 바로 물어봐.\n예: \"a랑 the 차이 뭐야?\", \"I go to school yesterday 맞아?\", \"analyze 뜻\"");
 
 //==================== 초기화 ====================
 viewDay=currentDay();
