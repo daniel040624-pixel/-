@@ -121,6 +121,18 @@
   section { display:none; animation:fade var(--dur-slow) var(--ease); }
   section.active { display:block; }
   @keyframes fade { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
+  /* ── Sub-tabs (vocab) ── */
+  .vtabs { display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--border); }
+  .vtabs button { background:none; border:none; border-bottom:2px solid transparent; padding:9px 13px; cursor:pointer; color:var(--text-muted); font:var(--fw-medium) var(--text-sm)/1 var(--font-sans); border-radius:var(--radius-sm) var(--radius-sm) 0 0; transition:color var(--dur) var(--ease),background var(--dur) var(--ease); }
+  .vtabs button:hover { color:var(--text); background:var(--surface-2); }
+  .vtabs button.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:var(--fw-semibold); }
+  .vhud { display:flex; gap:var(--space-6); flex-wrap:wrap; margin-bottom:var(--space-4); }
+  .vhud .v { font-family:var(--font-display); font-size:var(--text-xl); font-weight:var(--fw-bold); color:var(--text-strong); line-height:1; }
+  .vhud .l { color:var(--text-muted); font-size:var(--text-xs); margin-top:3px; }
+  .task-row { display:flex; gap:10px; align-items:flex-start; padding:11px 0; border-bottom:1px solid var(--border); }
+  .task-row:last-child { border:none; }
+  .task-row input { margin-top:2px; width:18px; height:18px; accent-color:var(--accent); cursor:pointer; flex:none; }
+  .task-row.done .t { text-decoration:line-through; color:var(--text-subtle); }
   /* ── Card ── */
   .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:var(--space-6); margin-bottom:var(--space-5); box-shadow:var(--shadow-sm); }
   .card h3 { font-size:var(--text-base); margin-bottom:var(--space-3); color:var(--text); font-weight:var(--fw-semibold); letter-spacing:-0.005em; }
@@ -460,10 +472,45 @@
 
   <!-- VOCAB -->
   <section id="vocab">
-    <h2><span data-ic="book"></span> 학술 어휘 (AWL) 전체</h2>
-    <p class="sub">주차를 선택해 그 주의 단어를 카드로 학습.</p>
-    <div style="margin-bottom:14px">주차 <select id="vocabWeek"></select></div>
-    <div class="grid2" id="vocabGrid"></div>
+    <h2><span data-ic="book"></span> 어휘 트레이닝</h2>
+    <p class="sub">단어 · 뜻 · 콜로케이션 · 예문을 분리해 무제한 문제와 스터디 과제로 익혀요.</p>
+    <div class="vtabs" id="vtabs">
+      <button data-vt="cards" class="active">단어 카드</button>
+      <button data-vt="mean">뜻 퀴즈</button>
+      <button data-vt="collo">콜로케이션</button>
+      <button data-vt="cloze">예문 빈칸</button>
+      <button data-vt="task">스터디 과제</button>
+    </div>
+    <div style="margin:16px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap" id="vocabScopeWrap">
+      <label>범위 <select id="vocabScope"></select></label>
+      <span class="note" id="vocabScopeNote"></span>
+    </div>
+
+    <div id="vtCards">
+      <div class="grid2" id="vocabGrid"></div>
+    </div>
+
+    <div id="vtQuiz" style="display:none">
+      <div class="vhud">
+        <div><div class="v" id="vqScore">0/0</div><div class="l">정답/시도</div></div>
+        <div><div class="v" id="vqAcc">-</div><div class="l">정답률</div></div>
+        <div><div class="v" id="vqStreak">0</div><div class="l">연속 정답</div></div>
+      </div>
+      <div class="card" id="vQuizCard" style="min-height:160px"></div>
+    </div>
+
+    <div id="vtTask" style="display:none">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <h3 style="margin:0"><span data-ic="check"></span> 오늘의 스터디 과제</h3>
+          <button class="btn ghost sm" id="taskRefresh">새 과제 만들기</button>
+        </div>
+        <p class="note" id="taskMeta" style="margin:8px 0 4px"></p>
+        <div id="taskList"></div>
+        <div class="prog-bar" style="margin-top:14px"><div class="prog-fill" id="taskProg"></div></div>
+        <p class="note" id="taskDone" style="margin-top:8px"></p>
+      </div>
+    </div>
   </section>
 
   <!-- ASSESS (진단 & 성장 통합) -->
@@ -1031,13 +1078,77 @@ document.getElementById("saveStart").onclick=()=>{
   });
 })();
 
-//==================== 어휘 탭 ====================
+//==================== 어휘 트레이닝 (단어·뜻·콜로케이션·예문·과제) ====================
+// 학술 콜로케이션 뱅크 (한국어 뜻으로 정답이 확정됨)
+const COLLOCATIONS=[
+ {p:"___ research",ko:"연구를 수행하다",a:"conduct",d:["make","invent"]},
+ {p:"___ a conclusion",ko:"결론을 내리다",a:"draw",d:["pull","build"]},
+ {p:"___ a role",ko:"역할을 하다",a:"play",d:["do","act"]},
+ {p:"___ progress",ko:"진전을 이루다",a:"make",d:["do","give"]},
+ {p:"___ a goal",ko:"목표를 달성하다",a:"achieve",d:["arrive","finish"]},
+ {p:"___ a deadline",ko:"마감을 맞추다",a:"meet",d:["catch","arrive"]},
+ {p:"___ awareness",ko:"인식을 높이다",a:"raise",d:["rise","grow"]},
+ {p:"___ action",ko:"조치를 취하다",a:"take",d:["make","give"]},
+ {p:"___ attention",ko:"주의를 기울이다",a:"pay",d:["give","put"]},
+ {p:"___ experience",ko:"경험을 쌓다",a:"gain",d:["win","earn"]},
+ {p:"___ a problem",ko:"문제를 해결하다",a:"solve",d:["answer","cut"]},
+ {p:"___ evidence",ko:"증거를 제공하다",a:"provide",d:["bring","tell"]},
+ {p:"___ a challenge",ko:"도전에 직면하다",a:"face",d:["see","watch"]},
+ {p:"___ an opinion",ko:"의견을 표현하다",a:"express",d:["talk","speak"]},
+ {p:"___ a skill",ko:"기술을 개발하다",a:"develop",d:["grow","raise"]},
+ {p:"___ a decision",ko:"결정을 내리다",a:"make",d:["do","put"]},
+ {p:"___ an effort",ko:"노력을 기울이다",a:"make",d:["do","give"]},
+ {p:"___ a risk",ko:"위험을 무릅쓰다",a:"take",d:["make","do"]},
+ {p:"___ notes",ko:"필기하다",a:"take",d:["make","write"]},
+ {p:"___ a meeting",ko:"회의를 하다",a:"have",d:["make","put"]},
+ {p:"___ homework",ko:"숙제를 하다",a:"do",d:["make","take"]},
+ {p:"___ a presentation",ko:"발표를 하다",a:"give",d:["do","tell"]},
+ {p:"___ advice",ko:"조언을 하다",a:"give",d:["make","say"]},
+ {p:"___ a promise",ko:"약속을 지키다",a:"keep",d:["hold","take"]},
+ {p:"___ a record",ko:"기록을 깨다",a:"break",d:["beat","cut"]},
+ {p:"___ time",ko:"시간을 절약하다",a:"save",d:["keep","win"]},
+ {p:"___ time",ko:"시간을 낭비하다",a:"waste",d:["lose","drop"]},
+ {p:"___ a question",ko:"질문을 하다",a:"ask",d:["make","do"]},
+ {p:"___ a mistake",ko:"실수를 하다",a:"make",d:["do","take"]},
+ {p:"___ money",ko:"돈을 벌다",a:"earn",d:["win","bring"]},
+ {p:"___ a course",ko:"강좌를 수강하다",a:"take",d:["study","read"]},
+ {p:"___ a habit",ko:"습관을 들이다",a:"form",d:["do","build"]},
+ {p:"___ interest",ko:"관심을 보이다",a:"show",d:["give","do"]},
+ {p:"___ a solution",ko:"해결책을 찾다",a:"find",d:["make","do"]},
+ {p:"___ data",ko:"데이터를 수집하다",a:"collect",d:["pick","take"]},
+ {p:"___ a theory",ko:"이론을 제시하다",a:"propose",d:["say","tell"]},
+ {p:"___ results",ko:"결과를 얻다",a:"obtain",d:["win","catch"]},
+ {p:"___ goals",ko:"목표를 세우다",a:"set",d:["put","do"]},
+ {p:"___ a difference",ko:"차이를 만들다",a:"make",d:["do","give"]},
+ {p:"___ responsibility",ko:"책임을 지다",a:"take",d:["have","do"]},
+ {p:"___ a plan",ko:"계획을 세우다",a:"make",d:["build","do"]},
+ {p:"___ pressure",ko:"압력을 가하다",a:"put",d:["make","give"]},
+ {p:"___ a survey",ko:"설문을 실시하다",a:"carry out",d:["take","do"]},
+ {p:"___ a recommendation",ko:"추천을 하다",a:"make",d:["do","say"]}
+];
+const TASK_TEMPLATES=[
+  w=>`${w}주차 핵심 단어 ${(VW[w]||[]).length}개를 소리 내어 3번씩 읽기`,
+  ()=>`'뜻 퀴즈' ${15}문제 풀기 (정답률 85% 목표)`,
+  ()=>`'콜로케이션' ${10}개 맞히고 각각 영어 문장 만들기`,
+  ()=>`'예문 빈칸' ${12}문제 풀기`,
+  w=>`${w}주차 단어 중 5개를 골라 영작 → 코치 챗봇에 보내 첨삭받기`,
+  ()=>`어제 안 외워진 단어 ${8}개 집중 반복`,
+  w=>`${w}주차 단어로 짧은 글 ${4}문장 쓰기`,
+  ()=>`콜로케이션 ${5}개를 활용해 말로 설명해보기 (말하기 연습)`
+];
+
 (function(){
-  const sel=document.getElementById("vocabWeek");
-  for(let w=1;w<=12;w++) sel.innerHTML+=`<option value="${w}">${w}주차 · ${weekInfo(w).subject}</option>`;
-  function render(){
-    const w=+sel.value; const g=document.getElementById("vocabGrid"); g.innerHTML="";
-    (VW[w]||[]).forEach(([word,pos,mean,ex])=>{
+  const scope=document.getElementById("vocabScope");
+  scope.innerHTML=`<option value="all">전체 (1~12주)</option>`+Array.from({length:12},(_,i)=>`<option value="${i+1}">${i+1}주차 · ${weekInfo(i+1).subject}</option>`).join("");
+  let curTab="cards", vq={mode:null,seen:new Set(),att:0,cor:0,streak:0};
+
+  function scopeWords(){ const v=scope.value; if(v==="all"){ let a=[]; for(let w=1;w<=12;w++)(VW[w]||[]).forEach(x=>a.push(x)); return a; } return (VW[+v]||[]).slice(); }
+  const norm=s=>s.toLowerCase();
+
+  // ── 단어 카드 ──
+  function renderCards(){
+    const g=document.getElementById("vocabGrid"); g.innerHTML="";
+    scopeWords().forEach(([word,pos,mean,ex])=>{
       const c=document.createElement("div"); c.className="flash card"; c.style.padding="0";
       c.innerHTML=`<div class="flash-inner">
         <div class="flash-face flash-front"><div class="w">${word}</div><div class="pos">${pos}</div></div>
@@ -1045,7 +1156,80 @@ document.getElementById("saveStart").onclick=()=>{
       c.onclick=()=>c.classList.toggle("flipped"); g.appendChild(c);
     });
   }
-  sel.onchange=render; render();
+
+  // ── 퀴즈 문제 생성기 ──
+  function genMean(){ const pool=scopeWords(); const it=_rand(pool); const dir=Math.random()<0.5?"e2k":"k2e";
+    if(dir==="e2k"){ const dis=shuffle(pool.filter(x=>x[2]!==it[2])).slice(0,2).map(x=>x[2]); const t=_mc(it[2],dis);
+      return {q:`"<b>${it[0]}</b>" <span class="note">(${it[1]})</span> 의 뜻은?`,opts:t.opts,ans:t.ans,exp:`${it[0]} = ${it[2]} · 예) "${it[3]}"`,key:"m-e-"+it[0]}; }
+    const dis=shuffle(pool.filter(x=>x[0]!==it[0])).slice(0,2).map(x=>x[0]); const t=_mc(it[0],dis);
+    return {q:`"<b>${it[2]}</b>" 에 해당하는 단어는?`,opts:t.opts,ans:t.ans,exp:`${it[2]} = ${it[0]} · 예) "${it[3]}"`,key:"m-k-"+it[0]}; }
+  function genCollo(){ const c=_rand(COLLOCATIONS); const t=_mc(c.a,c.d);
+    return {q:`<span class="note">${c.ko}</span><br><span class="quiz-q">${c.p.replace("___","_____")}</span>`,opts:t.opts,ans:t.ans,exp:`${c.p.replace("___","<b>"+c.a+"</b>")} — ${c.ko}`,key:"c-"+c.p+c.a}; }
+  function genCloze(){ const pool=scopeWords(); for(let i=0;i<20;i++){ const it=_rand(pool); const re=new RegExp("\\b"+it[0].replace(/[.*+?^${}()|[\]\\]/g,"")+"(s|es|ed|ing)?\\b","i");
+      if(re.test(it[3])){ const blanked=it[3].replace(re,"_____"); const dis=shuffle(pool.filter(x=>x[0]!==it[0])).slice(0,2).map(x=>x[0]); const t=_mc(it[0],dis);
+        return {q:`<span class="quiz-q">${blanked}</span><br><span class="note">빈칸에 알맞은 단어는?</span>`,opts:t.opts,ans:t.ans,exp:`"${it[3]}" — ${it[0]} = ${it[2]}`,key:"z-"+it[0]}; } }
+    return genMean(); }
+  const GENS={mean:genMean,collo:genCollo,cloze:genCloze};
+
+  function updHud(){ document.getElementById("vqScore").textContent=vq.cor+"/"+vq.att;
+    document.getElementById("vqAcc").textContent=vq.att?Math.round(vq.cor/vq.att*100)+"%":"-";
+    document.getElementById("vqStreak").textContent=vq.streak; }
+  function newQuestion(){ const gen=GENS[vq.mode]; let q; for(let i=0;i<40;i++){ q=gen(); if(!vq.seen.has(q.key)){ vq.seen.add(q.key); break; } } return q; }
+  function renderQuiz(){
+    const q=newQuestion(); const card=document.getElementById("vQuizCard");
+    card.innerHTML=`<div>${q.q}</div><div id="vqOpts" style="margin-top:14px"></div><div id="vqFb" class="feedback" style="margin-top:12px"></div><div id="vqNext" style="margin-top:14px"></div>`;
+    const box=card.querySelector("#vqOpts");
+    q.opts.forEach((o,oi)=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=(oi+1)+". "+o;
+      b.onclick=()=>{ if(box.dataset.d)return; box.dataset.d="1"; vq.att++;
+        const ok=oi===q.ans; const fb=card.querySelector("#vqFb");
+        if(ok){ b.classList.add("correct"); vq.cor++; vq.streak++; fb.className="feedback show ok"; fb.innerHTML=svgIcon('check')+" 정답! "+q.exp; }
+        else { b.classList.add("wrong"); box.querySelectorAll(".opt")[q.ans].classList.add("correct"); vq.streak=0; fb.className="feedback show no"; fb.innerHTML=svgIcon('x')+" "+q.exp; }
+        updHud();
+        card.querySelector("#vqNext").innerHTML=`<button class="btn" id="vqN">다음 문제 ▶ (스페이스)</button>`;
+        card.querySelector("#vqN").onclick=renderQuiz; };
+      box.appendChild(b); });
+  }
+  function startQuiz(mode){ vq={mode,seen:new Set(),att:0,cor:0,streak:0}; updHud(); renderQuiz(); }
+
+  // ── 스터디 과제 ──
+  function taskKey(){ return todayStr()+"-"+scope.value; }
+  function genTasks(){ const w=scope.value==="all"?dayMeta(currentDay()).week:+scope.value;
+    const picks=shuffle(TASK_TEMPLATES).slice(0,5).map(fn=>fn(w));
+    const d=db(); d.vocabTasks=d.vocabTasks||{}; d.vocabTasks[taskKey()]={list:picks,done:picks.map(()=>false)}; save(d); return d.vocabTasks[taskKey()]; }
+  function renderTasks(){
+    const d=db(); d.vocabTasks=d.vocabTasks||{}; let t=d.vocabTasks[taskKey()]; if(!t){ t=genTasks(); }
+    const w=scope.value==="all"?dayMeta(currentDay()).week:+scope.value;
+    document.getElementById("taskMeta").textContent=`${w}주차 · ${weekInfo(w).subject} · ${todayStr()}`;
+    const box=document.getElementById("taskList");
+    box.innerHTML=t.list.map((s,i)=>`<label class="task-row ${t.done[i]?'done':''}"><input type="checkbox" data-i="${i}" ${t.done[i]?'checked':''}><span class="t">${s}</span></label>`).join("");
+    box.querySelectorAll("input").forEach(inp=>inp.onchange=()=>{ const dd=db(); dd.vocabTasks[taskKey()].done[+inp.dataset.i]=inp.checked; save(dd); renderTasks(); });
+    const done=t.done.filter(Boolean).length; document.getElementById("taskProg").style.width=Math.round(done/t.list.length*100)+"%";
+    document.getElementById("taskDone").textContent=`${done} / ${t.list.length} 완료${done===t.list.length?" — 오늘 과제 끝! 잘했어요 🎉":""}`;
+  }
+  document.getElementById("taskRefresh").onclick=()=>{ genTasks(); renderTasks(); };
+
+  // ── 탭 전환 ──
+  function show(id){ ["vtCards","vtQuiz","vtTask"].forEach(x=>document.getElementById(x).style.display=x===id?"":"none"); }
+  function setTab(tab){
+    curTab=tab;
+    document.querySelectorAll("#vtabs button").forEach(b=>b.classList.toggle("active",b.dataset.vt===tab));
+    document.getElementById("vocabScopeWrap").style.display = tab==="collo" ? "none" : "flex";
+    if(tab==="cards"){ show("vtCards"); renderCards(); }
+    else if(tab==="task"){ show("vtTask"); renderTasks(); }
+    else { show("vtQuiz"); startQuiz(tab); }
+  }
+  document.querySelectorAll("#vtabs button").forEach(b=>b.onclick=()=>setTab(b.dataset.vt));
+  scope.onchange=()=>{ if(curTab==="cards") renderCards(); else if(curTab==="task") renderTasks(); else startQuiz(curTab); };
+  // 키보드: 스페이스 = 다음, 1/2/3 = 보기
+  document.addEventListener("keydown",e=>{
+    if(!document.getElementById("vocab").classList.contains("active")) return;
+    if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    if(document.getElementById("vtQuiz").style.display==="none") return;
+    const k=e.key;
+    if(k===" "||k==="Enter"){ const n=document.getElementById("vqN"); if(n){ e.preventDefault(); n.click(); } }
+    else if(k==="1"||k==="2"||k==="3"){ const o=document.querySelectorAll("#vqOpts .opt"); if(o[+k-1]) o[+k-1].click(); }
+  });
+  renderCards();
 })();
 
 //==================== 진단 & 성장 (통합) ====================
