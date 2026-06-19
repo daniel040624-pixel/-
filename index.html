@@ -579,42 +579,156 @@ const QUIZ_BANK = {
     {q:"___ book was very interesting. (아까 그 책)",opts:["A","The","(없음)"],ans:1,exp:"서로 아는 특정 → The book."},
     {q:"I drink ___ coffee every morning.",opts:["a","the","(없음)"],ans:2,exp:"셀 수 없는 물질·일반 → 관사 없음."},
     {q:"She is ___ student at my school.",opts:["a","the","(없음)"],ans:0,exp:"셀 수 있는 단수·처음 → a student."},
-    {q:"I love ___ music.",opts:["a","the","(없음)"],ans:2,exp:"추상·불가산·일반 → 관사 없음."}
+    {q:"I love ___ music.",opts:["a","the","(없음)"],ans:2,exp:"추상·불가산·일반 → 관사 없음."},
+    {q:"___ sun rises in the east.",opts:["A","The","(없음)"],ans:1,exp:"세상에 하나뿐 → the sun."},
+    {q:"He plays ___ piano well.",opts:["a","the","(없음)"],ans:1,exp:"악기 연주 → the piano."},
+    {q:"I go to ___ school by bus.",opts:["a","the","(없음)"],ans:2,exp:"본래 목적(수업)으로 갈 땐 무관사 → go to school."},
+    {q:"She is ___ honest person.",opts:["a","an","the"],ans:1,exp:"honest는 [ɑ] 모음 소리 → an."},
+    {q:"We had ___ umbrella with us.",opts:["a","an","the"],ans:1,exp:"모음 소리 앞 → an umbrella."},
+    {q:"He is ___ best player on the team.",opts:["a","an","the"],ans:2,exp:"최상급 앞 → the best."},
+    {q:"In general, ___ water is essential for life.",opts:["a","the","(없음)"],ans:2,exp:"일반적 물질 일반론 → 무관사."},
+    {q:"I saw ___ movie you recommended.",opts:["a","the","(없음)"],ans:1,exp:"서로 아는 특정 → the movie."},
+    {q:"There is ___ apple and ___ banana.",opts:["an / a","a / an","the / the"],ans:0,exp:"apple(모음)→an, banana(자음)→a."}
   ],
   tense:[
     {q:"Yesterday I ___ to school.",opts:["go","went","going"],ans:1,exp:"과거(yesterday) → went."},
     {q:"She ___ English every day.",opts:["study","studies","studied"],ans:1,exp:"3인칭 단수 현재 → studies."},
     {q:"They ___ a movie last night.",opts:["watch","watched","watches"],ans:1,exp:"과거(last night) → watched."},
     {q:"I ___ TV when she called.",opts:["watch","was watching","watched"],ans:1,exp:"과거진행: ~하던 중 → was watching."},
-    {q:"He has ___ here since 2020.",opts:["live","lived","living"],ans:1,exp:"현재완료 have/has + p.p. → lived."}
+    {q:"He has ___ here since 2020.",opts:["live","lived","living"],ans:1,exp:"현재완료 have/has + p.p. → lived."},
+    {q:"Look! It ___ now.",opts:["rains","is raining","rained"],ans:1,exp:"지금 진행 → is raining."},
+    {q:"By 2010 he ___ in Seoul for ten years.",opts:["lived","had lived","has lived"],ans:1,exp:"과거 기준 그 이전까지 → 과거완료 had lived."},
+    {q:"I ___ my homework already.",opts:["finish","finished","have finished"],ans:2,exp:"already + 현재완료 → have finished."},
+    {q:"When I arrived, the train ___.",opts:["leaves","had left","has left"],ans:1,exp:"도착보다 먼저 일어남 → 과거완료 had left."},
+    {q:"She ___ to Japan next week.",opts:["goes","is going","went"],ans:1,exp:"예정된 미래 → is going."},
+    {q:"Water ___ at 0 degrees.",opts:["freeze","freezes","froze"],ans:1,exp:"불변의 진리 → 현재형 freezes."},
+    {q:"They ___ dinner when I called.",opts:["have","were having","had"],ans:1,exp:"~하던 중 → 과거진행 were having."},
+    {q:"He ___ English for five years now.",opts:["studies","has studied","studied"],ans:1,exp:"지금까지 계속 → 현재완료 has studied."},
+    {q:"If it rains tomorrow, I ___ home.",opts:["stay","will stay","stayed"],ans:1,exp:"조건절 현재, 주절 → will stay."}
   ],
   plural:[
     {q:"There are three ___ on the table.",opts:["book","books","bookes"],ans:1,exp:"복수 → books."},
     {q:"I have two ___.",opts:["childs","children","childrens"],ans:1,exp:"불규칙 복수 → children."},
     {q:"Many ___ live in the sea.",opts:["fish","fishs","fishes"],ans:0,exp:"fish는 단복수 동일."},
     {q:"She has many ___.",opts:["box","boxs","boxes"],ans:2,exp:"-x로 끝나면 -es → boxes."},
-    {q:"There are several ___.",opts:["citys","cities","cityes"],ans:1,exp:"자음+y → -ies → cities."}
+    {q:"There are several ___.",opts:["citys","cities","cityes"],ans:1,exp:"자음+y → -ies → cities."},
+    {q:"He brushes his ___ twice a day.",opts:["tooth","teeth","tooths"],ans:1,exp:"불규칙 → teeth."},
+    {q:"The ___ are playing in the yard.",opts:["mans","men","mens"],ans:1,exp:"man → men."},
+    {q:"We saw two ___ in the field.",opts:["sheep","sheeps","sheepes"],ans:0,exp:"sheep 단복수 동일."},
+    {q:"She bought three ___.",opts:["knifes","knives","knifs"],ans:1,exp:"-f/-fe → -ves → knives."},
+    {q:"The lab ran many ___.",opts:["analysis","analyses","analysises"],ans:1,exp:"-is → -es → analyses."},
+    {q:"The ___ of the study are clear.",opts:["datas","data","datums"],ans:1,exp:"data는 보통 복수 취급, 추가 -s 안 붙임."},
+    {q:"He took several ___.",opts:["photoes","photos","photo"],ans:1,exp:"모음+o → 보통 +s → photos."},
+    {q:"Two ___ passed by.",opts:["bus","buses","buss"],ans:1,exp:"-s로 끝 → -es → buses."}
   ],
   clause:[
     {q:"The man ___ lives next door is a doctor.",opts:["who","which","what"],ans:0,exp:"사람 주격 관계대명사 → who."},
     {q:"This is the book ___ I bought.",opts:["who","that","what"],ans:1,exp:"사물 목적격 → that/which."},
     {q:"___ it rains, we stay home.",opts:["When","What","Who"],ans:0,exp:"~할 때(시간 접속사) → When."},
     {q:"I know the reason ___ he left.",opts:["why","which","who"],ans:0,exp:"이유 → why."},
-    {q:"She smiled ___ she was happy.",opts:["because","but","or"],ans:0,exp:"이유 접속사 → because."}
+    {q:"She smiled ___ she was happy.",opts:["because","but","or"],ans:0,exp:"이유 접속사 → because."},
+    {q:"The house ___ roof is red is ours.",opts:["who","whose","which"],ans:1,exp:"소유격 관계대명사 → whose."},
+    {q:"That's the city ___ I was born.",opts:["which","where","that"],ans:1,exp:"장소 → where."},
+    {q:"Do you know ___ she lives?",opts:["where","which","who"],ans:0,exp:"장소 명사절 → where."},
+    {q:"___ you study hard, you'll pass.",opts:["If","Unless","Despite"],ans:0,exp:"~한다면 → If."},
+    {q:"___ he was tired, he kept working.",opts:["Although","Because","So"],ans:0,exp:"양보(~지만) → Although."},
+    {q:"I'll wait ___ you come back.",opts:["until","during","for"],ans:0,exp:"~까지(시간 접속사) → until."},
+    {q:"The woman ___ I met was kind.",opts:["which","whom","what"],ans:1,exp:"사람 목적격 → whom/who."},
+    {q:"___ finishing, he went home.",opts:["After","During","Until"],ans:0,exp:"~한 후에 → After."}
   ],
   preposition:[
     {q:"I will meet you ___ Monday.",opts:["in","on","at"],ans:1,exp:"요일 앞 → on Monday."},
     {q:"The class starts ___ 9 a.m.",opts:["in","on","at"],ans:2,exp:"정확한 시각 → at 9."},
     {q:"She was born ___ 1999.",opts:["in","on","at"],ans:0,exp:"연도 → in 1999."},
     {q:"The book is ___ the table.",opts:["on","in","at"],ans:0,exp:"표면 위 → on."},
-    {q:"He is good ___ math.",opts:["in","at","on"],ans:1,exp:"good at + 분야."}
+    {q:"He is good ___ math.",opts:["in","at","on"],ans:1,exp:"good at + 분야."},
+    {q:"She lives ___ Korea.",opts:["in","on","at"],ans:0,exp:"국가/큰 장소 → in."},
+    {q:"We met ___ the bus stop.",opts:["in","on","at"],ans:2,exp:"한 지점 → at."},
+    {q:"The picture is ___ the wall.",opts:["in","on","at"],ans:1,exp:"벽 표면 → on the wall."},
+    {q:"I'll see you ___ the morning.",opts:["in","on","at"],ans:0,exp:"in the morning."},
+    {q:"He's afraid ___ spiders.",opts:["of","at","to"],ans:0,exp:"afraid of."},
+    {q:"This depends ___ the weather.",opts:["of","on","in"],ans:1,exp:"depend on."},
+    {q:"She is interested ___ science.",opts:["in","on","at"],ans:0,exp:"interested in."},
+    {q:"They arrived ___ the airport.",opts:["to","at","in"],ans:1,exp:"arrive at + 지점."}
   ],
   connectors:[
     {q:"It was raining; ___, we went out.",opts:["however","because","so"],ans:0,exp:"대조 → however."},
     {q:"He studied hard; ___, he passed.",opts:["however","therefore","but"],ans:1,exp:"결과 → therefore."},
     {q:"___ addition, prices rose.",opts:["In","On","At"],ans:0,exp:"게다가 → In addition."},
     {q:"___ example, coral needs algae.",opts:["For","In","On"],ans:0,exp:"예시 → For example."},
-    {q:"The plan failed ___ poor funding.",opts:["due to","because","so"],ans:0,exp:"due to + 명사."}
+    {q:"The plan failed ___ poor funding.",opts:["due to","because","so"],ans:0,exp:"due to + 명사."},
+    {q:"He was sick; ___, he went to work.",opts:["nevertheless","therefore","thus"],ans:0,exp:"그럼에도 → nevertheless."},
+    {q:"___, the data shows a clear trend.",opts:["Moreover","Otherwise","However"],ans:0,exp:"게다가 → Moreover."},
+    {q:"Save money; ___, you'll be broke.",opts:["otherwise","therefore","moreover"],ans:0,exp:"그렇지 않으면 → otherwise."},
+    {q:"___ the rain, the game continued.",opts:["Despite","Although","Because"],ans:0,exp:"Despite + 명사."},
+    {q:"He failed ___ he didn't study.",opts:["because","therefore","however"],ans:0,exp:"이유 접속사 → because."},
+    {q:"The results were poor; ___, we changed the plan.",opts:["thus","however","although"],ans:0,exp:"따라서 → thus."},
+    {q:"___ working hard, she didn't pass.",opts:["Despite","Although","Because"],ans:0,exp:"Despite + 동명사/명사."},
+    {q:"First, mix it; ___, heat it.",opts:["then","however","because"],ans:0,exp:"순서 → then."}
+  ],
+  agreement:[
+    {q:"Each of the students ___ a book.",opts:["have","has","are"],ans:1,exp:"each → 단수 → has."},
+    {q:"The number of cars ___ increasing.",opts:["is","are","be"],ans:0,exp:"the number of → 단수 is."},
+    {q:"Neither he nor they ___ ready.",opts:["is","are","was"],ans:1,exp:"nor 뒤 주어(they)에 일치 → are."},
+    {q:"Mathematics ___ my favorite subject.",opts:["are","is","were"],ans:1,exp:"학과명은 -s라도 단수 → is."},
+    {q:"There ___ several reasons for this.",opts:["is","are","was"],ans:1,exp:"복수 주어 → are."},
+    {q:"One of the books ___ missing.",opts:["are","is","were"],ans:1,exp:"one of → 단수 is."},
+    {q:"Everybody ___ the rules.",opts:["know","knows","are knowing"],ans:1,exp:"everybody → 단수 knows."},
+    {q:"The team ___ winning the game.",opts:["is","are","be"],ans:0,exp:"집합명사 단일체 → is."},
+    {q:"A number of students ___ late.",opts:["is","are","was"],ans:1,exp:"a number of → 복수 are."}
+  ],
+  comparison:[
+    {q:"This box is ___ than that one.",opts:["heavy","heavier","heaviest"],ans:1,exp:"비교급 → heavier."},
+    {q:"She is the ___ student in class.",opts:["smart","smarter","smartest"],ans:2,exp:"최상급 → the smartest."},
+    {q:"This is ___ interesting than the book.",opts:["more","most","much"],ans:0,exp:"긴 형용사 비교 → more interesting."},
+    {q:"He runs ___ than his brother.",opts:["fast","faster","fastest"],ans:1,exp:"부사 비교급 → faster."},
+    {q:"It's the ___ movie I've ever seen.",opts:["good","better","best"],ans:2,exp:"불규칙 최상급 → best."},
+    {q:"My bag is as ___ as yours.",opts:["heavy","heavier","heaviest"],ans:0,exp:"as ... as → 원급 heavy."},
+    {q:"The more you practice, the ___ you get.",opts:["good","better","best"],ans:1,exp:"the 비교급, the 비교급 → better."},
+    {q:"This problem is ___ difficult than that.",opts:["less","least","little"],ans:0,exp:"덜 → less difficult."},
+    {q:"Today is ___ than yesterday.",opts:["bad","worse","worst"],ans:1,exp:"bad의 비교급 → worse."}
+  ],
+  verbals:[
+    {q:"I enjoy ___ books.",opts:["read","to read","reading"],ans:2,exp:"enjoy + 동명사(-ing)."},
+    {q:"She decided ___ early.",opts:["leave","to leave","leaving"],ans:1,exp:"decide + to부정사."},
+    {q:"He avoided ___ the question.",opts:["answer","to answer","answering"],ans:2,exp:"avoid + 동명사(-ing)."},
+    {q:"They want ___ a house.",opts:["buy","to buy","buying"],ans:1,exp:"want + to부정사."},
+    {q:"I'm looking forward to ___ you.",opts:["see","to see","seeing"],ans:2,exp:"look forward to + 동명사(-ing)."},
+    {q:"We hope ___ you soon.",opts:["see","to see","seeing"],ans:1,exp:"hope + to부정사."},
+    {q:"Would you mind ___ the door?",opts:["close","to close","closing"],ans:2,exp:"mind + 동명사(-ing)."},
+    {q:"She suggested ___ a break.",opts:["take","to take","taking"],ans:2,exp:"suggest + 동명사(-ing)."},
+    {q:"It's important ___ on time.",opts:["be","to be","being"],ans:1,exp:"It's + 형용사 + to부정사 → to be."}
+  ],
+  conditional:[
+    {q:"If I ___ rich, I would travel.",opts:["am","were","was"],ans:1,exp:"가정법 과거 → were."},
+    {q:"If you heat ice, it ___.",opts:["melt","melts","melted"],ans:1,exp:"일반 사실 조건 → 현재형 melts."},
+    {q:"If she had studied, she ___ passed.",opts:["would","would have","will have"],ans:1,exp:"가정법 과거완료 → would have passed."},
+    {q:"I ___ help you if I had time.",opts:["will","would","would have"],ans:1,exp:"가정법 과거 → would help."},
+    {q:"Unless you hurry, you ___ the train.",opts:["miss","will miss","missed"],ans:1,exp:"조건 미래 → will miss."},
+    {q:"If it ___ tomorrow, we'll cancel.",opts:["rain","rains","rained"],ans:1,exp:"조건절은 현재형 → rains."},
+    {q:"Had I known, I ___ come.",opts:["will","would have","would"],ans:1,exp:"도치 가정법 과거완료 → would have come."},
+    {q:"I wish I ___ speak French.",opts:["can","could","will"],ans:1,exp:"wish + 과거(가정) → could."}
+  ],
+  passive:[
+    {q:"The letter ___ yesterday.",opts:["sent","was sent","is sent"],ans:1,exp:"과거 수동 → was sent."},
+    {q:"English ___ all over the world.",opts:["speaks","is spoken","spoke"],ans:1,exp:"수동 → is spoken."},
+    {q:"The house ___ built in 1900.",opts:["is","was","has"],ans:1,exp:"과거 수동 → was built."},
+    {q:"The work must ___ by Friday.",opts:["finish","be finished","finished"],ans:1,exp:"조동사 + be + p.p. → be finished."},
+    {q:"The window ___ broken by the boy.",opts:["was","did","has"],ans:0,exp:"수동 → was broken."},
+    {q:"A new bridge ___ now.",opts:["is building","is being built","builds"],ans:1,exp:"진행 수동 → is being built."},
+    {q:"This song ___ by millions.",opts:["has heard","has been heard","heard"],ans:1,exp:"현재완료 수동 → has been heard."},
+    {q:"The results ___ next week.",opts:["will announce","will be announced","announce"],ans:1,exp:"미래 수동 → will be announced."}
+  ],
+  wordform:[
+    {q:"The scientist will ___ the data.",opts:["analysis","analyze","analytical"],ans:1,exp:"동사 자리 → analyze."},
+    {q:"We need a careful ___ of the results.",opts:["analyze","analysis","analyzed"],ans:1,exp:"명사 자리 → analysis."},
+    {q:"This is a ___ approach.",opts:["theory","theorize","theoretical"],ans:2,exp:"명사 수식 → 형용사 theoretical."},
+    {q:"The policy had a big ___ on prices.",opts:["affect","effect","effective"],ans:1,exp:"명사 → effect (영향)."},
+    {q:"Smoking can ___ your health.",opts:["affect","effect","effective"],ans:0,exp:"동사 → affect (영향을 주다)."},
+    {q:"She gave a clear ___ of the theory.",opts:["explain","explanation","explanatory"],ans:1,exp:"명사 → explanation."},
+    {q:"The data ___ a strong trend.",opts:["indication","indicate","indicative"],ans:1,exp:"동사 → indicate."},
+    {q:"His argument was very ___.",opts:["persuade","persuasion","persuasive"],ans:2,exp:"형용사 → persuasive."},
+    {q:"They reached a final ___.",opts:["conclude","conclusion","conclusive"],ans:1,exp:"명사 → conclusion."}
   ]
 };
 
@@ -1244,7 +1358,7 @@ function startDrill(){
   const focus=document.getElementById("drillFocus").value;
   const week=dayMeta(currentDay()).week;
   drillState={ end:Date.now()+mins*60000, mins, focus, reps:0, correct:0, attempts:0,
-    streak:0, maxStreak:0, mastered:0, vq:shuffle(allVocabUpTo(week)).map(v=>({v})), qpool:allQuiz() };
+    streak:0, maxStreak:0, mastered:0, vq:shuffle(allVocabUpTo(week)).map(v=>({v})), qpool:shuffle(allQuiz()), qi:0 };
   showDrillView("run"); flashHud();
   clearInterval(drillTick); drillTick=setInterval(drillTimer,200);
   nextDrillItem();
@@ -1281,7 +1395,9 @@ function renderDrillVocab(){
   };
 }
 function renderDrillQuiz(){
-  const item=drillState.qpool[Math.floor(Math.random()*drillState.qpool.length)];
+  const s=drillState;
+  if(s.qi>=s.qpool.length){ s.qpool=shuffle(s.qpool); s.qi=0; }
+  const item=s.qpool[s.qi++];
   const c=document.getElementById("drillCard");
   c.innerHTML=`<div class="quiz-q" style="font-size:1.05rem">${item.q}</div><div id="dOpts" style="margin-top:14px"></div><div id="dFb" class="note" style="margin-top:8px"></div>`;
   const box=c.querySelector("#dOpts");
