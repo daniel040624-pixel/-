@@ -375,7 +375,6 @@
     <div class="vtabs" id="ttabs">
       <button data-tt="coach" class="active"><span data-ic="compass"></span> 코치 (단계별)</button>
       <button data-tt="drill"><span data-ic="bolt"></span> 집중 훈련</button>
-      <button data-tt="match"><span data-ic="flag"></span> 경기 (실전)</button>
     </div>
 
     <div id="ttCoach" style="margin-top:16px">
@@ -428,31 +427,33 @@
 
     <div id="drillReport" style="display:none"></div>
     </div><!-- /ttDrill -->
+  </section>
 
-    <div id="ttMatch" style="margin-top:16px;display:none">
-      <div id="matchSetup">
-        <p class="sub" style="margin-bottom:16px">실전처럼 4대 영역을 무제한으로 훈련해요. 영역·난이도를 고르거나, 간단 진단으로 난이도를 자동 설정하세요.</p>
-        <div class="card">
-          <h3>영역</h3>
-          <div class="seg" id="matchSkills" style="margin-top:8px"></div>
-          <h3 style="margin-top:18px">난이도</h3>
-          <div class="seg" id="matchLevels" style="margin-top:8px"></div>
-          <p class="note" id="matchLevelNote" style="margin-top:10px"></p>
-          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn" id="matchStart"><span data-ic="play"></span> 경기 시작</button>
-            <button class="btn secondary" id="matchDiag"><span data-ic="activity"></span> 간단 진단으로 난이도 설정</button>
-          </div>
+  <!-- MATCH (경기 모드) -->
+  <section id="match">
+    <h2><span data-ic="flag"></span> 경기 모드</h2>
+    <p class="sub">대화 · 모의고사 · 리딩 · 리스닝 · 라이팅 · 스피킹을 실전처럼 훈련해요. 영역·난이도를 고르거나 간단 진단으로 자동 설정하세요.</p>
+    <div id="matchSetup">
+      <div class="card">
+        <h3>영역</h3>
+        <div class="seg" id="matchSkills" style="margin-top:8px"></div>
+        <h3 style="margin-top:18px">난이도</h3>
+        <div class="seg" id="matchLevels" style="margin-top:8px"></div>
+        <p class="note" id="matchLevelNote" style="margin-top:10px"></p>
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" id="matchStart"><span data-ic="play"></span> 시작</button>
+          <button class="btn secondary" id="matchDiag"><span data-ic="activity"></span> 간단 진단으로 난이도 설정</button>
         </div>
       </div>
-      <div id="matchDiagView" style="display:none"></div>
-      <div id="matchRun" style="display:none">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
-          <b id="matchTitle"></b><span class="note" id="matchSub"></span><span style="flex:1"></span>
-          <button class="btn ghost sm" id="matchExit">◀ 나가기</button>
-        </div>
-        <div class="vhud" id="matchHud"></div>
-        <div class="card" id="matchBody" style="min-height:170px"></div>
+    </div>
+    <div id="matchDiagView" style="display:none"></div>
+    <div id="matchRun" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+        <b id="matchTitle"></b><span class="note" id="matchSub"></span><span style="flex:1"></span>
+        <button class="btn ghost sm" id="matchExit">◀ 나가기</button>
       </div>
+      <div class="vhud" id="matchHud"></div>
+      <div class="card" id="matchBody" style="min-height:170px"></div>
     </div>
   </section>
 
@@ -893,7 +894,7 @@ function currentDay(){
 }
 
 //==================== 네비게이션 ====================
-const SECTIONS = [["dashboard","대시보드","grid"],["curriculum","커리큘럼","list"],["train","훈련 모드","bolt"],["vocab","어휘","book"],["assess","진단평가","trending"]];
+const SECTIONS = [["dashboard","대시보드","grid"],["curriculum","커리큘럼","list"],["train","훈련 모드","bolt"],["match","경기모드","flag"],["vocab","어휘","book"],["assess","진단평가","trending"]];
 const nav = document.getElementById("nav");
 function navigate(id){
   document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active", x.dataset.view===id));
@@ -903,6 +904,7 @@ function navigate(id){
   if(id==="cover"){ renderCover(); renderToday(); }
   if(id==="dashboard") renderDashboard();
   if(id==="train") showTrain();
+  if(id==="match") showMatch();
   if(id==="assess") renderAssess();
   nav.classList.remove("open");
   document.getElementById("menuToggle").setAttribute("aria-expanded","false");
@@ -966,13 +968,10 @@ function setTrainTab(tab){
   document.querySelectorAll("#ttabs button").forEach(b=>b.classList.toggle("active",b.dataset.tt===tab));
   document.getElementById("ttCoach").style.display=tab==="coach"?"":"none";
   document.getElementById("ttDrill").style.display=tab==="drill"?"":"none";
-  document.getElementById("ttMatch").style.display=tab==="match"?"":"none";
   if(typeof coachTimer!=="undefined"&&coachTimer){ clearInterval(coachTimer); coachTimer=null; }
   if(typeof drillTick!=="undefined"&&drillTick){ clearInterval(drillTick); drillTick=null; }
-  if(typeof clearMatchTimer==="function") clearMatchTimer();
   if(tab==="coach") startCoach();
-  else if(tab==="drill"){ refreshDrillSetup(); showDrillView("setup"); }
-  else showMatch();
+  else { refreshDrillSetup(); showDrillView("setup"); }
 }
 function showTrain(){ setTrainTab(currentTrainTab||"coach"); }
 document.querySelectorAll("#ttabs button").forEach(b=>b.onclick=()=>setTrainTab(b.dataset.tt));
@@ -2123,8 +2122,34 @@ document.getElementById("chatInput").addEventListener("keydown",e=>{ if(e.key===
 chatAdd("a","안녕! 👋 문제 풀다 막히면 여기에 바로 물어봐.\n예: \"a랑 the 차이 뭐야?\", \"I go to school yesterday 맞아?\", \"analyze 뜻\"");
 
 //==================== 경기 (실전 훈련: 리딩·리스닝·라이팅·스피킹) ====================
-const MATCH_SKILLS=[["reading","리딩"],["listening","리스닝"],["writing","라이팅"],["speaking","스피킹"]];
+const MATCH_SKILLS=[["conversation","대화"],["mock","모의고사"],["reading","리딩"],["listening","리스닝"],["writing","라이팅"],["speaking","스피킹"]];
 const MATCH_LEVELS=[[1,"쉬움"],[2,"보통"],[3,"어려움"]];
+const CONVO=[
+  {ctx:"식당에서 주문",q:"Are you ready to order?",a:"Yes, I'll have the pasta, please.",d:["No, I'm a waiter.","It's raining outside."]},
+  {ctx:"길 묻기",q:"Excuse me, how do I get to the station?",a:"Go straight and turn left at the corner.",d:["I had lunch already.","Yes, I have two cats."]},
+  {ctx:"안부 인사",q:"How have you been lately?",a:"Pretty good, thanks. How about you?",d:["It costs ten dollars.","Turn off the light."]},
+  {ctx:"수업 중 질문",q:"Could you explain that again, please?",a:"Sure, let me put it another way.",d:["No, the store is closed.","I bought a new phone."]},
+  {ctx:"전화 통화",q:"Hello, can I speak to Mr. Kim?",a:"Speaking. How can I help you?",d:["I like pizza very much.","The movie was boring."]},
+  {ctx:"제안에 응답",q:"Why don't we study together this weekend?",a:"That sounds great. When works for you?",d:["I am a doctor.","It is on the table."]},
+  {ctx:"감사 표현에 답",q:"Thank you so much for your help.",a:"No problem, happy to help.",d:["I'm twenty years old.","The bus is late."]},
+  {ctx:"쇼핑",q:"Can I try this on?",a:"Of course, the fitting room is over there.",d:["I went home early.","She is my sister."]},
+  {ctx:"의견 묻기",q:"What do you think about online classes?",a:"I think they're convenient but less interactive.",d:["Yes, please sit down.","It rained yesterday."]},
+  {ctx:"약속 잡기",q:"Are you free tomorrow afternoon?",a:"Let me check my schedule and get back to you.",d:["I don't have a brother.","The soup is too hot."]},
+  {ctx:"카페",q:"For here or to go?",a:"To go, please.",d:["I am reading a book.","He runs every day."]},
+  {ctx:"사과에 응답",q:"I'm sorry I'm late.",a:"That's okay, don't worry about it.",d:["I love this song.","The exam is on Monday."]},
+  {ctx:"발표 후",q:"Do you have any questions?",a:"Yes, could you clarify your last point?",d:["No, I'm a teacher.","It tastes sweet."]},
+  {ctx:"날씨 잡담",q:"It's a beautiful day, isn't it?",a:"It really is. Perfect for a walk.",d:["I have three apples.","Close the window, please."]},
+  {ctx:"도움 제안",q:"Do you need a hand with that?",a:"Yes, thanks. Could you hold this?",d:["I am from Korea.","The train left already."]},
+  {ctx:"식당 추천",q:"What would you recommend?",a:"The grilled salmon is very popular here.",d:["I slept at ten.","She is taller than me."]},
+  {ctx:"회의 시작",q:"Shall we get started?",a:"Yes, let's begin with the first item.",d:["I have a headache.","It is blue."]},
+  {ctx:"부탁하기",q:"Could you do me a favor?",a:"Sure, what do you need?",d:["No, it's Tuesday.","I ate breakfast."]},
+  {ctx:"길에서 우연히",q:"Long time no see! How are you?",a:"I'm doing well, it's great to see you!",d:["The book is mine.","Water boils at 100 degrees."]},
+  {ctx:"호텔 체크인",q:"Do you have a reservation?",a:"Yes, under the name Lee.",d:["I play the piano.","The dog is sleeping."]},
+  {ctx:"수업 토론",q:"Could you give an example?",a:"Sure. For instance, solar energy is renewable.",d:["I am hungry now.","Turn right at the light."]},
+  {ctx:"초대",q:"Would you like to join us for dinner?",a:"I'd love to, thank you for inviting me.",d:["It is six o'clock.","My car is red."]},
+  {ctx:"진료실",q:"What seems to be the problem?",a:"I've had a sore throat for two days.",d:["I like swimming.","The class starts at nine."]},
+  {ctx:"가격 흥정",q:"That's a bit expensive. Any discount?",a:"I can offer you ten percent off.",d:["I have a cold.","She reads books."]}
+];
 let matchSel="reading", matchState=null, diagState=null, matchTimer=null;
 function clearMatchTimer(){ if(matchTimer){ clearInterval(matchTimer); matchTimer=null; } }
 function matchLevel(){ return db().matchLevel||2; }
@@ -2143,18 +2168,49 @@ function showMatch(){ clearMatchTimer(); matchState=null;
   document.getElementById("matchSetup").style.display=""; document.getElementById("matchDiagView").style.display="none"; document.getElementById("matchRun").style.display="none";
   renderMatchSetup(); }
 function startMatch(skill,level){ clearMatchTimer();
-  matchState={skill,level,count:0,correct:0,attempts:0,streak:0};
   document.getElementById("matchSetup").style.display="none"; document.getElementById("matchDiagView").style.display="none"; document.getElementById("matchRun").style.display="";
-  document.getElementById("matchTitle").textContent=MATCH_SKILLS.find(x=>x[0]===skill)[1]+" 경기";
+  if(skill==="mock"){
+    const plan=["reading","reading","reading","listening","listening","conversation","conversation","reading","writing","speaking"];
+    matchState={skill:plan[0],mode:"mock",plan,level,count:0,correct:0,attempts:0,streak:0};
+    document.getElementById("matchTitle").textContent="모의고사";
+  } else {
+    matchState={skill,mode:"drill",level,count:0,correct:0,attempts:0,streak:0};
+    document.getElementById("matchTitle").textContent=MATCH_SKILLS.find(x=>x[0]===skill)[1]+" 훈련";
+  }
   document.getElementById("matchSub").textContent="난이도 "+MATCH_LEVELS.find(x=>x[0]===level)[1];
   matchHudUpd(); matchStep();
 }
 function matchHudUpd(){ const s=matchState; if(!s)return; const acc=s.attempts?Math.round(s.correct/s.attempts*100)+"%":"-";
-  document.getElementById("matchHud").innerHTML=`<div><div class="v">${s.count}</div><div class="l">처리</div></div>
-    <div><div class="v">${acc}</div><div class="l">정답률</div></div>
+  const first = s.mode==="mock" ? `<div><div class="v">${s.count}/${s.plan.length}</div><div class="l">진행</div></div>` : `<div><div class="v">${s.count}</div><div class="l">처리</div></div>`;
+  document.getElementById("matchHud").innerHTML=first+
+    `<div><div class="v">${acc}</div><div class="l">정답률</div></div>
     <div><div class="v">${s.streak}</div><div class="l">연속</div></div>`; }
 function matchNext(){ clearMatchTimer(); matchState.count++; matchHudUpd(); matchStep(); }
-function matchStep(){ ({reading:matchReading,listening:matchListening,writing:matchWriting,speaking:matchSpeaking}[matchState.skill])(); }
+function matchStep(){ const s=matchState;
+  if(s.mode==="mock"){ if(s.count>=s.plan.length) return finishMock(); s.skill=s.plan[s.count];
+    document.getElementById("matchSub").textContent=`${s.count+1}/${s.plan.length} · ${MATCH_SKILLS.find(x=>x[0]===s.skill)[1]}`; }
+  ({conversation:matchConversation,reading:matchReading,listening:matchListening,writing:matchWriting,speaking:matchSpeaking}[s.skill])();
+}
+function finishMock(){ const s=matchState; const acc=s.attempts?Math.round(s.correct/s.attempts*100):0;
+  document.getElementById("matchHud").innerHTML="";
+  document.getElementById("matchBody").innerHTML=`<div style="text-align:center;padding:10px 0">
+    <div class="bigscore" style="font-size:var(--text-3xl)">${acc}%</div>
+    <p class="note" style="margin-top:6px">정답 ${s.correct}/${s.attempts} · 총 ${s.plan.length}문항 완료</p>
+    <p style="font-weight:var(--fw-semibold);margin-top:8px">모의고사 완료! 수고했어요.</p>
+    <div style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn" id="mockAgain">${svgIcon('play')} 다시</button>
+      <button class="btn ghost" id="mockBack">나가기</button></div></div>`;
+  document.getElementById("mockAgain").onclick=()=>startMatch("mock",matchLevel());
+  document.getElementById("mockBack").onclick=()=>showMatch(); matchState=null;
+}
+function matchConversation(){ const body=document.getElementById("matchBody"); const c=_rand(CONVO); const t=_mc(c.a,c.d);
+  body.innerHTML=`<p class="note">상황: ${c.ctx}</p><p class="quiz-q">"${c.q}"</p>
+    ${ttsAvailable()?`<button class="btn ghost sm" id="mConvEx" style="margin-top:6px">${svgIcon('play')} 듣기</button>`:''}
+    <p class="note" style="margin-top:12px">가장 자연스러운 대답은?</p>
+    <div id="mOpts" style="margin-top:8px"></div><div id="mFb" class="feedback" style="margin-top:12px"></div><div id="mNext" style="margin-top:14px"></div>`;
+  if(ttsAvailable()){ const ex=document.getElementById("mConvEx"); if(ex) ex.onclick=()=>speakRate(c.q,1.0); }
+  matchMC({opts:t.opts,ans:t.ans,exp:`자연스러운 대답: "${c.a}"`});
+}
 function matchMC(it){ const body=document.getElementById("matchBody"); const box=body.querySelector("#mOpts");
   it.opts.forEach((o,oi)=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=(oi+1)+". "+o;
     b.onclick=()=>{ if(box.dataset.d)return; box.dataset.d="1"; const s=matchState; s.attempts++; const ok=oi===it.ans; const fb=body.querySelector("#mFb");
@@ -2244,8 +2300,7 @@ document.getElementById("matchStart").onclick=()=>startMatch(matchSel, matchLeve
 document.getElementById("matchExit").onclick=()=>showMatch();
 document.getElementById("matchDiag").onclick=startMatchDiag;
 document.addEventListener("keydown",e=>{
-  if(!document.getElementById("train").classList.contains("active")) return;
-  if(document.getElementById("ttMatch").style.display==="none") return;
+  if(!document.getElementById("match").classList.contains("active")) return;
   if(document.getElementById("matchRun").style.display==="none") return;
   if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
   const k=e.key;
