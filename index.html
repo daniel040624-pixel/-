@@ -365,14 +365,20 @@
     </div>
   </section>
 
-  <!-- COACH -->
-  <section id="coach">
-    <h2><span data-ic="compass"></span> 코치 모드 (단계별 학습)</h2>
-    <p class="sub">오늘의 루틴을 한 단계씩 안내합니다. 각 단계를 끝내면 '다음 단계'를 누르세요.</p>
+  <!-- TRAIN (코치 + 집중 통합) -->
+  <section id="train">
+    <h2><span data-ic="bolt"></span> 훈련 모드</h2>
+    <p class="sub">단계별 코치 학습과 시간 집중 훈련을 한곳에서. 탭을 선택하세요.</p>
+    <div class="vtabs" id="ttabs">
+      <button data-tt="coach" class="active"><span data-ic="compass"></span> 코치 (단계별)</button>
+      <button data-tt="drill"><span data-ic="bolt"></span> 집중 훈련</button>
+    </div>
+
+    <div id="ttCoach" style="margin-top:16px">
     <div class="card">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
         <b id="coachStepLabel"></b>
-        <label class="note" style="display:flex;align-items:center;gap:5px;margin-left:10px"><input type="checkbox" id="coachIntense" style="transform:scale(1.2);accent-color:var(--brand-700)"><span data-ic="bolt"></span> 집중 모드</label>
+        <label class="note" style="display:flex;align-items:center;gap:5px;margin-left:10px"><input type="checkbox" id="coachIntense" style="transform:scale(1.2);accent-color:var(--brand-700)"><span data-ic="bolt"></span> 빠른 진행</label>
         <span style="flex:1"></span>
         <span id="coachTimerWrap" style="display:none">
           <span id="coachTimer" style="font-variant-numeric:tabular-nums;font-weight:700;color:var(--brand-700)">00:00</span>
@@ -388,13 +394,10 @@
         <button class="btn" id="coachNext">다음 단계 ▶</button>
       </div>
     </div>
-  </section>
+    </div><!-- /ttCoach -->
 
-  <!-- DRILL -->
-  <section id="drill">
-    <h2><span data-ic="bolt"></span> 집중 훈련 (시간 대비 최대 학습량)</h2>
-    <p class="sub">제한 시간 안에 쉬는 틈 없이 최대한 많은 문항을 처리합니다. 답하면 즉시 다음으로 넘어가요.</p>
-
+    <div id="ttDrill" style="margin-top:16px;display:none">
+    <p class="sub" style="margin-bottom:16px">제한 시간 안에 쉬는 틈 없이 최대한 많은 문항을 처리합니다. 답하면 해설을 보는 동안 타이머가 멈춰요.</p>
     <div class="card" id="drillSetup">
       <h3>설정</h3>
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
@@ -420,6 +423,7 @@
     </div>
 
     <div id="drillReport" style="display:none"></div>
+    </div><!-- /ttDrill -->
   </section>
 
   <!-- DASHBOARD -->
@@ -859,7 +863,7 @@ function currentDay(){
 }
 
 //==================== 네비게이션 ====================
-const SECTIONS = [["today","오늘","calendar"],["coach","코치 모드","compass"],["drill","집중","bolt"],["dashboard","대시보드","grid"],["curriculum","커리큘럼","list"],["vocab","어휘","book"],["assess","진단 & 성장","trending"]];
+const SECTIONS = [["today","오늘","calendar"],["train","훈련 모드","bolt"],["dashboard","대시보드","grid"],["curriculum","커리큘럼","list"],["vocab","어휘","book"],["assess","진단 & 성장","trending"]];
 const nav = document.getElementById("nav");
 function navigate(id){
   document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active", x.dataset.view===id));
@@ -868,8 +872,7 @@ function navigate(id){
   if(typeof drillTick!=="undefined" && drillTick){ clearInterval(drillTick); drillTick=null; }
   if(id==="cover") renderCover();
   if(id==="dashboard") renderDashboard();
-  if(id==="coach") startCoach();
-  if(id==="drill"){ refreshDrillSetup(); showDrillView("setup"); }
+  if(id==="train") showTrain();
   if(id==="assess") renderAssess();
   nav.classList.remove("open");
   document.getElementById("menuToggle").setAttribute("aria-expanded","false");
@@ -892,6 +895,21 @@ document.getElementById("brandBtn").onclick=()=>navigate("cover");
 document.getElementById("menuToggle").onclick=function(){ const open=nav.classList.toggle("open"); this.setAttribute("aria-expanded",open?"true":"false"); };
 document.getElementById("coverStart").onclick=()=>navigate("today");
 document.getElementById("coverDash").onclick=()=>navigate("dashboard");
+
+// 훈련 모드 (코치 + 집중 통합) 탭
+let currentTrainTab="coach";
+function setTrainTab(tab){
+  currentTrainTab=tab;
+  document.querySelectorAll("#ttabs button").forEach(b=>b.classList.toggle("active",b.dataset.tt===tab));
+  document.getElementById("ttCoach").style.display=tab==="coach"?"":"none";
+  document.getElementById("ttDrill").style.display=tab==="drill"?"":"none";
+  if(typeof coachTimer!=="undefined"&&coachTimer){ clearInterval(coachTimer); coachTimer=null; }
+  if(typeof drillTick!=="undefined"&&drillTick){ clearInterval(drillTick); drillTick=null; }
+  if(tab==="coach") startCoach();
+  else { refreshDrillSetup(); showDrillView("setup"); }
+}
+function showTrain(){ setTrainTab(currentTrainTab||"coach"); }
+document.querySelectorAll("#ttabs button").forEach(b=>b.onclick=()=>setTrainTab(b.dataset.tt));
 
 //==================== 오늘의 세션 엔진 ====================
 function dayMeta(day){
@@ -1980,7 +1998,7 @@ document.getElementById("drillStart").onclick=startDrill;
 document.getElementById("drillStop").onclick=endDrill;
 document.addEventListener("keydown",e=>{
   if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
-  if(!drillState||!document.getElementById("drill").classList.contains("active")) return;
+  if(!drillState||!document.getElementById("train").classList.contains("active")||document.getElementById("ttDrill").style.display==="none") return;
   const k=e.key;
   if(k===" "||k==="Enter"||k==="ArrowRight"){ const nx=document.getElementById("dNext"),sh=document.getElementById("dShow"),ye=document.getElementById("dYes");
     if(nx){ e.preventDefault(); nx.click(); } else if(ye){ e.preventDefault(); ye.click(); } else if(sh){ e.preventDefault(); sh.click(); } }
