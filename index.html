@@ -102,7 +102,15 @@
   /* ── Cover (landing) ── */
   .cover { animation:fade var(--dur-slow) var(--ease); }
   .cover-inner { min-height:min(58vh,520px); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:var(--space-8) 0; }
-  #todaySession { border-top:1px solid var(--border); padding-top:var(--space-8); margin-top:var(--space-4); }
+  .mode-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-4); margin-top:var(--space-10); }
+  @media (max-width:680px){ .mode-grid { grid-template-columns:1fr; } }
+  .mode-card { display:flex; flex-direction:column; align-items:flex-start; text-align:left; gap:var(--space-2);
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:var(--space-6); cursor:pointer;
+    box-shadow:var(--shadow-sm); transition:transform var(--dur) var(--ease),border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease); }
+  .mode-card:hover { transform:translateY(-3px); border-color:var(--accent); box-shadow:var(--shadow-md); }
+  .mode-card .mode-ic { font-size:1.6rem; color:var(--accent); }
+  .mode-card .mode-t { font-family:var(--font-display); font-weight:var(--fw-bold); font-size:var(--text-lg); color:var(--text-strong); }
+  .mode-card .mode-d { font-size:var(--text-sm); color:var(--text-muted); line-height:1.5; }
   .cover-kicker { display:inline-flex; align-items:center; gap:6px; font-size:var(--text-sm); font-weight:var(--fw-semibold); color:var(--text-muted);
     border:1px solid var(--border); border-radius:var(--radius-full); padding:6px var(--space-4); }
   .cover-kicker .ic { font-size:1rem; color:var(--accent); }
@@ -311,7 +319,27 @@
       <div class="cover-goal">목표 · TOEFL 80+ <span>R20 · L20 · S20 · W20</span></div>
     </div>
 
-    <div id="todaySession">
+    <div class="mode-grid">
+      <button class="mode-card" data-mode="general" data-go="train">
+        <span class="mode-ic" data-ic="bolt"></span>
+        <span class="mode-t">영어 실력 향상 모드</span>
+        <span class="mode-d">기초부터 실전까지 단계별·집중 훈련</span>
+      </button>
+      <button class="mode-card" data-mode="toefl" data-go="assess">
+        <span class="mode-ic" data-ic="trending"></span>
+        <span class="mode-t">토플 모드</span>
+        <span class="mode-d">진단·모의고사로 TOEFL 80+ 공략</span>
+      </button>
+      <button class="mode-card" data-mode="opic" data-go="match-speaking">
+        <span class="mode-ic" data-ic="compass"></span>
+        <span class="mode-t">오픽 모드</span>
+        <span class="mode-d">주제별 말하기 집중 (OPIc 대비)</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- TODAY (오늘 세션) -->
+  <section id="today">
     <h2>오늘의 세션</h2>
     <p class="sub">시작일 기준으로 며칠 차인지 자동 계산해 그 날의 전체 루틴을 생성합니다.</p>
 
@@ -365,7 +393,6 @@
       <button class="btn" id="completeDay" style="margin-top:10px">오늘 완료 처리</button>
       <span class="saved-flash" id="completeFlash">완료!</span>
     </div>
-    </div><!-- /todaySession -->
   </section>
 
   <!-- TRAIN (코치 + 집중 통합) -->
@@ -894,14 +921,15 @@ function currentDay(){
 }
 
 //==================== 네비게이션 ====================
-const SECTIONS = [["dashboard","대시보드","grid"],["curriculum","커리큘럼","list"],["train","훈련 모드","bolt"],["match","경기모드","flag"],["vocab","어휘","book"],["assess","진단평가","trending"]];
+const SECTIONS = [["today","오늘 세션","calendar"],["dashboard","대시보드","grid"],["curriculum","커리큘럼","list"],["train","훈련 모드","bolt"],["match","경기모드","flag"],["vocab","어휘","book"],["assess","진단평가","trending"]];
 const nav = document.getElementById("nav");
 function navigate(id){
   document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active", x.dataset.view===id));
   document.querySelectorAll("section").forEach(x=>x.classList.toggle("active", x.id===id));
   if(typeof coachTimer!=="undefined" && coachTimer){ clearInterval(coachTimer); coachTimer=null; }
   if(typeof drillTick!=="undefined" && drillTick){ clearInterval(drillTick); drillTick=null; }
-  if(id==="cover"){ renderCover(); renderToday(); }
+  if(id==="cover") renderCover();
+  if(id==="today") renderToday();
   if(id==="dashboard") renderDashboard();
   if(id==="train") showTrain();
   if(id==="match") showMatch();
@@ -958,7 +986,13 @@ function renderCover(){
 }
 document.getElementById("brandBtn").onclick=()=>navigate("cover");
 document.getElementById("menuToggle").onclick=function(){ const open=nav.classList.toggle("open"); this.setAttribute("aria-expanded",open?"true":"false"); };
-document.getElementById("coverStart").onclick=()=>{ const t=document.getElementById("todaySession"); if(t) t.scrollIntoView({behavior:"smooth"}); };
+document.getElementById("coverStart").onclick=()=>navigate("today");
+document.querySelectorAll(".mode-card").forEach(c=>c.onclick=()=>{
+  const d=db(); d.mode=c.dataset.mode; save(d);
+  const go=c.dataset.go;
+  if(go==="match-speaking"){ if(typeof matchSel!=="undefined") matchSel="speaking"; navigate("match"); }
+  else navigate(go);
+});
 document.getElementById("coverDash").onclick=()=>navigate("dashboard");
 
 // 훈련 모드 (코치 + 집중 통합) 탭
