@@ -70,38 +70,35 @@
   .ic { display:inline-flex; width:1em; height:1em; flex:none; vertical-align:-0.14em; }
   .ic svg, svg.ic { width:1em; height:1em; display:block; }
   /* ── Top bar + right-aligned menu ── */
-  .topbar { position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; gap:var(--space-4);
+  .topbar { position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:var(--space-4);
     padding:var(--space-3) clamp(var(--space-4),4vw,var(--space-8)); background:color-mix(in srgb, var(--bg) 80%, transparent);
     backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-bottom:1px solid var(--border); }
-  .brand { display:inline-flex; align-items:center; gap:var(--space-2); background:none; border:none; cursor:pointer; padding:var(--space-1);
+  .menu-toggle { display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:var(--radius-md);
+    background:var(--surface); border:1px solid var(--border); color:var(--text); cursor:pointer; font-size:1.25rem; z-index:61; }
+  .menu-toggle:hover { background:var(--surface-2); }
+  .brand { position:absolute; left:50%; transform:translateX(-50%); display:inline-flex; align-items:center; gap:var(--space-2); background:none; border:none; cursor:pointer; padding:var(--space-1);
     font-family:var(--font-display); font-weight:var(--fw-bold); font-size:var(--text-base); color:var(--text-strong); letter-spacing:-0.01em; }
   .brand .brandmark { font-size:1.25rem; color:var(--accent); }
-  .menu-toggle { display:none; align-items:center; justify-content:center; width:40px; height:40px; border-radius:var(--radius-md);
-    background:var(--surface); border:1px solid var(--border); color:var(--text); cursor:pointer; font-size:1.25rem; }
   h2 { font-family:var(--font-display); color:var(--text-strong); font-weight:var(--fw-bold); font-size:clamp(1.7rem,3.6vw,var(--text-3xl)); margin-bottom:var(--space-1); line-height:1.2; letter-spacing:-0.015em; }
   .sub { color:var(--text-muted); margin-bottom:var(--space-6); font-size:var(--text-sm); max-width:62ch; }
   /* ── Goal pill (hero duotone moment) ── */
   .goal-pill { display:inline-block; margin-top:var(--space-4); background:linear-gradient(95deg,var(--brand-500),var(--brand-amber));
     color:var(--accent-ink); font-weight:var(--fw-semibold); padding:var(--space-2) var(--space-5); border-radius:var(--radius-full); font-size:var(--text-sm); box-shadow:var(--shadow-brand); }
-  /* ── Right-aligned menu bar ── */
-  nav.menubar { display:flex; flex-wrap:wrap; gap:var(--space-1); justify-content:flex-end; align-items:center; }
-  nav.menubar button { display:inline-flex; align-items:center; gap:6px; min-height:36px; background:none; color:var(--text-muted);
-    border:1px solid transparent; padding:0 var(--space-3); border-radius:var(--radius-md); cursor:pointer;
+  /* ── Vertical dropdown menu (open/close from top-left) ── */
+  nav.menubar { position:absolute; top:calc(100% + 6px); left:clamp(var(--space-4),4vw,var(--space-8));
+    display:none; flex-direction:column; align-items:stretch; min-width:230px;
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg);
+    padding:var(--space-2); gap:2px; z-index:60; }
+  nav.menubar.open { display:flex; animation:fade var(--dur) var(--ease); }
+  nav.menubar button { display:inline-flex; align-items:center; gap:10px; justify-content:flex-start; width:100%; min-height:44px;
+    background:none; color:var(--text-muted); border:1px solid transparent; padding:0 var(--space-3); border-radius:var(--radius-md); cursor:pointer;
     font:var(--fw-medium) var(--text-sm)/1 var(--font-sans); letter-spacing:-0.005em;
-    transition:color var(--dur) var(--ease),background var(--dur) var(--ease),border-color var(--dur) var(--ease); }
-  nav.menubar button .ic { font-size:1.05rem; opacity:.85; }
+    transition:color var(--dur) var(--ease),background var(--dur) var(--ease); }
+  nav.menubar button .ic { font-size:1.15rem; opacity:.85; }
   nav.menubar button:hover { background:var(--surface-2); color:var(--text); }
   nav.menubar button:focus-visible { outline:none; box-shadow:0 0 0 3px var(--ring); }
   nav.menubar button.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:var(--fw-semibold); }
   nav.menubar button.active .ic { opacity:1; }
-  @media (max-width:780px){
-    .menu-toggle { display:inline-flex; }
-    nav.menubar { position:absolute; top:calc(100% + 6px); right:clamp(var(--space-4),4vw,var(--space-8)); flex-direction:column; align-items:stretch;
-      min-width:200px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg);
-      padding:var(--space-2); display:none; }
-    nav.menubar.open { display:flex; }
-    nav.menubar button { justify-content:flex-start; width:100%; min-height:42px; }
-  }
   /* ── Cover (landing) ── */
   .cover { animation:fade var(--dur-slow) var(--ease); }
   .cover-inner { min-height:min(58vh,520px); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:var(--space-8) 0; }
@@ -284,8 +281,8 @@
 </head>
 <body>
 <header class="topbar">
-  <button class="brand" id="brandBtn" aria-label="홈으로"><span class="brandmark" data-ic="cap"></span><span>영어 학습 코치</span></button>
   <button class="menu-toggle" id="menuToggle" aria-label="메뉴 열기" aria-expanded="false" data-ic="menu"></button>
+  <button class="brand" id="brandBtn" aria-label="홈으로"><span class="brandmark" data-ic="cap"></span><span>영어 학습 코치</span></button>
   <nav id="nav" class="menubar" aria-label="섹션 메뉴"></nav>
 </header>
 
@@ -863,7 +860,7 @@ function currentDay(){
 }
 
 //==================== 네비게이션 ====================
-const SECTIONS = [["train","훈련 모드","bolt"],["dashboard","대시보드","grid"],["curriculum","커리큘럼","list"],["vocab","어휘","book"],["assess","진단 & 성장","trending"]];
+const SECTIONS = [["dashboard","대시보드","grid"],["curriculum","커리큘럼","list"],["train","훈련 모드","bolt"],["vocab","어휘","book"],["assess","진단평가","trending"]];
 const nav = document.getElementById("nav");
 function navigate(id){
   document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active", x.dataset.view===id));
