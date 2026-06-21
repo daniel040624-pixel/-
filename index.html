@@ -304,6 +304,7 @@
 <body>
 <header class="topbar">
   <button class="menu-toggle" id="menuToggle" aria-label="메뉴 열기" aria-expanded="false" data-ic="menu"></button>
+  <button class="menu-toggle" id="backBtn" aria-label="이전으로" title="이전으로" data-ic="back" style="display:none"></button>
   <button class="brand" id="brandBtn" aria-label="홈으로"><span class="brandmark" data-ic="cap"></span><span>영어 학습 코치</span></button>
   <nav id="nav" class="menubar" aria-label="섹션 메뉴"></nav>
 </header>
@@ -434,9 +435,9 @@
       <div class="prog-bar"><div class="prog-fill" id="coachProgress"></div></div>
       <h3 id="coachTitle" style="margin-top:14px"></h3>
       <div id="coachBody"></div>
-      <div style="display:flex;gap:10px;margin-top:18px;align-items:center">
+      <div style="display:flex;gap:10px;margin-top:18px;align-items:center;flex-wrap:wrap">
         <button class="btn ghost" id="coachPrev">◀ 이전</button>
-        <span style="flex:1"></span>
+        <span class="note" id="coachGateHint" style="flex:1"></span>
         <button class="btn" id="coachNext">다음 단계 ▶</button>
       </div>
     </div>
@@ -700,7 +701,8 @@ const ICONS = {
   close:'<path d="M6 6l12 12M18 6 6 18"/>',
   up:'<path d="M12 19V6M6 12l6-6 6 6"/>',
   play:'<path d="M7 4.5v15l13-7.5-13-7.5Z"/>',
-  menu:'<path d="M3 6.5h18M3 12h18M3 17.5h18"/>'
+  menu:'<path d="M3 6.5h18M3 12h18M3 17.5h18"/>',
+  back:'<path d="M15 5l-7 7 7 7"/>'
 };
 function svgIcon(name,extra){ return `<svg class="ic ${extra||''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]||''}</svg>`; }
 function hydrateIcons(root){ (root||document).querySelectorAll('[data-ic]').forEach(el=>{ el.classList.add('ic'); el.innerHTML=svgIcon(el.dataset.ic); el.removeAttribute('data-ic'); }); }
@@ -954,7 +956,12 @@ function buildNav(mode){
     const b=document.createElement("button"); b.dataset.view=id; b.innerHTML=svgIcon(meta[1])+`<span>${meta[0]}</span>`; b.onclick=()=>navigate(id); nav.appendChild(b); });
 }
 function switchMode(m){ setMode(m); if(m==="opic" && typeof matchSel!=="undefined") matchSel="speaking"; buildNav(m); navigate(MODE_HOME[m]); }
-function navigate(id){
+let navHistory=[];
+function updateBackBtn(){ const b=document.getElementById("backBtn"); if(b) b.style.display=navHistory.length?"inline-flex":"none"; }
+function navigate(id, isBack){
+  const cur=document.querySelector("section.active");
+  if(!isBack && cur && cur.id!==id){ if(navHistory[navHistory.length-1]!==cur.id) navHistory.push(cur.id); }
+  if(!isBack && id==="cover") navHistory=[];
   document.querySelectorAll("#nav button[data-view]").forEach(x=>x.classList.toggle("active", x.dataset.view===id));
   document.querySelectorAll("section").forEach(x=>x.classList.toggle("active", x.id===id));
   if(typeof coachTimer!=="undefined" && coachTimer){ clearInterval(coachTimer); coachTimer=null; }
@@ -969,8 +976,10 @@ function navigate(id){
   if(id==="assess") renderAssess();
   nav.classList.remove("open");
   document.getElementById("menuToggle").setAttribute("aria-expanded","false");
+  updateBackBtn();
   window.scrollTo({top:0,behavior:"smooth"});
 }
+document.getElementById("backBtn").onclick=()=>{ if(navHistory.length){ navigate(navHistory.pop(), true); } else navigate("cover", true); };
 buildNav(appMode());
 const MOTTOS=[
   "오늘 흘린 땀이 3개월 뒤 점수가 된다.",
@@ -1831,7 +1840,10 @@ function startCoach(){ if(!viewDay) viewDay=currentDay();
   coachSession={reps:0,correct:0,attempts:0,streak:0,mastered:0};
   const ci=document.getElementById("coachIntense"); const d=db(); ci.checked=!!d.coachIntense;
   ci.onchange=()=>{ const dd=db(); dd.coachIntense=ci.checked; save(dd); renderCoachStep(); };
-  coachSteps=buildCoachSteps(viewDay); coachIdx=0; renderCoachStep(); }
+  coachSteps=buildCoachSteps(viewDay);
+  const saved=(db().coachPos&&db().coachPos[viewDay])||0;
+  coachIdx=Math.min(Math.max(0,saved), coachSteps.length-1);
+  renderCoachStep(); }
 function isIntense(){ const ci=document.getElementById("coachIntense"); return ci && ci.checked; }
 function coachHud(stepId){
   return `<div style="display:flex;gap:14px;flex-wrap:wrap;text-align:center;margin-bottom:12px">
@@ -1892,7 +1904,7 @@ function renderFreeResponse(c, gen){
     c.querySelector("#frEval").onclick=()=>{
       const r=evaluateEnglish(c.querySelector("#frInput").value);
       const fb=c.querySelector("#frFb"); fb.className="feedback show "+(r.ok?"ok":"no"); fb.innerHTML=r.html;
-      sc++; coachSession.reps++;
+      sc++; coachSession.reps++; coachActivity();
       c.querySelector("#frNext").innerHTML=`<button class="btn ghost" id="frN">다음 문제 ▶ (${sc})</button>`;
       c.querySelector("#frN").onclick=load;
     };
@@ -1913,8 +1925,8 @@ function renderVocabLoop(c){
     card.querySelector("#vShow").onclick=()=>{
       card.querySelector("#vrev").innerHTML=`<div style="font-weight:700;color:var(--brand-700)">${mean}</div><div class="note">"${ex}"</div>`;
       card.querySelector("#vbtn").innerHTML=`<button class="btn ghost" id="vNo">${svgIcon('x')} 다시</button> &nbsp; <button class="btn" id="vYes">${svgIcon('check')} 외웠어요</button>`;
-      card.querySelector("#vYes").onclick=()=>{ sc++; coachSession.reps++; coachSession.mastered++; queue.push(item); if(intense)coachHudUpd("csStep",sc); load(); };
-      card.querySelector("#vNo").onclick=()=>{ sc++; coachSession.reps++; queue.splice(Math.min(3,queue.length),0,item); if(intense)coachHudUpd("csStep",sc); load(); };
+      card.querySelector("#vYes").onclick=()=>{ sc++; coachSession.reps++; coachSession.mastered++; coachActivity(); queue.push(item); if(intense)coachHudUpd("csStep",sc); load(); };
+      card.querySelector("#vNo").onclick=()=>{ sc++; coachSession.reps++; coachActivity(); queue.splice(Math.min(3,queue.length),0,item); if(intense)coachHudUpd("csStep",sc); load(); };
     };
   }
   load();
@@ -1930,7 +1942,7 @@ function renderQuizLoop(c, key){
     box.innerHTML=`<div class="quiz-q">${item.q}</div><div id="qo" style="margin-top:12px"></div><div id="qfb" class="feedback" style="margin-top:8px"></div><div id="qnext" style="margin-top:10px"></div>`;
     const ob=box.querySelector("#qo");
     item.opts.forEach((o,oi)=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=(oi+1)+". "+o;
-      b.onclick=()=>{ if(ob.dataset.d)return; ob.dataset.d="1"; sc++; coachSession.reps++; coachSession.attempts++;
+      b.onclick=()=>{ if(ob.dataset.d)return; ob.dataset.d="1"; sc++; coachSession.reps++; coachSession.attempts++; coachActivity();
         const fb=box.querySelector("#qfb");
         if(oi===item.ans){ b.classList.add("correct"); coachSession.correct++; coachSession.streak++; fb.className="feedback show ok"; fb.innerHTML=svgIcon('check')+" 정답! "+item.exp; }
         else { b.classList.add("wrong"); ob.querySelectorAll(".opt")[item.ans].classList.add("correct"); coachSession.streak=0; fb.className="feedback show no"; fb.innerHTML=svgIcon('x')+" "+item.exp; }
@@ -1953,8 +1965,33 @@ function toggleTimer(){
 }
 function el_alert(){ const t=document.getElementById("coachTitle"); if(t) t.insertAdjacentHTML("beforeend",' <span class="tag good">시간 종료 ✓</span>'); }
 
+// ── 단계 잠금: 일정 문제 풀이 또는 일정 시간 경과 시 해제 ──
+let coachGate=null, coachGateTimer=null;
+const GATE_RULES={ warmup:{n:1,sec:40}, speak:{n:1,sec:40}, write:{n:1,sec:40}, recall:{n:1,sec:40}, vocab:{n:4,sec:90}, quiz:{n:3,sec:90} };
+function setGate(type){
+  clearInterval(coachGateTimer); coachGateTimer=null;
+  const r=GATE_RULES[type];
+  if(!r){ coachGate={met:true}; applyGate(); return; }
+  coachGate={met:false, n:r.n, sec:r.sec, done:0, start:Date.now()};
+  applyGate();
+  coachGateTimer=setInterval(()=>{ if(!coachGate||coachGate.met){ clearInterval(coachGateTimer); coachGateTimer=null; return; }
+    const left=coachGate.sec-Math.floor((Date.now()-coachGate.start)/1000);
+    if(left<=0){ coachGate.met=true; applyGate(); clearInterval(coachGateTimer); coachGateTimer=null; } else applyGate(left); },1000);
+}
+function coachActivity(){ if(coachGate && !coachGate.met){ coachGate.done=(coachGate.done||0)+1; if(coachGate.done>=coachGate.n){ coachGate.met=true; } applyGate(); } }
+function applyGate(left){
+  const nx=document.getElementById("coachNext"), hint=document.getElementById("coachGateHint");
+  if(!nx||!hint) return;
+  if(!coachGate || coachGate.met){ nx.disabled=false; hint.textContent=coachGate&&coachGate.n?"다음 단계로 갈 수 있어요 ✓":""; return; }
+  nx.disabled=true;
+  const needLeft=Math.max(0,coachGate.n-(coachGate.done||0));
+  const t=left!=null?left:coachGate.sec-Math.floor((Date.now()-coachGate.start)/1000);
+  hint.textContent=`다음 단계 잠금 — ${needLeft}문제 더 풀거나 ${Math.max(0,t)}초 후 해제`;
+}
+
 function renderCoachStep(){
   clearInterval(coachTimer); coachTimer=null;
+  clearInterval(coachGateTimer); coachGateTimer=null;
   const step=coachSteps[coachIdx], N=coachSteps.length;
   document.getElementById("coachProgress").style.width=(coachIdx/(N-1)*100)+"%";
   document.getElementById("coachStepLabel").textContent=`단계 ${coachIdx+1} / ${N}`;
@@ -1965,6 +2002,8 @@ function renderCoachStep(){
   renderCoachBody(step,c);
   document.getElementById("coachPrev").disabled=coachIdx===0;
   document.getElementById("coachNext").style.display=coachIdx===N-1?"none":"";
+  setGate(step.type);
+  const dd=db(); dd.coachPos=dd.coachPos||{}; dd.coachPos[viewDay]=coachIdx; save(dd);  // 진행 위치 저장
 }
 
 function renderCoachBody(step,c){
