@@ -99,6 +99,13 @@
   nav.menubar button:focus-visible { outline:none; box-shadow:0 0 0 3px var(--ring); }
   nav.menubar button.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:var(--fw-semibold); }
   nav.menubar button.active .ic { opacity:1; }
+  /* 모드 전환(메뉴 상단) */
+  .mode-switch { display:flex; flex-wrap:wrap; gap:4px; padding:4px 4px 8px; margin-bottom:6px; border-bottom:1px solid var(--border); }
+  .mode-switch-label { width:100%; font-size:var(--text-xs); color:var(--text-subtle); padding:2px 4px 4px; }
+  .mode-switch .mchip { flex:1; min-width:72px; padding:7px 8px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--surface);
+    color:var(--text-muted); cursor:pointer; font:var(--fw-medium) var(--text-xs)/1.1 var(--font-sans); }
+  .mode-switch .mchip:hover { background:var(--surface-2); color:var(--text); }
+  .mode-switch .mchip.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:var(--fw-semibold); }
   /* ── Cover (landing) ── */
   .cover { animation:fade var(--dur-slow) var(--ease); }
   .cover-inner { min-height:min(58vh,520px); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:var(--space-8) 0; }
@@ -921,10 +928,29 @@ function currentDay(){
 }
 
 //==================== 네비게이션 ====================
-const SECTIONS = [["today","오늘 세션","calendar"],["dashboard","대시보드","grid"],["curriculum","커리큘럼","list"],["train","훈련 모드","bolt"],["match","경기모드","flag"],["vocab","어휘","book"],["assess","진단평가","trending"]];
+const SECTION_META = { today:["오늘 세션","calendar"], dashboard:["대시보드","grid"], curriculum:["커리큘럼","list"], train:["훈련 모드","bolt"], match:["경기모드","flag"], vocab:["어휘","book"], assess:["진단평가","trending"] };
+const MODES = [["general","영어 실력 향상"],["toefl","토플"],["opic","오픽"]];
+const MODE_MENUS = {
+  general: ["today","train","match","vocab","dashboard"],
+  toefl:   ["today","curriculum","assess","train","match","vocab","dashboard"],
+  opic:    ["match","vocab","dashboard"]
+};
+const MODE_HOME = { general:"train", toefl:"today", opic:"match" };
 const nav = document.getElementById("nav");
+function appMode(){ return db().mode || "toefl"; }
+function setMode(m){ const d=db(); d.mode=m; save(d); }
+function buildNav(mode){
+  nav.innerHTML="";
+  const sw=document.createElement("div"); sw.className="mode-switch";
+  sw.innerHTML=`<div class="mode-switch-label">학습 모드</div>`+MODES.map(([m,l])=>`<button class="mchip ${m===mode?'active':''}" data-m="${m}">${l}</button>`).join("");
+  nav.appendChild(sw);
+  sw.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>switchMode(b.dataset.m));
+  MODE_MENUS[mode].forEach(id=>{ const meta=SECTION_META[id]; if(!meta)return;
+    const b=document.createElement("button"); b.dataset.view=id; b.innerHTML=svgIcon(meta[1])+`<span>${meta[0]}</span>`; b.onclick=()=>navigate(id); nav.appendChild(b); });
+}
+function switchMode(m){ setMode(m); if(m==="opic" && typeof matchSel!=="undefined") matchSel="speaking"; buildNav(m); navigate(MODE_HOME[m]); }
 function navigate(id){
-  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active", x.dataset.view===id));
+  document.querySelectorAll("#nav button[data-view]").forEach(x=>x.classList.toggle("active", x.dataset.view===id));
   document.querySelectorAll("section").forEach(x=>x.classList.toggle("active", x.id===id));
   if(typeof coachTimer!=="undefined" && coachTimer){ clearInterval(coachTimer); coachTimer=null; }
   if(typeof drillTick!=="undefined" && drillTick){ clearInterval(drillTick); drillTick=null; }
@@ -938,12 +964,7 @@ function navigate(id){
   document.getElementById("menuToggle").setAttribute("aria-expanded","false");
   window.scrollTo({top:0,behavior:"smooth"});
 }
-SECTIONS.forEach(([id,label,icon])=>{
-  const b=document.createElement("button"); b.dataset.view=id;
-  b.innerHTML=svgIcon(icon)+`<span>${label}</span>`;
-  b.onclick=()=>navigate(id);
-  nav.appendChild(b);
-});
+buildNav(appMode());
 const MOTTOS=[
   "오늘 흘린 땀이 3개월 뒤 점수가 된다.",
   "어제의 나보다 딱 한 문제만 더.",
@@ -987,12 +1008,7 @@ function renderCover(){
 document.getElementById("brandBtn").onclick=()=>navigate("cover");
 document.getElementById("menuToggle").onclick=function(){ const open=nav.classList.toggle("open"); this.setAttribute("aria-expanded",open?"true":"false"); };
 document.getElementById("coverStart").onclick=()=>navigate("today");
-document.querySelectorAll(".mode-card").forEach(c=>c.onclick=()=>{
-  const d=db(); d.mode=c.dataset.mode; save(d);
-  const go=c.dataset.go;
-  if(go==="match-speaking"){ if(typeof matchSel!=="undefined") matchSel="speaking"; navigate("match"); }
-  else navigate(go);
-});
+document.querySelectorAll(".mode-card").forEach(c=>c.onclick=()=>switchMode(c.dataset.mode));
 document.getElementById("coverDash").onclick=()=>navigate("dashboard");
 
 // 훈련 모드 (코치 + 집중 통합) 탭
@@ -2189,9 +2205,14 @@ function clearMatchTimer(){ if(matchTimer){ clearInterval(matchTimer); matchTime
 function matchLevel(){ return db().matchLevel||2; }
 function setMatchLevel(v){ const d=db(); d.matchLevel=v; save(d); }
 function speakRate(t,r){ try{ if(ttsAvailable()){ window.speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang="en-US"; u.rate=r; window.speechSynthesis.speak(u);} }catch(e){} }
+function matchSkillsForMode(){ const m=(typeof appMode==="function"?appMode():"toefl");
+  if(m==="opic") return MATCH_SKILLS.filter(s=>s[0]==="conversation"||s[0]==="speaking");
+  if(m==="general") return MATCH_SKILLS.filter(s=>s[0]!=="mock");
+  return MATCH_SKILLS; }
 function renderMatchSetup(){
+  const skills=matchSkillsForMode(); if(!skills.find(s=>s[0]===matchSel)) matchSel=skills[0][0];
   const sb=document.getElementById("matchSkills");
-  sb.innerHTML=MATCH_SKILLS.map(([k,l])=>`<button class="chip ${k===matchSel?'active':''}" data-sk="${k}">${l}</button>`).join("");
+  sb.innerHTML=skills.map(([k,l])=>`<button class="chip ${k===matchSel?'active':''}" data-sk="${k}">${l}</button>`).join("");
   sb.querySelectorAll("[data-sk]").forEach(b=>b.onclick=()=>{ matchSel=b.dataset.sk; renderMatchSetup(); });
   const lv=matchLevel(), lb=document.getElementById("matchLevels");
   lb.innerHTML=MATCH_LEVELS.map(([v,l])=>`<button class="chip ${v===lv?'active':''}" data-lv="${v}">${l}</button>`).join("");
