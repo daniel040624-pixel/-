@@ -132,6 +132,11 @@
   .task-row:last-child { border:none; }
   .task-row input { margin-top:2px; width:18px; height:18px; accent-color:var(--accent); cursor:pointer; flex:none; }
   .task-row.done .t { text-decoration:line-through; color:var(--text-subtle); }
+  .seg { display:flex; gap:8px; flex-wrap:wrap; }
+  .chip { display:inline-flex; align-items:center; gap:6px; padding:9px 15px; border:1px solid var(--border); border-radius:var(--radius-full);
+    background:var(--surface); color:var(--text-muted); cursor:pointer; font:var(--fw-medium) var(--text-sm)/1 var(--font-sans); transition:all var(--dur) var(--ease); }
+  .chip:hover { background:var(--surface-2); color:var(--text); }
+  .chip.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:var(--fw-semibold); }
   /* ── Card ── */
   .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:var(--space-6); margin-bottom:var(--space-5); box-shadow:var(--shadow-sm); }
   .card h3 { font-size:var(--text-base); margin-bottom:var(--space-3); color:var(--text); font-weight:var(--fw-semibold); letter-spacing:-0.005em; }
@@ -370,6 +375,7 @@
     <div class="vtabs" id="ttabs">
       <button data-tt="coach" class="active"><span data-ic="compass"></span> 코치 (단계별)</button>
       <button data-tt="drill"><span data-ic="bolt"></span> 집중 훈련</button>
+      <button data-tt="match"><span data-ic="flag"></span> 경기 (실전)</button>
     </div>
 
     <div id="ttCoach" style="margin-top:16px">
@@ -422,6 +428,32 @@
 
     <div id="drillReport" style="display:none"></div>
     </div><!-- /ttDrill -->
+
+    <div id="ttMatch" style="margin-top:16px;display:none">
+      <div id="matchSetup">
+        <p class="sub" style="margin-bottom:16px">실전처럼 4대 영역을 무제한으로 훈련해요. 영역·난이도를 고르거나, 간단 진단으로 난이도를 자동 설정하세요.</p>
+        <div class="card">
+          <h3>영역</h3>
+          <div class="seg" id="matchSkills" style="margin-top:8px"></div>
+          <h3 style="margin-top:18px">난이도</h3>
+          <div class="seg" id="matchLevels" style="margin-top:8px"></div>
+          <p class="note" id="matchLevelNote" style="margin-top:10px"></p>
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn" id="matchStart"><span data-ic="play"></span> 경기 시작</button>
+            <button class="btn secondary" id="matchDiag"><span data-ic="activity"></span> 간단 진단으로 난이도 설정</button>
+          </div>
+        </div>
+      </div>
+      <div id="matchDiagView" style="display:none"></div>
+      <div id="matchRun" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <b id="matchTitle"></b><span class="note" id="matchSub"></span><span style="flex:1"></span>
+          <button class="btn ghost sm" id="matchExit">◀ 나가기</button>
+        </div>
+        <div class="vhud" id="matchHud"></div>
+        <div class="card" id="matchBody" style="min-height:170px"></div>
+      </div>
+    </div>
   </section>
 
   <!-- DASHBOARD -->
@@ -934,10 +966,13 @@ function setTrainTab(tab){
   document.querySelectorAll("#ttabs button").forEach(b=>b.classList.toggle("active",b.dataset.tt===tab));
   document.getElementById("ttCoach").style.display=tab==="coach"?"":"none";
   document.getElementById("ttDrill").style.display=tab==="drill"?"":"none";
+  document.getElementById("ttMatch").style.display=tab==="match"?"":"none";
   if(typeof coachTimer!=="undefined"&&coachTimer){ clearInterval(coachTimer); coachTimer=null; }
   if(typeof drillTick!=="undefined"&&drillTick){ clearInterval(drillTick); drillTick=null; }
+  if(typeof clearMatchTimer==="function") clearMatchTimer();
   if(tab==="coach") startCoach();
-  else { refreshDrillSetup(); showDrillView("setup"); }
+  else if(tab==="drill"){ refreshDrillSetup(); showDrillView("setup"); }
+  else showMatch();
 }
 function showTrain(){ setTrainTab(currentTrainTab||"coach"); }
 document.querySelectorAll("#ttabs button").forEach(b=>b.onclick=()=>setTrainTab(b.dataset.tt));
@@ -2086,6 +2121,137 @@ document.getElementById("chatSaveKey").onclick=()=>{ const d=db(); d.apiKey=docu
 document.getElementById("chatSend").onclick=doChatSend;
 document.getElementById("chatInput").addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); doChatSend(); } });
 chatAdd("a","안녕! 👋 문제 풀다 막히면 여기에 바로 물어봐.\n예: \"a랑 the 차이 뭐야?\", \"I go to school yesterday 맞아?\", \"analyze 뜻\"");
+
+//==================== 경기 (실전 훈련: 리딩·리스닝·라이팅·스피킹) ====================
+const MATCH_SKILLS=[["reading","리딩"],["listening","리스닝"],["writing","라이팅"],["speaking","스피킹"]];
+const MATCH_LEVELS=[[1,"쉬움"],[2,"보통"],[3,"어려움"]];
+let matchSel="reading", matchState=null, diagState=null, matchTimer=null;
+function clearMatchTimer(){ if(matchTimer){ clearInterval(matchTimer); matchTimer=null; } }
+function matchLevel(){ return db().matchLevel||2; }
+function setMatchLevel(v){ const d=db(); d.matchLevel=v; save(d); }
+function speakRate(t,r){ try{ if(ttsAvailable()){ window.speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang="en-US"; u.rate=r; window.speechSynthesis.speak(u);} }catch(e){} }
+function renderMatchSetup(){
+  const sb=document.getElementById("matchSkills");
+  sb.innerHTML=MATCH_SKILLS.map(([k,l])=>`<button class="chip ${k===matchSel?'active':''}" data-sk="${k}">${l}</button>`).join("");
+  sb.querySelectorAll("[data-sk]").forEach(b=>b.onclick=()=>{ matchSel=b.dataset.sk; renderMatchSetup(); });
+  const lv=matchLevel(), lb=document.getElementById("matchLevels");
+  lb.innerHTML=MATCH_LEVELS.map(([v,l])=>`<button class="chip ${v===lv?'active':''}" data-lv="${v}">${l}</button>`).join("");
+  lb.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{ setMatchLevel(+b.dataset.lv); renderMatchSetup(); });
+  document.getElementById("matchLevelNote").textContent=`현재: ${MATCH_SKILLS.find(x=>x[0]===matchSel)[1]} · 난이도 ${MATCH_LEVELS.find(x=>x[0]===lv)[1]}`;
+}
+function showMatch(){ clearMatchTimer(); matchState=null;
+  document.getElementById("matchSetup").style.display=""; document.getElementById("matchDiagView").style.display="none"; document.getElementById("matchRun").style.display="none";
+  renderMatchSetup(); }
+function startMatch(skill,level){ clearMatchTimer();
+  matchState={skill,level,count:0,correct:0,attempts:0,streak:0};
+  document.getElementById("matchSetup").style.display="none"; document.getElementById("matchDiagView").style.display="none"; document.getElementById("matchRun").style.display="";
+  document.getElementById("matchTitle").textContent=MATCH_SKILLS.find(x=>x[0]===skill)[1]+" 경기";
+  document.getElementById("matchSub").textContent="난이도 "+MATCH_LEVELS.find(x=>x[0]===level)[1];
+  matchHudUpd(); matchStep();
+}
+function matchHudUpd(){ const s=matchState; if(!s)return; const acc=s.attempts?Math.round(s.correct/s.attempts*100)+"%":"-";
+  document.getElementById("matchHud").innerHTML=`<div><div class="v">${s.count}</div><div class="l">처리</div></div>
+    <div><div class="v">${acc}</div><div class="l">정답률</div></div>
+    <div><div class="v">${s.streak}</div><div class="l">연속</div></div>`; }
+function matchNext(){ clearMatchTimer(); matchState.count++; matchHudUpd(); matchStep(); }
+function matchStep(){ ({reading:matchReading,listening:matchListening,writing:matchWriting,speaking:matchSpeaking}[matchState.skill])(); }
+function matchMC(it){ const body=document.getElementById("matchBody"); const box=body.querySelector("#mOpts");
+  it.opts.forEach((o,oi)=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=(oi+1)+". "+o;
+    b.onclick=()=>{ if(box.dataset.d)return; box.dataset.d="1"; const s=matchState; s.attempts++; const ok=oi===it.ans; const fb=body.querySelector("#mFb");
+      if(ok){ b.classList.add("correct"); s.correct++; s.streak++; fb.className="feedback show ok"; fb.innerHTML=svgIcon('check')+" 정답! "+(it.exp||""); }
+      else { b.classList.add("wrong"); box.querySelectorAll(".opt")[it.ans].classList.add("correct"); s.streak=0; fb.className="feedback show no"; fb.innerHTML=svgIcon('x')+" "+(it.exp||"정답: "+it.opts[it.ans]); }
+      matchHudUpd(); body.querySelector("#mNext").innerHTML=`<button class="btn" id="mN">다음 ▶ (스페이스)</button>`; body.querySelector("#mN").onclick=matchNext; };
+    box.appendChild(b); }); }
+function matchReading(){ const s=matchState, body=document.getElementById("matchBody"); let it;
+  if(Math.random()<0.6){ const P=_rand(READING_BANK); const qq=_rand(P.qs); const t=_mc(qq.opts[qq.ans],qq.opts.filter((_,i)=>i!==qq.ans));
+    it={passage:P.p,q:qq.q,opts:t.opts,ans:t.ans,exp:""}; }
+  else { const pool=allVocabUpTo(12); const v=_rand(pool); const re=new RegExp("\\b"+v[0]+"(s|es|ed|ing)?\\b","i");
+    const sent=re.test(v[3])?v[3].replace(re,"_____"):(v[3]+" — (___)"); const dis=shuffle(pool.filter(x=>x[0]!==v[0])).slice(0,2).map(x=>x[0]); const t=_mc(v[0],dis);
+    it={passage:null,q:`빈칸에 알맞은 단어: ${sent}`,opts:t.opts,ans:t.ans,exp:`${v[0]} = ${v[2]}`}; }
+  const hide=s.level>=3 && it.passage;
+  body.innerHTML=(it.passage?`<div class="card" id="mPassage" style="background:var(--surface-2);margin-bottom:12px">${it.passage}</div>`:"")
+    +(hide?`<button class="btn ghost sm" id="mRead" style="margin-bottom:12px">다 읽었어요 (지문 가리기)</button>`:"")
+    +`<p class="quiz-q">${it.q}</p><div id="mOpts" style="margin-top:12px"></div><div id="mFb" class="feedback" style="margin-top:12px"></div><div id="mNext" style="margin-top:14px"></div>`;
+  if(hide){ document.getElementById("mRead").onclick=()=>{ const p=document.getElementById("mPassage"); if(p)p.style.display="none"; }; }
+  matchMC(it); }
+function matchListening(){ const s=matchState, body=document.getElementById("matchBody");
+  const L=_rand(LISTEN_BANK); const t=_mc(L.s,L.d); const it={opts:t.opts,ans:t.ans,exp:`정답: "${L.s}"`};
+  const rate=s.level===1?0.85:s.level===2?1.0:1.12; const maxPlay=s.level===1?99:s.level===2?2:1; let plays=0; const canT=ttsAvailable();
+  body.innerHTML=`<p class="quiz-q">🔊 들은 문장을 고르세요.</p>
+    <div style="margin:12px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn ${canT?'':'ghost'}" id="mPlay">${svgIcon('play')} ${canT?'재생':'음성 미지원 — 텍스트'}</button><span class="note" id="mPlayN"></span></div>
+    <div id="mHeard" class="note" style="margin-bottom:8px;${canT?'display:none':''}">${canT?'':'"'+L.s+'"'}</div>
+    <div id="mOpts" style="margin-top:6px"></div><div id="mFb" class="feedback" style="margin-top:12px"></div><div id="mNext" style="margin-top:14px"></div>`;
+  function play(){ if(!canT){ document.getElementById("mHeard").style.display="block"; return; } if(plays>=maxPlay){ document.getElementById("mPlayN").textContent="재생 횟수 초과"; return; } plays++; speakRate(L.s,rate); document.getElementById("mPlayN").textContent=`재생 ${plays}/${maxPlay===99?'∞':maxPlay}`; }
+  document.getElementById("mPlay").onclick=play; if(canT) setTimeout(play,250);
+  matchMC(it); }
+function matchWriting(){ const s=matchState, body=document.getElementById("matchBody");
+  const pool=allVocabUpTo(12); const useWord=Math.random()<0.5||s.level>=3; const w=_rand(pool);
+  const prompt=useWord?`"<b>${w[0]}</b>" (${w[2]}) 를 사용해 영어로 쓰세요.`:_rand(WRITING_PROMPTS); const minSent=s.level;
+  body.innerHTML=`<p class="quiz-q">✍️ ${prompt}</p>
+    <p class="note">요구: 최소 ${minSent}문장${useWord?` · "${w[0]}" 포함`:''}</p>
+    <textarea id="mWrite" placeholder="영어로 작성..." style="margin-top:8px"></textarea>
+    <div id="mFb" class="feedback" style="margin-top:10px"></div>
+    <button class="btn" id="mSubmit" style="margin-top:12px">제출 ▶</button>`;
+  document.getElementById("mSubmit").onclick=()=>{ const txt=document.getElementById("mWrite").value.trim(); const r=evaluateEnglish(txt);
+    const sentCount=(txt.match(/[.!?]+/g)||[]).length||(txt?1:0); const issues=[];
+    if(sentCount<minSent) issues.push(`문장 수 부족 (${sentCount}/${minSent})`);
+    if(useWord && !new RegExp("\\b"+w[0]+"\\b","i").test(txt)) issues.push(`"${w[0]}" 미포함`);
+    const okAll=r.ok&&issues.length===0; const fb=document.getElementById("mFb"); fb.className="feedback show "+(okAll?"ok":"no");
+    fb.innerHTML=(issues.length?svgIcon('x')+" "+issues.join(" · ")+"<br>":"")+r.html;
+    const s2=matchState; s2.attempts++; if(okAll){s2.correct++;s2.streak++;}else s2.streak=0; matchHudUpd();
+    const btn=document.getElementById("mSubmit"); btn.textContent="다음 ▶"; btn.onclick=matchNext; }; }
+function matchSpeaking(){ const s=matchState, body=document.getElementById("matchBody");
+  const pool=allVocabUpTo(12); const useWord=s.level>=3; const w=_rand(pool); const topic=_rand(SPEAKING_PROMPTS);
+  const prep=s.level===1?20:s.level===2?12:6; const minSent=s.level;
+  body.innerHTML=`<p class="quiz-q">🗣️ 주제를 영어로 말하세요.</p>
+    <div class="card" style="background:var(--surface-2);margin:12px 0"><b>${topic}</b>${useWord?`<br><span class="note">"${w[0]}" (${w[2]}) 포함하기</span>`:''}</div>
+    <p class="note">준비 ${prep}초 · 최소 ${minSent}문장</p>
+    ${ttsAvailable()?`<button class="btn ghost sm" id="mSpeakEx">${svgIcon('play')} 주제 듣기</button>`:''}
+    <div id="mPrep" class="note" style="margin:10px 0"></div>
+    <p class="note">말한 뒤 스스로 평가:</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-sp="1">유창</button><button class="btn secondary" data-sp="1">보통</button><button class="btn ghost" data-sp="0">어려움</button></div>`;
+  if(ttsAvailable()){ const ex=document.getElementById("mSpeakEx"); if(ex) ex.onclick=()=>speakRate(topic,1.0); }
+  let left=prep; const pe=document.getElementById("mPrep"); pe.textContent=`준비 ${left}초`;
+  clearMatchTimer(); matchTimer=setInterval(()=>{ left--; if(left<=0){ clearMatchTimer(); pe.textContent="🎤 말하기 시작!"; } else pe.textContent=`준비 ${left}초`; },1000);
+  body.querySelectorAll("[data-sp]").forEach(b=>b.onclick=()=>{ clearMatchTimer(); const s2=matchState; s2.attempts++; if(+b.dataset.sp){s2.correct++;s2.streak++;}else s2.streak=0; matchHudUpd(); matchNext(); }); }
+// 간단 진단 → 난이도 설정
+function startMatchDiag(){ const qs=[];
+  shuffle(READING_BANK).slice(0,2).forEach(P=>{ const qq=_rand(P.qs); const t=_mc(qq.opts[qq.ans],qq.opts.filter((_,i)=>i!==qq.ans)); qs.push({kind:"읽기",passage:P.p,q:qq.q,opts:t.opts,ans:t.ans}); });
+  shuffle(LISTEN_BANK).slice(0,2).forEach(L=>{ const t=_mc(L.s,L.d); qs.push({kind:"듣기",listen:L.s,q:"방금 들은 문장은?",opts:t.opts,ans:t.ans}); });
+  const pool=allVocabUpTo(12); shuffle(pool).slice(0,2).forEach(v=>{ const dis=shuffle(pool.filter(x=>x[0]!==v[0])).slice(0,2).map(x=>x[2]); const t=_mc(v[2],dis); qs.push({kind:"어휘",q:`"${v[0]}" 의 뜻은?`,opts:t.opts,ans:t.ans}); });
+  diagState={qs:shuffle(qs),i:0,correct:0};
+  document.getElementById("matchSetup").style.display="none"; document.getElementById("matchRun").style.display="none"; document.getElementById("matchDiagView").style.display="";
+  renderDiag(); }
+function renderDiag(){ const s=diagState, v=document.getElementById("matchDiagView");
+  if(s.i>=s.qs.length){ const c=s.correct, lv=c<=2?1:c<=4?2:3; setMatchLevel(lv);
+    v.innerHTML=`<div class="card"><h3>${svgIcon('check')} 진단 완료</h3>
+      <p style="margin-top:8px">정답 <b>${c}/${s.qs.length}</b> → 추천 난이도 <b>${MATCH_LEVELS.find(x=>x[0]===lv)[1]}</b></p>
+      <button class="btn" id="diagDone" style="margin-top:14px">난이도 적용하고 돌아가기 ▶</button></div>`;
+    document.getElementById("diagDone").onclick=()=>showMatch(); return; }
+  const it=s.qs[s.i];
+  v.innerHTML=`<div class="card"><div class="note">진단 ${s.i+1}/${s.qs.length} · ${it.kind}</div>
+    ${it.passage?`<div class="card" style="background:var(--surface-2);margin:10px 0">${it.passage}</div>`:""}
+    ${it.listen?`<button class="btn ghost sm" id="diagPlay" style="margin:8px 0">${svgIcon('play')} 듣기</button> <span class="note" id="diagHeard"></span>`:""}
+    <p class="quiz-q" style="margin-top:8px">${it.q}</p><div id="diagOpts" style="margin-top:12px"></div></div>`;
+  if(it.listen){ const pb=document.getElementById("diagPlay"); if(ttsAvailable()){ pb.onclick=()=>speakRate(it.listen,1.0); setTimeout(()=>speakRate(it.listen,1.0),250); } else { document.getElementById("diagHeard").textContent='"'+it.listen+'"'; } }
+  const box=document.getElementById("diagOpts");
+  it.opts.forEach((o,oi)=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=(oi+1)+". "+o;
+    b.onclick=()=>{ if(box.dataset.d)return; box.dataset.d="1"; if(oi===it.ans){ b.classList.add("correct"); s.correct++; } else { b.classList.add("wrong"); box.querySelectorAll(".opt")[it.ans].classList.add("correct"); }
+      setTimeout(()=>{ s.i++; renderDiag(); },600); };
+    box.appendChild(b); }); }
+document.getElementById("matchStart").onclick=()=>startMatch(matchSel, matchLevel());
+document.getElementById("matchExit").onclick=()=>showMatch();
+document.getElementById("matchDiag").onclick=startMatchDiag;
+document.addEventListener("keydown",e=>{
+  if(!document.getElementById("train").classList.contains("active")) return;
+  if(document.getElementById("ttMatch").style.display==="none") return;
+  if(document.getElementById("matchRun").style.display==="none") return;
+  if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  const k=e.key;
+  if(k===" "||k==="Enter"){ const n=document.getElementById("mN"); if(n){ e.preventDefault(); n.click(); } }
+  else if(k==="1"||k==="2"||k==="3"){ const o=document.querySelectorAll("#mOpts .opt"); if(o[+k-1]) o[+k-1].click(); }
+});
 
 //==================== 초기화 ====================
 viewDay=currentDay();
