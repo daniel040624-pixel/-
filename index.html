@@ -960,6 +960,7 @@ function navigate(id){
   if(id==="cover") renderCover();
   if(id==="today") renderToday();
   if(id==="program") renderProgram();
+  if(id==="curriculum") renderCurriculum();
   if(id==="dashboard") renderDashboard();
   if(id==="train") showTrain();
   if(id==="match") showMatch();
@@ -1031,10 +1032,43 @@ function showTrain(){ setTrainTab(currentTrainTab||"coach"); }
 document.querySelectorAll("#ttabs button").forEach(b=>b.onclick=()=>setTrainTab(b.dataset.tt));
 
 //==================== 오늘의 세션 엔진 ====================
+//==================== 모드별 학습 트랙 ====================
+const TRACK_BLOCKS = {
+  toefl: BLOCKS,
+  general: [["워밍업",20,"전날 표현·문장 백지 인출 + 변형 미션"],["인풋",40,"단계별 듣기/읽기 → 반드시 요약 말하기·쓰기로 출력"],["어휘·표현 장착",30,"핵심 표현 5~10개, 예문→직접 생성"],["출력 훈련",50,"말하기(즉흥·의견·묘사) + 쉐도잉"],["쓰기",25,"일기/의견/에세이 → 자기 교정 후 제출"],["복습",10,"오늘 배운 것 백지 인출"],["마무리",5,"원어민 표현 1개 + 내 문장 1개"]],
+  opic: [["워밍업",15,"전날 표현 인출 + 발음 쉐도잉"],["인풋",30,"원어민 답변 샘플 듣고 표현 채집"],["표현 장착",30,"콜로케이션·구동사 5~10개 → 문장 생성"],["말하기",60,"주제별 1~2분 답변 + 녹음·자기 교정"],["롤플레이/돌발",30,"즉흥 대응 연습"],["복습",15,"오늘 표현 백지 인출"]]
+};
+const GENERAL_STAGES=[
+  {wk:[1,2,3],phase:"STAGE 1 · 문장 생성 자동화",focus:"기본 문형 조립 + 시제·접속사·동사 연결",integrated:"짧은 문장을 접속사로 길게 잇기"},
+  {wk:[4,5],phase:"STAGE 2 · 일상 유창성",focus:"쉬운 인풋 요약 말하기 + 능동 어휘·쉐도잉",integrated:"쉬운 콘텐츠 듣고 요약 말하기"},
+  {wk:[6,7,8],phase:"STAGE 3 · 표현력 도약",focus:"구동사·관용표현·콜로케이션·패러프레이징",integrated:"일반 콘텐츠 자막 없이 듣고 요약"},
+  {wk:[9,10],phase:"STAGE 4 · 고급 사고 표현",focus:"추상 토론·톤 조절·긴 글쓰기",integrated:"추상 주제 의견 글 + 자기 교정"},
+  {wk:[11,12],phase:"STAGE 5 · 원어민 정착",focus:"즉흥 발화·뉘앙스·자기 교정",integrated:"무작위 주제 2분 즉흥 스피치"}
+];
+const GENERAL_TOPICS=["일상","여행","취미","일·직업","음식","문화","기술","건강","교육","환경","뉴스","영화·음악"];
+const OPIC_STAGES=[
+  {wk:[1,2,3],phase:"STAGE 1 · 기본기(자기소개·일상 묘사)",focus:"5~7문장 묘사 + 현재/과거 시제 안정화",integrated:"익숙한 주제를 한 단락으로 말하기"},
+  {wk:[4,5,6],phase:"STAGE 2 · 경험 서술(스토리텔링)",focus:"사건 순서·연결어·구체 묘사",integrated:"경험 하나를 1~2분 이야기하기"},
+  {wk:[7,8,9],phase:"STAGE 3 · 의견·비교(논리)",focus:"의견→이유2→예시, 비교·대조",integrated:"찬반 주제를 근거 들어 1~2분 말하기"},
+  {wk:[10,11,12],phase:"STAGE 4 · 롤플레이·돌발(실전)",focus:"상황극·즉흥 2분 스피치·자기 교정",integrated:"낯선 주제·롤플레이 즉흥 대응"}
+];
+const OPIC_TOPICS=["자기소개","집·동네","취미·여가","직장·학교","여행","외식","영화·음악","운동","쇼핑","명절·기념일","기술·SNS","롤플레이"];
+const TRACK_QKEYS=["articles","tense","plural","clause","preposition","connectors"];
+function modeBlocks(){ return TRACK_BLOCKS[appMode()]||BLOCKS; }
+function trackInfo(mode,week){
+  if(mode==="toefl"){ const w=weekInfo(week)||weekInfo(1); return {phase:w.phase,theme:w.theme,topic:w.subject,subject:w.subject,focus:w.grammar,integrated:w.integrated,key:w.key,milestone:w.milestone}; }
+  const stages = mode==="opic"?OPIC_STAGES:GENERAL_STAGES;
+  const topics = mode==="opic"?OPIC_TOPICS:GENERAL_TOPICS;
+  const st = stages.find(s=>s.wk.includes(week)) || stages[stages.length-1];
+  const topic = topics[(week-1)%topics.length];
+  const key = TRACK_QKEYS[(week-1)%TRACK_QKEYS.length];
+  return {phase:st.phase, theme:topic+" — "+st.phase.split("· ")[1], topic, subject:topic, focus:st.focus, integrated:st.integrated, key, milestone:null};
+}
+
 function dayMeta(day){
   const week = Math.ceil(day/7);
   const dow = ((day-1)%7)+1;        // 1~7
-  const info = weekInfo(week);
+  const info = trackInfo(appMode(), week);
   let kind="study";
   if(dow===7){ kind = info.milestone ? "mock" : "test"; }
   return {day,week,dow,info,kind};
@@ -1042,7 +1076,7 @@ function dayMeta(day){
 
 function scaledBlocks(total){
   const factor = total/180;
-  return BLOCKS.map(([n,m,d])=>[n, Math.max(2,Math.round(m*factor)), d]);
+  return modeBlocks().map(([n,m,d])=>[n, Math.max(2,Math.round(m*factor)), d]);
 }
 
 function renderToday(){
@@ -1051,23 +1085,27 @@ function renderToday(){
   const d = db();
   document.getElementById("dayLabel").textContent = `Day ${day} · ${m.week}주차 ${m.dow}일차`;
 
-  // 마일스톤 배너
+  const mode=appMode();
+  // 마일스톤 / 점검 배너
   const mb = document.getElementById("milestoneBanner");
   if(m.kind==="mock"){
     const which = {mock1:"①(4주)",mock2:"②(8주)",mock3:"③(12주)"}[m.info.milestone];
-    mb.innerHTML = `<div class="milestone-banner">${svgIcon('flag')} <b>종합 모의고사 ${which}</b> — 실제 시험 형식·시간(약 120분)으로 4영역 풀세트. 끝나면 '성장 추적'에 점수 입력!</div>`;
+    mb.innerHTML = `<div class="milestone-banner">${svgIcon('flag')} <b>종합 모의고사 ${which}</b> — 실제 시험 형식·시간(약 120분)으로 4영역 풀세트. 끝나면 '진단평가'에 점수 입력!</div>`;
   } else if(m.kind==="test"){
-    mb.innerHTML = `<div class="milestone-banner">${svgIcon('edit')} <b>${m.week}주차 진척 테스트</b> — 미니 TOEFL(약 40분). 끝나면 '성장 추적'에 점수 입력!</div>`;
+    const txt = mode==="toefl" ? `<b>${m.week}주차 진척 테스트</b> — 미니 TOEFL(약 40분). 끝나면 '진단평가'에 기록!`
+      : mode==="opic" ? `<b>${m.week}주차 점검</b> — 즉흥 2분 답변을 녹음해 전주와 비교해보세요.`
+      : `<b>${m.week}주차 점검</b> — 즉흥 말하기 2분 + 1단락 쓰기로 발전을 확인하세요.`;
+    mb.innerHTML = `<div class="milestone-banner">${svgIcon('edit')} ${txt}</div>`;
   } else mb.innerHTML = "";
 
   // 목표
+  const goalTxt = m.kind==="study" ? `루틴 ${modeBlocks().length}블록 완수 + 어휘 + 퀴즈 + 말하기·쓰기` : (m.kind==="mock"?"종합 모의고사 응시 & 채점":"주간 점검 수행");
   document.getElementById("dayGoal").innerHTML =
     `<table>
       <tr><td class="note" style="width:90px">단계</td><td><span class="tag info">${m.info.phase}</span></td></tr>
-      <tr><td class="note">이번 주 주제</td><td><b>${m.info.theme}</b></td></tr>
-      <tr><td class="note">학술 영역</td><td>${m.info.subject}</td></tr>
-      <tr><td class="note">문법 초점</td><td>${m.info.grammar}</td></tr>
-      <tr><td class="note">오늘 목표</td><td>${m.kind==="study" ? "루틴 6블록 완수 + 어휘 4개 + 퀴즈 + 말하기 1회" : (m.kind==="mock"?"종합 모의고사 응시 & 채점":"주간 진척 테스트 응시 & 채점")}</td></tr>
+      <tr><td class="note">오늘 주제</td><td><b>${m.info.topic}</b></td></tr>
+      <tr><td class="note">학습 초점</td><td>${m.info.focus}</td></tr>
+      <tr><td class="note">오늘 목표</td><td>${goalTxt}</td></tr>
     </table>`;
 
   // 루틴
@@ -1120,14 +1158,14 @@ function renderToday(){
     "지질":["Describe a natural place you have visited.","Why do earthquakes happen, in your own words?"],
     "사회":["Describe a problem in your community.","What makes a good citizen?"],
     "종합":["Summarize what you learned this week.","Explain your test strategy for TOEFL."] };
-  const arr = PROMPTS[m.info.subject]||PROMPTS.default;
+  const arr = mode==="toefl" ? (PROMPTS[m.info.subject]||PROMPTS.default) : (MODE_SPEAK[mode]||MODE_SPEAK.general);
   document.getElementById("todayPrompt").textContent = arr[(day)%arr.length];
   document.getElementById("todaySpeak").value = (d.done[day] && d.done[day].speak) || "";
   document.getElementById("todaySpeak").oninput = (e)=>{ const dd=db(); dd.done[day]=dd.done[day]||{blocks:[]}; dd.done[day].speak=e.target.value; save(dd); };
 }
 
 function updateRoutineProg(){
-  const d=db(); const day=viewDay; const total=6;
+  const d=db(); const day=viewDay; const total=modeBlocks().length;
   const done=(d.done[day]&&d.done[day].blocks||[]).length;
   document.getElementById("routineProg").textContent = `(${done}/${total} 완료)`;
 }
@@ -1206,22 +1244,39 @@ document.getElementById("saveStart").onclick=()=>{
 };
 
 
-//==================== 커리큘럼 ====================
-(function(){
-  const c=document.getElementById("curriculumList");
-  let phase="";
-  WEEKS.forEach(wk=>{
-    if(wk.phase!==phase){ phase=wk.phase; c.innerHTML+=`<h3 style="color:var(--brand-700);margin:16px 0 8px">${phase}</h3>`; }
-    const badge = wk.milestone?`<span class="tag bad">종합 모의 ${ {mock1:"①",mock2:"②",mock3:"③"}[wk.milestone] }</span>`:`<span class="tag warn">7일차 진척 테스트</span>`;
-    c.innerHTML+=`<details><summary>${wk.w}주차 · ${wk.theme} ${badge}</summary>
-      <div style="margin-top:8px"><ul class="clean">
-        <li><b>학술 영역:</b> ${wk.subject}</li>
-        <li><b>문법 초점:</b> ${wk.grammar}</li>
-        <li><b>통합형 과제:</b> ${wk.integrated}</li>
-        <li><b>어휘:</b> ${(VW[wk.w]||[]).map(v=>v[0]).join(", ")}</li>
-      </ul></div></details>`;
+//==================== 커리큘럼 (모드별) ====================
+function renderCurriculum(){
+  const mode=appMode(); const c=document.getElementById("curriculumList"); c.innerHTML="";
+  if(mode==="toefl"){
+    let phase="";
+    WEEKS.forEach(wk=>{
+      if(wk.phase!==phase){ phase=wk.phase; c.innerHTML+=`<h3 style="color:var(--brand-700);margin:16px 0 8px">${phase}</h3>`; }
+      const badge = wk.milestone?`<span class="tag bad">종합 모의 ${ {mock1:"①",mock2:"②",mock3:"③"}[wk.milestone] }</span>`:`<span class="tag warn">7일차 진척 테스트</span>`;
+      c.innerHTML+=`<details><summary>${wk.w}주차 · ${wk.theme} ${badge}</summary>
+        <div style="margin-top:8px"><ul class="clean">
+          <li><b>학술 영역:</b> ${wk.subject}</li>
+          <li><b>문법 초점:</b> ${wk.grammar}</li>
+          <li><b>통합형 과제:</b> ${wk.integrated}</li>
+          <li><b>어휘:</b> ${(VW[wk.w]||[]).map(v=>v[0]).join(", ")}</li>
+        </ul></div></details>`;
+    });
+    return;
+  }
+  const stages = mode==="opic"?OPIC_STAGES:GENERAL_STAGES;
+  const topics = mode==="opic"?OPIC_TOPICS:GENERAL_TOPICS;
+  stages.forEach(st=>{
+    c.innerHTML+=`<h3 style="color:var(--brand-700);margin:16px 0 8px">${st.phase}</h3>`;
+    st.wk.forEach(w=>{ const topic=topics[(w-1)%topics.length];
+      c.innerHTML+=`<details><summary>${w}주차 · ${topic} <span class="tag warn">${w%7===0?'주간 점검':'데일리'}</span></summary>
+        <div style="margin-top:8px"><ul class="clean">
+          <li><b>학습 초점:</b> ${st.focus}</li>
+          <li><b>핵심 과제:</b> ${st.integrated}</li>
+          <li><b>오늘 주제:</b> ${topic}</li>
+          <li><b>어휘:</b> ${(VW[w]||[]).map(v=>v[0]).join(", ")}</li>
+        </ul></div></details>`;
+    });
   });
-})();
+}
 
 //==================== 어휘 트레이닝 (단어·뜻·콜로케이션·예문·과제) ====================
 // 학술 콜로케이션 뱅크 (한국어 뜻으로 정답이 확정됨)
@@ -1522,6 +1577,17 @@ const SPEAKING_PROMPTS=[
   "Describe your hometown briefly."
 ];
 const SEC_LABEL={Reading:"독해",Listening:"듣기","어휘/문법":"어휘·문법",Writing:"작문",Speaking:"말하기"};
+// 모드별 말하기·쓰기 프롬프트
+const MODE_SPEAK={
+  toefl:SPEAKING_PROMPTS,
+  general:["Describe your daily routine.","Talk about what you did last weekend.","What's your favorite movie and why?","Describe your hometown.","Talk about a hobby you enjoy.","What do you usually do after work or school?"],
+  opic:["Tell me about yourself.","Describe your house or apartment.","Talk about your neighborhood.","What do you do in your free time?","Describe a memorable trip you took.","Talk about your favorite restaurant.","Describe a problem you recently solved.","Role-play: ask a friend to help you this weekend."]
+};
+const MODE_WRITE={
+  toefl:WRITING_PROMPTS,
+  general:["오늘 한 일을 영어로 3문장 써보세요.","좋아하는 음식과 그 이유를 영어로 써보세요.","주말 계획을 영어로 써보세요.","최근에 본 영화/영상을 영어로 소개해보세요."],
+  opic:["자기소개를 영어 3문장으로 써보세요.","당신의 동네를 영어로 묘사해보세요.","최근 경험 하나를 영어로 서술해보세요.","좋아하는 취미와 이유를 영어로 써보세요."]
+};
 
 function examWeek(){ return Math.max(1, Math.min(12, dayMeta(currentDay()).week)); }
 function ttsAvailable(){ try{ return "speechSynthesis" in window; }catch(e){ return false; } }
@@ -1904,9 +1970,9 @@ function renderCoachBody(step,c){
     case "intro":
       c.innerHTML=`<p>안녕! 오늘은 <b>Day ${m.day} · ${m.week}주차 ${m.dow}일차</b>야. 같이 한 단계씩 가보자. 💪</p>
         <table style="margin-top:10px">
-          <tr><td class="note" style="width:90px">주제</td><td><b>${m.info.theme}</b></td></tr>
-          <tr><td class="note">학술 영역</td><td>${m.info.subject}</td></tr>
-          <tr><td class="note">문법 초점</td><td>${m.info.grammar}</td></tr>
+          <tr><td class="note" style="width:90px">단계</td><td><span class="tag info">${m.info.phase}</span></td></tr>
+          <tr><td class="note">오늘 주제</td><td><b>${m.info.topic}</b></td></tr>
+          <tr><td class="note">학습 초점</td><td>${m.info.focus}</td></tr>
         </table>
         <p class="note" style="margin-top:12px">준비됐으면 '다음 단계 ▶'를 눌러!</p>`;
       break;
@@ -2302,7 +2368,7 @@ function matchListening(){ const s=matchState, body=document.getElementById("mat
   matchMC(it); }
 function matchWriting(){ const s=matchState, body=document.getElementById("matchBody");
   const pool=allVocabUpTo(12); const useWord=Math.random()<0.5||s.level>=3; const w=_rand(pool);
-  const prompt=useWord?`"<b>${w[0]}</b>" (${w[2]}) 를 사용해 영어로 쓰세요.`:_rand(WRITING_PROMPTS); const minSent=s.level;
+  const prompt=useWord?`"<b>${w[0]}</b>" (${w[2]}) 를 사용해 영어로 쓰세요.`:_rand(MODE_WRITE[appMode()]||WRITING_PROMPTS); const minSent=s.level;
   body.innerHTML=`<p class="quiz-q">✍️ ${prompt}</p>
     <p class="note">요구: 최소 ${minSent}문장${useWord?` · "${w[0]}" 포함`:''}</p>
     <textarea id="mWrite" placeholder="영어로 작성..." style="margin-top:8px"></textarea>
@@ -2317,7 +2383,7 @@ function matchWriting(){ const s=matchState, body=document.getElementById("match
     const s2=matchState; s2.attempts++; if(okAll){s2.correct++;s2.streak++;}else s2.streak=0; matchHudUpd();
     const btn=document.getElementById("mSubmit"); btn.textContent="다음 ▶"; btn.onclick=matchNext; }; }
 function matchSpeaking(){ const s=matchState, body=document.getElementById("matchBody");
-  const pool=allVocabUpTo(12); const useWord=s.level>=3; const w=_rand(pool); const topic=_rand(SPEAKING_PROMPTS);
+  const pool=allVocabUpTo(12); const useWord=s.level>=3; const w=_rand(pool); const topic=_rand(MODE_SPEAK[appMode()]||SPEAKING_PROMPTS);
   const prep=s.level===1?20:s.level===2?12:6; const minSent=s.level;
   body.innerHTML=`<p class="quiz-q">🗣️ 주제를 영어로 말하세요.</p>
     <div class="card" style="background:var(--surface-2);margin:12px 0"><b>${topic}</b>${useWord?`<br><span class="note">"${w[0]}" (${w[2]}) 포함하기</span>`:''}</div>
@@ -2479,6 +2545,7 @@ viewDay=currentDay();
 hydrateIcons();
 renderAssess();
 renderToday();
+renderCurriculum();
 renderDashboard();
 renderCover();
 </script>
