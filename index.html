@@ -118,6 +118,7 @@
   .mode-card .mode-ic { font-size:1.6rem; color:var(--accent); }
   .mode-card .mode-t { font-family:var(--font-display); font-weight:var(--fw-bold); font-size:var(--text-lg); color:var(--text-strong); }
   .mode-card .mode-d { font-size:var(--text-sm); color:var(--text-muted); line-height:1.5; }
+  .cover-program-wrap { margin-top:var(--space-12); border-top:1px solid var(--border); padding-top:var(--space-10); text-align:left; }
   .cover-kicker { display:inline-flex; align-items:center; gap:6px; font-size:var(--text-sm); font-weight:var(--fw-semibold); color:var(--text-muted);
     border:1px solid var(--border); border-radius:var(--radius-full); padding:6px var(--space-4); }
   .cover-kicker .ic { font-size:1rem; color:var(--accent); }
@@ -343,6 +344,12 @@
         <span class="mode-d">주제별 말하기 집중 (OPIc 대비)</span>
       </button>
     </div>
+
+    <div class="cover-program-wrap">
+      <h2 style="text-align:center;margin-top:8px"><span data-ic="compass"></span> 코치 프로그램</h2>
+      <p class="note" style="text-align:center;margin:6px 0 18px" id="coverProgramMode"></p>
+      <div id="coverProgram"></div>
+    </div>
   </section>
 
   <!-- TODAY (오늘 세션) -->
@@ -400,13 +407,6 @@
       <button class="btn" id="completeDay" style="margin-top:10px">오늘 완료 처리</button>
       <span class="saved-flash" id="completeFlash">완료!</span>
     </div>
-  </section>
-
-  <!-- PROGRAM (모드별 코치 프로그램) -->
-  <section id="program">
-    <h2><span data-ic="compass"></span> 코치 프로그램</h2>
-    <p class="sub">선택한 모드에 맞춘 단계별 자기주도 코칭 프로그램입니다.</p>
-    <div id="programBody"></div>
   </section>
 
   <!-- TRAIN (코치 + 집중 통합) -->
@@ -935,10 +935,10 @@ function currentDay(){
 }
 
 //==================== 네비게이션 ====================
-const SECTION_META = { today:["오늘 세션","calendar"], program:["코치 프로그램","compass"], dashboard:["대시보드","grid"], curriculum:["커리큘럼","list"], train:["훈련 모드","bolt"], match:["경기모드","flag"], vocab:["어휘","book"], assess:["진단평가","trending"] };
+const SECTION_META = { today:["오늘 세션","calendar"], dashboard:["대시보드","grid"], curriculum:["커리큘럼","list"], train:["훈련 모드","bolt"], match:["경기모드","flag"], vocab:["어휘","book"], assess:["진단평가","trending"] };
 const MODES = [["general","영어 실력 향상"],["toefl","토플"],["opic","오픽"]];
-const MENU = ["today","program","train","match","vocab","assess","curriculum","dashboard"];
-const MODE_HOME = { general:"program", toefl:"program", opic:"program" };
+const MENU = ["today","train","match","vocab","assess","curriculum","dashboard"];
+const MODE_HOME = { general:"cover", toefl:"cover", opic:"cover" };
 const nav = document.getElementById("nav");
 function appMode(){ return db().mode || "toefl"; }
 function setMode(m){ const d=db(); d.mode=m; save(d); }
@@ -959,7 +959,6 @@ function navigate(id){
   if(typeof drillTick!=="undefined" && drillTick){ clearInterval(drillTick); drillTick=null; }
   if(id==="cover") renderCover();
   if(id==="today") renderToday();
-  if(id==="program") renderProgram();
   if(id==="curriculum") renderCurriculum();
   if(id==="dashboard") renderDashboard();
   if(id==="train") showTrain();
@@ -1009,11 +1008,12 @@ function renderCover(){
   document.getElementById("coverStreak").textContent=(typeof computeStreak==="function"?computeStreak():0);
   document.getElementById("coverDone").textContent=done;
   const m=document.getElementById("coverMotto"); if(m) m.textContent=dailyMotto();
+  if(typeof renderProgram==="function") renderProgram();
 }
 document.getElementById("brandBtn").onclick=()=>navigate("cover");
 document.getElementById("menuToggle").onclick=function(){ const open=nav.classList.toggle("open"); this.setAttribute("aria-expanded",open?"true":"false"); };
 document.getElementById("coverStart").onclick=()=>navigate("today");
-document.querySelectorAll(".mode-card").forEach(c=>c.onclick=()=>switchMode(c.dataset.mode));
+document.querySelectorAll(".mode-card").forEach(c=>c.onclick=()=>{ switchMode(c.dataset.mode); const p=document.getElementById("cover-program-wrap")||document.querySelector(".cover-program-wrap"); if(p) p.scrollIntoView({behavior:"smooth"}); });
 document.getElementById("coverDash").onclick=()=>navigate("dashboard");
 
 // 훈련 모드 (코치 + 집중 통합) 탭
@@ -2538,7 +2538,8 @@ function PROG_START(steps){ return `<div class="card"><h3>시작 방법</h3><ol 
     <button class="btn" onclick="navigate('assess')">진단평가로 레벨 측정</button>
     <button class="btn secondary" onclick="navigate('today')">오늘 세션 시작</button>
     <button class="btn ghost" onclick="navigate('match')">경기모드로 훈련</button></div></div>`; }
-function renderProgram(){ const m=appMode(); document.getElementById("programBody").innerHTML=PROGRAMS[m]||PROGRAMS.general; }
+function renderProgram(){ const m=appMode(); const el=document.getElementById("coverProgram"); if(el) el.innerHTML=PROGRAMS[m]||PROGRAMS.general;
+  const lbl=document.getElementById("coverProgramMode"); if(lbl) lbl.textContent=(MODES.find(x=>x[0]===m)||["","토플"])[1]+" 모드 · 단계별 자기주도 프로그램"; }
 
 //==================== 초기화 ====================
 viewDay=currentDay();
