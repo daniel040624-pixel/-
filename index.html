@@ -500,15 +500,23 @@
     </div>
 
     <div id="vtTask" style="display:none">
-      <div class="card">
+      <div class="card" id="taskListView">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
           <h3 style="margin:0"><span data-ic="check"></span> 오늘의 스터디 과제</h3>
           <button class="btn ghost sm" id="taskRefresh">새 과제 만들기</button>
         </div>
         <p class="note" id="taskMeta" style="margin:8px 0 4px"></p>
+        <p class="note" style="margin-bottom:6px">과제를 누르면 수행 창이 열리고, 목표를 채우면 자동으로 체크됩니다.</p>
         <div id="taskList"></div>
         <div class="prog-bar" style="margin-top:14px"><div class="prog-fill" id="taskProg"></div></div>
         <p class="note" id="taskDone" style="margin-top:8px"></p>
+      </div>
+      <div class="card" id="taskRunView" style="display:none">
+        <button class="btn ghost sm" id="taskBack">◀ 과제 목록</button>
+        <h3 id="taskRunTitle" style="margin-top:12px"></h3>
+        <div class="vhud" style="margin-top:8px"><div><div class="v" id="taskRunCount">0/0</div><div class="l">진행</div></div></div>
+        <div class="prog-bar"><div class="prog-fill" id="taskRunBar"></div></div>
+        <div id="taskRunBody" style="margin-top:16px;min-height:150px"></div>
       </div>
     </div>
   </section>
@@ -1126,16 +1134,18 @@ const COLLOCATIONS=[
  {p:"___ a survey",ko:"설문을 실시하다",a:"carry out",d:["take","do"]},
  {p:"___ a recommendation",ko:"추천을 하다",a:"make",d:["do","say"]}
 ];
-const TASK_TEMPLATES=[
-  w=>`${w}주차 핵심 단어 ${(VW[w]||[]).length}개를 소리 내어 3번씩 읽기`,
-  ()=>`'뜻 퀴즈' ${15}문제 풀기 (정답률 85% 목표)`,
-  ()=>`'콜로케이션' ${10}개 맞히고 각각 영어 문장 만들기`,
-  ()=>`'예문 빈칸' ${12}문제 풀기`,
-  w=>`${w}주차 단어 중 5개를 골라 영작 → 코치 챗봇에 보내 첨삭받기`,
-  ()=>`어제 안 외워진 단어 ${8}개 집중 반복`,
-  w=>`${w}주차 단어로 짧은 글 ${4}문장 쓰기`,
-  ()=>`콜로케이션 ${5}개를 활용해 말로 설명해보기 (말하기 연습)`
-];
+// 스터디 과제: 실행 가능한 타입으로 구조화
+function buildTaskPool(w){ const rc=Math.min(12,(VW[w]||[]).length||12);
+  return [
+    {type:"mean",n:15,label:"뜻 퀴즈 15문제 풀기"},
+    {type:"collo",n:10,label:"콜로케이션 10문제 풀기"},
+    {type:"cloze",n:12,label:"예문 빈칸 12문제 풀기"},
+    {type:"read",n:rc,label:`${w}주차 단어 ${rc}개 카드로 복습`},
+    {type:"write",n:3,label:`${w}주차 단어로 영어 문장 3개 쓰기`},
+    {type:"speak",n:5,label:"콜로케이션 5개 소리 내어 말하기"},
+    {type:"read",n:8,label:"헷갈리는 단어 8개 다시 보기"}
+  ];
+}
 
 (function(){
   const scope=document.getElementById("vocabScope");
@@ -1192,21 +1202,93 @@ const TASK_TEMPLATES=[
   function startQuiz(mode){ vq={mode,seen:new Set(),att:0,cor:0,streak:0}; updHud(); renderQuiz(); }
 
   // ── 스터디 과제 ──
+  const TASK_LABEL={mean:"뜻 퀴즈",collo:"콜로케이션",cloze:"예문 빈칸",read:"단어 카드 복습",write:"영작",speak:"말하기"};
+  let taskRunIdx=-1, taskRunProg=0, taskRunTask=null, taskRunSeen=new Set();
   function taskKey(){ return todayStr()+"-"+scope.value; }
+  function curTasks(){ const d=db(); d.vocabTasks=d.vocabTasks||{}; let t=d.vocabTasks[taskKey()];
+    if(!t || !Array.isArray(t.list) || typeof t.list[0]!=="object"){ t=genTasks(); } if(!t.prog) t.prog=t.list.map(()=>0); return t; }
   function genTasks(){ const w=scope.value==="all"?dayMeta(currentDay()).week:+scope.value;
-    const picks=shuffle(TASK_TEMPLATES).slice(0,5).map(fn=>fn(w));
-    const d=db(); d.vocabTasks=d.vocabTasks||{}; d.vocabTasks[taskKey()]={list:picks,done:picks.map(()=>false)}; save(d); return d.vocabTasks[taskKey()]; }
+    const picks=shuffle(buildTaskPool(w)).slice(0,5);
+    const d=db(); d.vocabTasks=d.vocabTasks||{}; d.vocabTasks[taskKey()]={list:picks,done:picks.map(()=>false),prog:picks.map(()=>0)}; save(d); return d.vocabTasks[taskKey()]; }
+  function showTaskView(run){ document.getElementById("taskListView").style.display=run?"none":""; document.getElementById("taskRunView").style.display=run?"":"none"; }
   function renderTasks(){
-    const d=db(); d.vocabTasks=d.vocabTasks||{}; let t=d.vocabTasks[taskKey()]; if(!t){ t=genTasks(); }
+    showTaskView(false);
+    const t=curTasks();
     const w=scope.value==="all"?dayMeta(currentDay()).week:+scope.value;
     document.getElementById("taskMeta").textContent=`${w}주차 · ${weekInfo(w).subject} · ${todayStr()}`;
     const box=document.getElementById("taskList");
-    box.innerHTML=t.list.map((s,i)=>`<label class="task-row ${t.done[i]?'done':''}"><input type="checkbox" data-i="${i}" ${t.done[i]?'checked':''}><span class="t">${s}</span></label>`).join("");
-    box.querySelectorAll("input").forEach(inp=>inp.onchange=()=>{ const dd=db(); dd.vocabTasks[taskKey()].done[+inp.dataset.i]=inp.checked; save(dd); renderTasks(); });
+    box.innerHTML=t.list.map((task,i)=>`<div class="task-row ${t.done[i]?'done':''}">
+      <input type="checkbox" data-i="${i}" ${t.done[i]?'checked':''} title="수동 체크">
+      <span class="t" data-open="${i}" style="flex:1;cursor:pointer">${task.label} ${t.done[i]?'':`<span class="note">(${t.prog[i]||0}/${task.n})</span>`}</span>
+      <button class="btn ${t.done[i]?'ghost':''} sm" data-open="${i}">${t.done[i]?'다시 ▶':'수행 ▶'}</button></div>`).join("");
+    box.querySelectorAll("input[type=checkbox]").forEach(inp=>inp.onchange=()=>{ const dd=db(); dd.vocabTasks[taskKey()].done[+inp.dataset.i]=inp.checked; save(dd); renderTasks(); });
+    box.querySelectorAll("[data-open]").forEach(el=>el.onclick=()=>openTask(+el.dataset.open));
     const done=t.done.filter(Boolean).length; document.getElementById("taskProg").style.width=Math.round(done/t.list.length*100)+"%";
     document.getElementById("taskDone").textContent=`${done} / ${t.list.length} 완료${done===t.list.length?" — 오늘 과제 끝! 잘했어요 🎉":""}`;
   }
   document.getElementById("taskRefresh").onclick=()=>{ genTasks(); renderTasks(); };
+  document.getElementById("taskBack").onclick=()=>renderTasks();
+
+  function openTask(idx){
+    const dd=db(); const t=dd.vocabTasks[taskKey()]; t.prog=t.prog||t.list.map(()=>0);
+    if(t.done[idx]){ t.prog[idx]=0; t.done[idx]=false; save(dd); }   // 다시 하기 → 초기화
+    taskRunIdx=idx; taskRunTask=t.list[idx]; taskRunProg=t.prog[idx]||0; taskRunSeen=new Set();
+    showTaskView(true);
+    document.getElementById("taskRunTitle").innerHTML=`${svgIcon('edit')} ${taskRunTask.label}`;
+    if(taskRunProg>=taskRunTask.n) finishTaskRun(); else { updateRunHud(); stepTask(); }
+  }
+  function updateRunHud(){ document.getElementById("taskRunCount").textContent=taskRunProg+"/"+taskRunTask.n;
+    document.getElementById("taskRunBar").style.width=Math.round(taskRunProg/taskRunTask.n*100)+"%"; }
+  function bumpProg(){ taskRunProg++; const dd=db(); const t=dd.vocabTasks[taskKey()]; t.prog=t.prog||t.list.map(()=>0); t.prog[taskRunIdx]=taskRunProg;
+    if(taskRunProg>=taskRunTask.n){ t.done[taskRunIdx]=true; save(dd); updateRunHud(); finishTaskRun(); } else { save(dd); updateRunHud(); stepTask(); } }
+  function finishTaskRun(){ document.getElementById("taskRunBar").style.width="100%";
+    document.getElementById("taskRunBody").innerHTML=`<div style="text-align:center;padding:10px 0">
+      <div class="bigscore" style="font-size:var(--text-3xl)">${svgIcon('check')}</div>
+      <p style="font-weight:var(--fw-semibold);margin-top:8px">과제 완료! 자동으로 체크됐어요.</p>
+      <button class="btn" id="taskDoneBtn" style="margin-top:14px">과제 목록으로 ▶</button></div>`;
+    document.getElementById("taskDoneBtn").onclick=()=>renderTasks(); }
+  function newTaskQ(mode){ const gen=GENS[mode]; let q; for(let i=0;i<40;i++){ q=gen(); if(!taskRunSeen.has(q.key)){ taskRunSeen.add(q.key); break; } } return q; }
+  function stepTask(){
+    const t=taskRunTask, body=document.getElementById("taskRunBody");
+    if(t.type==="mean"||t.type==="collo"||t.type==="cloze"){
+      const q=newTaskQ(t.type);
+      body.innerHTML=`<div>${q.q}</div><div id="tqOpts" style="margin-top:14px"></div><div id="tqFb" class="feedback" style="margin-top:12px"></div><div id="tqNext" style="margin-top:14px"></div>`;
+      const box=body.querySelector("#tqOpts");
+      q.opts.forEach((o,oi)=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=(oi+1)+". "+o;
+        b.onclick=()=>{ if(box.dataset.d)return; box.dataset.d="1"; const ok=oi===q.ans; const fb=body.querySelector("#tqFb");
+          if(ok){ b.classList.add("correct"); fb.className="feedback show ok"; fb.innerHTML=svgIcon('check')+" 정답! "+q.exp; }
+          else { b.classList.add("wrong"); box.querySelectorAll(".opt")[q.ans].classList.add("correct"); fb.className="feedback show no"; fb.innerHTML=svgIcon('x')+" "+q.exp; }
+          body.querySelector("#tqNext").innerHTML=`<button class="btn" id="tqN">다음 ▶ (스페이스)</button>`; body.querySelector("#tqN").onclick=bumpProg; };
+        box.appendChild(b); });
+    } else if(t.type==="read"){
+      const it=_rand(scopeWords());
+      body.innerHTML=`<div class="card" style="text-align:center;background:var(--surface-2)">
+          <div style="font-size:var(--text-2xl);font-weight:var(--fw-bold)">${it[0]}</div>
+          <div class="note">${it[1]}</div>
+          <div style="margin-top:10px;font-weight:var(--fw-semibold);color:var(--brand-700)">${it[2]}</div>
+          <div class="note" style="margin-top:4px">"${it[3]}"</div></div>
+        <p class="note" style="margin:12px 0">소리 내어 2번 읽고 넘어가세요.</p>
+        <button class="btn" id="tStep">외웠어요 ▶ (스페이스)</button>`;
+      body.querySelector("#tStep").onclick=bumpProg;
+    } else if(t.type==="write"){
+      const it=_rand(scopeWords());
+      body.innerHTML=`<p class="quiz-q">"<b>${it[0]}</b>" (${it[2]}) 로 영어 문장을 만들어보세요.</p>
+        <textarea id="tWrite" placeholder="여기에 영어로 한 문장..." style="margin-top:10px"></textarea>
+        <div id="tWfb" class="feedback" style="margin-top:10px"></div>
+        <button class="btn" id="tWsubmit" style="margin-top:12px">제출 ▶</button>`;
+      body.querySelector("#tWsubmit").onclick=()=>{ const txt=document.getElementById("tWrite").value.trim(); const r=evaluateEnglish(txt);
+        const fb=document.getElementById("tWfb"); fb.className="feedback show "+(r.ok?"ok":"no"); fb.innerHTML=r.html;
+        const btn=document.getElementById("tWsubmit"); btn.textContent="다음 ▶"; btn.onclick=bumpProg; };
+    } else if(t.type==="speak"){
+      const c=_rand(COLLOCATIONS);
+      body.innerHTML=`<div class="card" style="background:var(--surface-2)"><b style="font-size:var(--text-lg)">${c.p.replace("___",c.a)}</b> &nbsp;<span class="note">${c.ko}</span></div>
+        ${ttsAvailable()?`<button class="btn ghost sm" id="tSpeakEx" style="margin-top:10px">${svgIcon('play')} 듣기</button>`:''}
+        <p class="note" style="margin:12px 0">소리 내어 3번 말해보세요.</p>
+        <button class="btn" id="tStep">말했어요 ▶ (스페이스)</button>`;
+      if(ttsAvailable()){ const ex=body.querySelector("#tSpeakEx"); if(ex) ex.onclick=()=>speakText(c.p.replace("___",c.a)); }
+      body.querySelector("#tStep").onclick=bumpProg;
+    }
+  }
 
   // ── 탭 전환 ──
   function show(id){ ["vtCards","vtQuiz","vtTask"].forEach(x=>document.getElementById(x).style.display=x===id?"":"none"); }
@@ -1224,10 +1306,12 @@ const TASK_TEMPLATES=[
   document.addEventListener("keydown",e=>{
     if(!document.getElementById("vocab").classList.contains("active")) return;
     if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
-    if(document.getElementById("vtQuiz").style.display==="none") return;
-    const k=e.key;
-    if(k===" "||k==="Enter"){ const n=document.getElementById("vqN"); if(n){ e.preventDefault(); n.click(); } }
-    else if(k==="1"||k==="2"||k==="3"){ const o=document.querySelectorAll("#vqOpts .opt"); if(o[+k-1]) o[+k-1].click(); }
+    const quizOn=document.getElementById("vtQuiz").style.display!=="none";
+    const taskRunOn=document.getElementById("vtTask").style.display!=="none" && document.getElementById("taskRunView").style.display!=="none";
+    if(!quizOn && !taskRunOn) return;
+    const k=e.key, P=quizOn?"vq":"tq";
+    if(k===" "||k==="Enter"){ const n=document.getElementById(P+"N")||document.getElementById("tStep"); if(n){ e.preventDefault(); n.click(); } }
+    else if(k==="1"||k==="2"||k==="3"){ const o=document.querySelectorAll("#"+P+"Opts .opt"); if(o[+k-1]) o[+k-1].click(); }
   });
   renderCards();
 })();
