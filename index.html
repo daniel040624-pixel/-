@@ -365,7 +365,7 @@
         <button class="btn ghost sm" id="prevDay">◀ 이전</button>
         <b id="dayLabel" style="font-size:1.05rem"></b>
         <button class="btn ghost sm" id="nextDay">다음 ▶</button>
-        <button class="btn sm" id="goToday">오늘로</button>
+        <button class="btn sm" id="routineMap"><span data-ic="list"></span> 루틴 이동</button>
         <span style="flex:1"></span>
         <label class="note">세션 길이
           <select id="sessionLen">
@@ -380,33 +380,27 @@
       <div id="dayGoal"></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="routineOverview">
       <h3>오늘의 루틴 <span class="note" id="routineProg"></span></h3>
+      <p class="note" style="margin-bottom:8px">각 루틴을 눌러 학습하세요. 완료하면 자동으로 체크됩니다.</p>
       <div id="todayRoutine"></div>
     </div>
 
-    <div class="grid2">
-      <div class="card">
-        <h3>오늘의 학술 어휘</h3>
-        <div id="todayVocab"></div>
+    <div class="card" id="routineRun" style="display:none">
+      <button class="btn ghost sm" id="routineBack">◀ 루틴 목록</button>
+      <h3 id="routineRunTitle" style="margin-top:10px"></h3>
+      <p class="note" id="routineRunDesc"></p>
+      <div class="vhud" id="routineHud" style="margin-top:6px"></div>
+      <div id="routineBody" style="margin-top:8px;min-height:150px"></div>
+      <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn" id="routineDone" disabled><span data-ic="check"></span> 완료하고 돌아가기</button>
+        <span class="note" id="routineGateHint"></span>
       </div>
-      <div class="card">
-        <h3>오늘의 문법 퀴즈</h3>
-        <div id="todayQuiz"></div>
-        <div id="todayQuizScore" class="note" style="margin-top:10px"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>오늘의 말하기 + 쓰기</h3>
-      <p class="quiz-q" id="todayPrompt"></p>
-      <textarea id="todaySpeak" placeholder="위 질문에 영어로 답해봐 (말하듯이)..."></textarea>
-      <div class="note" style="margin-top:8px"><b>자가 점검:</b> ① 단수 명사 앞 a/the/my? ② 시제 맞나? ③ 주어+동사 있나?</div>
     </div>
 
     <div class="card">
       <h3><span data-ic="check"></span> 오늘 세션 마무리</h3>
-      <p class="note">위 루틴을 모두 끝냈으면 완료 처리하세요. 연속 학습(streak)이 기록됩니다.</p>
+      <p class="note">모든 루틴을 끝냈으면 완료 처리하세요. 연속 학습(streak)이 기록됩니다.</p>
       <button class="btn" id="completeDay" style="margin-top:10px">오늘 완료 처리</button>
       <span class="saved-flash" id="completeFlash">완료!</span>
     </div>
@@ -721,12 +715,12 @@ const to120 = s => Math.round(s*4/5); // 5영역(30만점) 합 → 120 환산 �
 
 // 6블록 루틴 (180분 기준 분배)
 const BLOCKS = [
-  ["워밍업",20,"구조 분석 + 전날 표현·문법·어휘 퀴즈 복습"],
-  ["본 공부",45,"오늘 주제 학습 + 아래 '오늘의 학술 어휘' 익히기"],
-  ["경기(실전)",60,"역할극 / 30초 말하기 / 질문 답하기 / 주제 설명 / 문장 확장 / 쉐도잉"],
-  ["통합형",35,"읽고→듣고→말/쓰기 (5주차부터 비중↑)"],
-  ["복습",15,"백지 회상 — 오늘 배운 것 말하고 빈틈 보완"],
-  ["마무리",5,"표현 1 + 숙어 1 + 원어민식 문장 1"]
+  ["워밍업",20,"구조 분석 + 전날 표현·문법·어휘 퀴즈 복습","warmup"],
+  ["본 공부",45,"오늘 주제 학습 + 학술 어휘 익히기","vocab"],
+  ["경기(실전)",60,"역할극 / 30초 말하기 / 질문 답하기 / 주제 설명 / 쉐도잉","speak"],
+  ["통합형",35,"읽고→듣고→말/쓰기 (5주차부터 비중↑)","write"],
+  ["복습",15,"백지 회상 — 오늘 배운 것 말하고 빈틈 보완","recall"],
+  ["마무리",5,"표현 1 + 숙어 1 + 원어민식 문장 1","wrap"]
 ];
 
 // 문법 퀴즈 은행 (주차별 grammarKey로 연결)
@@ -1047,8 +1041,8 @@ document.querySelectorAll("#ttabs button").forEach(b=>b.onclick=()=>setTrainTab(
 //==================== 모드별 학습 트랙 ====================
 const TRACK_BLOCKS = {
   toefl: BLOCKS,
-  general: [["워밍업",20,"전날 표현·문장 백지 인출 + 변형 미션"],["인풋",40,"단계별 듣기/읽기 → 반드시 요약 말하기·쓰기로 출력"],["어휘·표현 장착",30,"핵심 표현 5~10개, 예문→직접 생성"],["출력 훈련",50,"말하기(즉흥·의견·묘사) + 쉐도잉"],["쓰기",25,"일기/의견/에세이 → 자기 교정 후 제출"],["복습",10,"오늘 배운 것 백지 인출"],["마무리",5,"원어민 표현 1개 + 내 문장 1개"]],
-  opic: [["워밍업",15,"전날 표현 인출 + 발음 쉐도잉"],["인풋",30,"원어민 답변 샘플 듣고 표현 채집"],["표현 장착",30,"콜로케이션·구동사 5~10개 → 문장 생성"],["말하기",60,"주제별 1~2분 답변 + 녹음·자기 교정"],["롤플레이/돌발",30,"즉흥 대응 연습"],["복습",15,"오늘 표현 백지 인출"]]
+  general: [["워밍업",20,"전날 표현·문장 백지 인출 + 변형 미션","warmup"],["인풋",40,"단계별 듣기/읽기 → 요약 말하기·쓰기로 출력","input"],["어휘·표현 장착",30,"핵심 표현 5~10개, 예문→직접 생성","vocab"],["출력 훈련",50,"말하기(즉흥·의견·묘사) + 쉐도잉","speak"],["쓰기",25,"일기/의견/에세이 → 자기 교정 후 제출","write"],["복습",10,"오늘 배운 것 백지 인출","recall"],["마무리",5,"원어민 표현 1개 + 내 문장 1개","wrap"]],
+  opic: [["워밍업",15,"전날 표현 인출 + 발음 쉐도잉","warmup"],["인풋",30,"원어민 답변 샘플 듣고 표현 채집","input"],["표현 장착",30,"콜로케이션·구동사 5~10개 → 문장 생성","vocab"],["말하기",60,"주제별 1~2분 답변 + 녹음·자기 교정","speak"],["롤플레이/돌발",30,"즉흥 대응 연습","conversation"],["복습",15,"오늘 표현 백지 인출","recall"]]
 };
 const GENERAL_STAGES=[
   {wk:[1,2,3],phase:"STAGE 1 · 문장 생성 자동화",focus:"기본 문형 조립 + 시제·접속사·동사 연결",integrated:"짧은 문장을 접속사로 길게 잇기"},
@@ -1111,7 +1105,7 @@ function renderToday(){
   } else mb.innerHTML = "";
 
   // 목표
-  const goalTxt = m.kind==="study" ? `루틴 ${modeBlocks().length}블록 완수 + 어휘 + 퀴즈 + 말하기·쓰기` : (m.kind==="mock"?"종합 모의고사 응시 & 채점":"주간 점검 수행");
+  const goalTxt = m.kind==="study" ? `루틴 ${modeBlocks().length}블록 모두 완료 (각 루틴을 눌러 학습)` : (m.kind==="mock"?"종합 모의고사 응시 & 채점":"주간 점검 수행");
   document.getElementById("dayGoal").innerHTML =
     `<table>
       <tr><td class="note" style="width:90px">단계</td><td><span class="tag info">${m.info.phase}</span></td></tr>
@@ -1120,7 +1114,7 @@ function renderToday(){
       <tr><td class="note">오늘 목표</td><td>${goalTxt}</td></tr>
     </table>`;
 
-  // 루틴
+  // 루틴 — 각 항목 클릭 시 학습으로 이동, 완료하면 자동 체크
   const total = parseInt(document.getElementById("sessionLen").value);
   const blocks = scaledBlocks(total);
   const doneBlocks = (d.done[day] && d.done[day].blocks) || [];
@@ -1128,52 +1122,27 @@ function renderToday(){
   rt.innerHTML = "";
   blocks.forEach(([n,mins,desc],bi)=>{
     let detail = desc;
-    if(bi===3) detail = m.info.integrated; // 통합형은 주차별 내용
-    const row = document.createElement("div"); row.className="routine-row";
-    const checked = doneBlocks.includes(bi)?"checked":"";
-    row.innerHTML = `<input type="checkbox" class="chk" ${checked} data-bi="${bi}">
-      <div class="body"><span class="t">${n}</span> <span class="min">· ${mins}분</span><br>
-      <span class="note">${detail}</span></div>`;
+    if(bi===3 && m.info.integrated) detail = m.info.integrated;
+    const isDone = doneBlocks.includes(bi);
+    const row = document.createElement("div"); row.className="routine-row"+(isDone?" done":"");
+    row.innerHTML = `<input type="checkbox" class="chk" ${isDone?"checked":""} data-bi="${bi}" title="수동 체크">
+      <div class="body" data-open="${bi}" style="cursor:pointer">
+        <span class="t">${n}</span> <span class="min">· ${mins}분</span>
+        ${isDone?'<span class="tag good">완료 ✓</span>':'<span class="tag info">시작 ▶</span>'}<br>
+        <span class="note">${detail}</span></div>`;
     row.querySelector("input").onchange = (e)=>{
       const dd = db(); dd.done[day]=dd.done[day]||{blocks:[]};
       const arr = new Set(dd.done[day].blocks||[]);
       if(e.target.checked) arr.add(bi); else arr.delete(bi);
-      dd.done[day].blocks=[...arr]; save(dd); updateRoutineProg();
+      dd.done[day].blocks=[...arr]; save(dd); renderToday();
     };
+    row.querySelector("[data-open]").onclick = ()=>openRoutine(bi);
     rt.appendChild(row);
   });
   updateRoutineProg();
-
-  // 어휘 (study day는 dow별 2개씩, 그 외 복습 4개)
-  const vw = VW[m.week]||VW[1];
-  const tv = document.getElementById("todayVocab"); tv.innerHTML="";
-  let picks;
-  if(m.kind==="study"){ const s=(m.dow-1)*2; picks=vw.slice(s,s+2).concat(vw.slice(Math.max(0,s-2),s)); }
-  else picks=vw.slice(0,4);
-  picks.forEach(([w,pos,mean,ex])=>{
-    tv.innerHTML += `<div style="padding:7px 0;border-bottom:1px solid var(--line)"><b>${w}</b> <span class="note">(${pos})</span> — ${mean}<br><span class="note">"${ex}"</span></div>`;
-  });
-
-  // 퀴즈
-  renderTodayQuiz(m.info.key);
-
-  // 말하기 프롬프트
-  const PROMPTS={ default:["What do you do on weekends?","Describe your daily routine."],
-    "생물(산호 등)":["Why are coral reefs important?","Describe an animal you find interesting."],
-    "역사":["Talk about an important event in your country's history.","If you could visit any past era, when and why?"],
-    "심리":["What motivates you to study?","How do you handle stress?"],
-    "환경":["What can people do to protect the environment?","Describe an environmental problem in your area."],
-    "예술":["Describe a piece of art or music you like.","Is art important in school? Why?"],
-    "기술":["How has technology changed your daily life?","Describe a useful device you own."],
-    "경제":["Do you prefer saving or spending money? Why?","Describe a product you bought recently."],
-    "천문":["Would you travel to space? Why or why not?","Describe something you find amazing about the universe."],
-    "지질":["Describe a natural place you have visited.","Why do earthquakes happen, in your own words?"],
-    "사회":["Describe a problem in your community.","What makes a good citizen?"],
-    "종합":["Summarize what you learned this week.","Explain your test strategy for TOEFL."] };
-  const arr = mode==="toefl" ? (PROMPTS[m.info.subject]||PROMPTS.default) : (MODE_SPEAK[mode]||MODE_SPEAK.general);
-  document.getElementById("todayPrompt").textContent = arr[(day)%arr.length];
-  document.getElementById("todaySpeak").value = (d.done[day] && d.done[day].speak) || "";
-  document.getElementById("todaySpeak").oninput = (e)=>{ const dd=db(); dd.done[day]=dd.done[day]||{blocks:[]}; dd.done[day].speak=e.target.value; save(dd); };
+  // 루틴 목록 표시(학습 화면 숨김)
+  document.getElementById("routineOverview").style.display="";
+  document.getElementById("routineRun").style.display="none";
 }
 
 function updateRoutineProg(){
@@ -1182,34 +1151,96 @@ function updateRoutineProg(){
   document.getElementById("routineProg").textContent = `(${done}/${total} 완료)`;
 }
 
-function renderTodayQuiz(key){
-  const bank = QUIZ_BANK[key]||QUIZ_BANK.articles;
-  // 3문항 랜덤
-  const items = [...bank].sort(()=>Math.random()-0.5).slice(0,3);
-  const box = document.getElementById("todayQuiz"); box.innerHTML="";
-  let correct=0, answered=0;
-  items.forEach((item,qi)=>{
-    const wrap=document.createElement("div"); wrap.style.marginBottom="16px";
-    wrap.innerHTML=`<div class="quiz-q">${qi+1}. ${item.q}</div>`;
-    const fb=document.createElement("div"); fb.className="feedback";
-    item.opts.forEach((o,oi)=>{
-      const btn=document.createElement("button"); btn.className="opt"; btn.textContent=o;
-      btn.onclick=()=>{ if(wrap.dataset.done)return; wrap.dataset.done="1"; answered++;
-        if(oi===item.ans){btn.classList.add("correct");correct++;fb.className="feedback show ok";fb.innerHTML=svgIcon('check')+" 정답! "+item.exp;}
-        else{btn.classList.add("wrong");wrap.querySelectorAll(".opt")[item.ans].classList.add("correct");fb.className="feedback show no";fb.innerHTML=svgIcon('x')+" "+item.exp;}
-        document.getElementById("todayQuizScore").textContent=`점수: ${correct}/${answered}`;
-      };
-      wrap.appendChild(btn);
-    });
-    wrap.appendChild(fb); box.appendChild(wrap);
-  });
-  document.getElementById("todayQuizScore").textContent="";
-}
-
 document.getElementById("prevDay").onclick=()=>{ viewDay=Math.max(1,viewDay-1); renderToday(); };
 document.getElementById("nextDay").onclick=()=>{ viewDay=Math.min(84,viewDay+1); renderToday(); };
-document.getElementById("goToday").onclick=()=>{ viewDay=currentDay(); renderToday(); };
+document.getElementById("routineMap").onclick=()=>{ renderToday(); document.getElementById("routineOverview").scrollIntoView({behavior:"smooth"}); };
+document.getElementById("routineBack").onclick=()=>renderToday();
 document.getElementById("sessionLen").onchange=renderToday;
+
+//==================== 루틴 학습 러너 (클릭 → 학습 → 자동 체크) ====================
+let routineState=null, routineGateTimer=null;
+const ROUTINE_NEED={ warmup:2, recall:2, vocab:5, input:3, quiz:4, conversation:4, speak:2, write:2, wrap:0 };
+function openRoutine(bi){
+  const block=modeBlocks()[bi]; if(!block) return;
+  const act=block[3]||"warmup";
+  clearInterval(routineGateTimer); routineGateTimer=null;
+  routineState={bi, act, done:0, need:(ROUTINE_NEED[act]??2), start:Date.now(), sec:Math.max(40,(ROUTINE_NEED[act]||1)*15), met:false};
+  if(routineState.need===0) routineState.met=true;
+  document.getElementById("routineOverview").style.display="none";
+  document.getElementById("routineRun").style.display="";
+  document.getElementById("routineRunTitle").textContent=block[0];
+  document.getElementById("routineRunDesc").textContent=block[2];
+  document.getElementById("routineDone").onclick=()=>{ markRoutineDone(routineState.bi); renderToday(); };
+  routineHudUpd(); renderRoutineAct(act); applyRoutineGate();
+  if(!routineState.met){ routineGateTimer=setInterval(()=>{ if(!routineState||routineState.met){clearInterval(routineGateTimer);routineGateTimer=null;return;}
+    const left=routineState.sec-Math.floor((Date.now()-routineState.start)/1000);
+    if(left<=0){ routineState.met=true; applyRoutineGate(); clearInterval(routineGateTimer); routineGateTimer=null; } else applyRoutineGate(left); },1000); }
+}
+function markRoutineDone(bi){ const dd=db(); const day=viewDay; dd.done[day]=dd.done[day]||{blocks:[]}; const s=new Set(dd.done[day].blocks||[]); s.add(bi); dd.done[day].blocks=[...s]; save(dd); }
+function routineHudUpd(){ const s=routineState; if(!s)return; document.getElementById("routineHud").innerHTML=`<div><div class="v">${s.done}${s.need?'/'+s.need:''}</div><div class="l">진행</div></div>`; }
+function routineBump(){ const s=routineState; if(!s)return; s.done++; if(s.need&&s.done>=s.need) s.met=true; routineHudUpd(); applyRoutineGate(); }
+function applyRoutineGate(left){ const b=document.getElementById("routineDone"), h=document.getElementById("routineGateHint"); const s=routineState; if(!b||!h||!s)return;
+  if(s.met){ b.disabled=false; h.textContent="완료할 수 있어요 ✓"; return; }
+  b.disabled=true; const t=left!=null?left:s.sec-Math.floor((Date.now()-s.start)/1000);
+  h.textContent=`${Math.max(0,s.need-s.done)}개 더 하거나 ${Math.max(0,t)}초 후 완료 가능`; }
+
+function renderRoutineAct(act){
+  const body=document.getElementById("routineBody"); const m=dayMeta(viewDay); const week=m.week;
+  const vw=VW[week]||VW[1];
+  if(act==="wrap"){ const set=WRAP[m.day%WRAP.length];
+    body.innerHTML=`<p>오늘의 마무리 — 원어민식 표현을 소리 내어 읽어보세요.</p>
+      <ul class="clean" style="margin-top:10px"><li><b>표현:</b> ${set[0]}</li><li><b>숙어:</b> ${set[1]}</li><li><b>원어민 문장:</b> ${set[2]}</li></ul>`;
+    return; }
+  if(act==="vocab"){ let queue=shuffle(vw.slice()); const card=document.createElement("div"); card.className="card"; card.style.minHeight="140px"; body.innerHTML=""; body.appendChild(card);
+    (function load(){ const it=queue.length?queue.shift():_rand(vw); queue.push(it); const [w,pos,mean,ex]=it;
+      card.innerHTML=`<div class="drill-word">${w}</div><div class="note" style="text-align:center">${pos}</div><div id="rrev" style="margin-top:12px;text-align:center"></div>
+        <div id="rbtn" style="margin-top:14px;text-align:center"><button class="btn" id="rShow">뜻 보기</button></div>`;
+      card.querySelector("#rShow").onclick=()=>{ card.querySelector("#rrev").innerHTML=`<div style="font-weight:700;color:var(--brand-700)">${mean}</div><div class="note">"${ex}"</div>`;
+        card.querySelector("#rbtn").innerHTML=`<button class="btn ghost" id="rNo">${svgIcon('x')} 다시</button> &nbsp; <button class="btn" id="rYes">${svgIcon('check')} 외웠어요</button>`;
+        card.querySelector("#rYes").onclick=()=>{ routineBump(); load(); }; card.querySelector("#rNo").onclick=()=>{ routineBump(); load(); }; }; })();
+    return; }
+  if(act==="input"){ // 독해/듣기 이해 (지문/문장 + 객관식)
+    (function load(){ let it;
+      if(Math.random()<0.6){ const P=_rand(READING_BANK); const qq=_rand(P.qs); const t=_mc(qq.opts[qq.ans],qq.opts.filter((_,i)=>i!==qq.ans)); it={passage:P.p,q:qq.q,opts:t.opts,ans:t.ans,exp:""}; }
+      else { const L=_rand(LISTEN_BANK); const t=_mc(L.s,L.d); it={listen:L.s,q:"들은 문장을 고르세요.",opts:t.opts,ans:t.ans,exp:`정답: "${L.s}"`}; }
+      body.innerHTML=(it.passage?`<div class="card" style="background:var(--surface-2);margin-bottom:10px">${it.passage}</div>`:"")
+        +(it.listen?`<button class="btn ghost sm" id="rPlay" style="margin-bottom:10px">${svgIcon('play')} ${ttsAvailable()?'듣기':'문장 보기'}</button><div id="rHeard" class="note" style="margin-bottom:8px;${ttsAvailable()?'display:none':''}">${ttsAvailable()?'':'"'+it.listen+'"'}</div>`:"")
+        +`<p class="quiz-q">${it.q}</p><div id="rOpts" style="margin-top:10px"></div><div id="rFb" class="feedback" style="margin-top:10px"></div><div id="rNext" style="margin-top:12px"></div>`;
+      if(it.listen){ const pb=document.getElementById("rPlay"); if(ttsAvailable()){ pb.onclick=()=>speakRate(it.listen,1.0); setTimeout(()=>speakRate(it.listen,1.0),250);} else pb.onclick=()=>document.getElementById("rHeard").style.display="block"; }
+      routineMC(it,load); })();
+    return; }
+  if(act==="quiz"){ (function load(){ const q=genUniqueQuiz(new Set()); routineRenderMC({opts:q.opts,ans:q.ans,exp:q.exp,q:q.q},load); })(); return; }
+  if(act==="conversation"){ (function load(){ const c=_rand(CONVO); const t=_mc(c.a,c.d);
+    routineRenderMC({q:`<span class="note">상황: ${c.ctx}</span><br>"${c.q}"`,opts:t.opts,ans:t.ans,exp:`자연스러운 대답: "${c.a}"`, tts:c.q},load); })(); return; }
+  if(act==="speak"){ (function load(){ const topic=_rand(MODE_SPEAK[appMode()]||SPEAKING_PROMPTS);
+    body.innerHTML=`<p class="quiz-q">🗣️ 영어로 말해보세요.</p><div class="card" style="background:var(--surface-2);margin:10px 0"><b>${topic}</b></div>
+      ${ttsAvailable()?`<button class="btn ghost sm" id="rEx">${svgIcon('play')} 듣기</button>`:''}
+      <p class="note" style="margin:10px 0">말한 뒤 스스로 평가:</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-sp>유창</button><button class="btn secondary" data-sp>보통</button><button class="btn ghost" data-sp>어려움</button></div>`;
+    if(ttsAvailable()){const ex=document.getElementById("rEx"); if(ex)ex.onclick=()=>speakRate(topic,1.0);}
+    body.querySelectorAll("[data-sp]").forEach(b=>b.onclick=()=>{ routineBump(); load(); }); })(); return; }
+  // warmup / recall / write — 자유 작문 + 자동 첨삭
+  const genFn=()=>{ const w=_rand(vw);
+    if(act==="write"){ const p=Math.random()<0.5?_rand(MODE_WRITE[appMode()]||WRITING_PROMPTS):`주제 "${m.info.topic}"에 대해 영어로 2~3문장 쓰기`; return {prompt:p, hint:`오늘 단어 "<b>${w[0]}</b>"(${w[2]})를 넣어보기!`}; }
+    if(act==="recall"){ return {prompt:`복습! "<b>${w[0]}</b>"의 뜻을 떠올리고 이 단어로 영어 문장을 만들어보세요.`, hint:"기억나는 대로 써보고 피드백 받기!"}; }
+    return {prompt:`단어 "<b>${w[0]}</b>" (${w[2]})를 넣어 영어 문장 1개를 만들어보세요.`, hint:"주어 + 동사 + 목적어가 다 있는지 확인!"}; };
+  (function load(){ const g=genFn();
+    body.innerHTML=`<p class="quiz-q">${svgIcon('edit')} ${g.prompt}</p><div class="note" style="margin-bottom:8px">${g.hint}</div>
+      <textarea id="rWrite" placeholder="영어로 작성..."></textarea><div id="rFb" class="feedback" style="margin-top:10px"></div>
+      <div style="margin-top:10px"><button class="btn" id="rSubmit">제출하고 피드백</button></div>`;
+    document.getElementById("rSubmit").onclick=()=>{ const r=evaluateEnglish(document.getElementById("rWrite").value); const fb=document.getElementById("rFb"); fb.className="feedback show "+(r.ok?"ok":"no"); fb.innerHTML=r.html;
+      routineBump(); const btn=document.getElementById("rSubmit"); btn.textContent="다음 문제 ▶"; btn.onclick=load; }; })();
+}
+function routineMC(it,reload){ routineRenderMC(it,reload); }
+function routineRenderMC(it,reload){ const body=document.getElementById("routineBody"); if(!body.querySelector("#rOpts")){
+    body.innerHTML=`<p class="quiz-q">${it.q}</p><div id="rOpts" style="margin-top:10px"></div><div id="rFb" class="feedback" style="margin-top:10px"></div><div id="rNext" style="margin-top:12px"></div>`; }
+  const box=body.querySelector("#rOpts"); box.innerHTML=""; box.dataset.d="";
+  it.opts.forEach((o,oi)=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=(oi+1)+". "+o;
+    b.onclick=()=>{ if(box.dataset.d)return; box.dataset.d="1"; const fb=body.querySelector("#rFb");
+      if(oi===it.ans){ b.classList.add("correct"); fb.className="feedback show ok"; fb.innerHTML=svgIcon('check')+" 정답! "+(it.exp||""); }
+      else { b.classList.add("wrong"); box.querySelectorAll(".opt")[it.ans].classList.add("correct"); fb.className="feedback show no"; fb.innerHTML=svgIcon('x')+" "+(it.exp||""); }
+      routineBump(); body.querySelector("#rNext").innerHTML=`<button class="btn" id="rN">다음 ▶</button>`; body.querySelector("#rN").onclick=reload; }; box.appendChild(b); });
+}
 document.getElementById("completeDay").onclick=()=>{
   const d=db(); const day=viewDay; d.done[day]=d.done[day]||{blocks:[]};
   d.done[day].completed=true; save(d);
