@@ -380,7 +380,12 @@
       <div id="dayGoal"></div>
     </div>
 
-    <div class="card" id="routineOverview">
+    <div class="card" id="routineHint">
+      <p class="note" style="margin-bottom:10px">오늘의 루틴은 <b>루틴 이동</b>으로 열 수 있어요. 각 루틴을 눌러 학습하면 자동으로 체크됩니다. <span id="routineHintProg"></span></p>
+      <button class="btn" id="routineOpenBtn"><span data-ic="list"></span> 오늘의 루틴 열기</button>
+    </div>
+
+    <div class="card" id="routineOverview" style="display:none">
       <h3>오늘의 루틴 <span class="note" id="routineProg"></span></h3>
       <p class="note" style="margin-bottom:8px">각 루틴을 눌러 학습하세요. 완료하면 자동으로 체크됩니다.</p>
       <div id="todayRoutine"></div>
@@ -1140,9 +1145,17 @@ function renderToday(){
     rt.appendChild(row);
   });
   updateRoutineProg();
-  // 루틴 목록 표시(학습 화면 숨김)
+  // 기본: 안내만 표시, 루틴 목록/학습 화면 숨김 ('루틴 이동'으로 열기)
+  document.getElementById("routineHint").style.display="";
+  document.getElementById("routineOverview").style.display="none";
+  document.getElementById("routineRun").style.display="none";
+  const hp=document.getElementById("routineHintProg"); if(hp){ const dd=db(); const done=(dd.done[viewDay]&&dd.done[viewDay].blocks||[]).length; hp.textContent=`(${done}/${modeBlocks().length} 완료)`; }
+}
+function showRoutineOverview(){
+  document.getElementById("routineHint").style.display="none";
   document.getElementById("routineOverview").style.display="";
   document.getElementById("routineRun").style.display="none";
+  document.getElementById("routineOverview").scrollIntoView({behavior:"smooth"});
 }
 
 function updateRoutineProg(){
@@ -1153,8 +1166,9 @@ function updateRoutineProg(){
 
 document.getElementById("prevDay").onclick=()=>{ viewDay=Math.max(1,viewDay-1); renderToday(); };
 document.getElementById("nextDay").onclick=()=>{ viewDay=Math.min(84,viewDay+1); renderToday(); };
-document.getElementById("routineMap").onclick=()=>{ renderToday(); document.getElementById("routineOverview").scrollIntoView({behavior:"smooth"}); };
-document.getElementById("routineBack").onclick=()=>renderToday();
+document.getElementById("routineMap").onclick=()=>{ renderToday(); showRoutineOverview(); };
+document.getElementById("routineOpenBtn").onclick=()=>{ renderToday(); showRoutineOverview(); };
+document.getElementById("routineBack").onclick=()=>{ renderToday(); showRoutineOverview(); };
 document.getElementById("sessionLen").onchange=renderToday;
 
 //==================== 루틴 학습 러너 (클릭 → 학습 → 자동 체크) ====================
@@ -1170,7 +1184,8 @@ function openRoutine(bi){
   document.getElementById("routineRun").style.display="";
   document.getElementById("routineRunTitle").textContent=block[0];
   document.getElementById("routineRunDesc").textContent=block[2];
-  document.getElementById("routineDone").onclick=()=>{ markRoutineDone(routineState.bi); renderToday(); };
+  document.getElementById("routineHint").style.display="none";
+  document.getElementById("routineDone").onclick=()=>{ markRoutineDone(routineState.bi); renderToday(); showRoutineOverview(); };
   routineHudUpd(); renderRoutineAct(act); applyRoutineGate();
   if(!routineState.met){ routineGateTimer=setInterval(()=>{ if(!routineState||routineState.met){clearInterval(routineGateTimer);routineGateTimer=null;return;}
     const left=routineState.sec-Math.floor((Date.now()-routineState.start)/1000);
