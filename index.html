@@ -183,6 +183,10 @@
   .routine-row .chk { margin-top:3px; width:20px; height:20px; transform:scale(1.15); accent-color:var(--accent); cursor:pointer; }
   .routine-row .body { flex:1; }
   .routine-row .t { color:var(--text); font-weight:var(--fw-semibold); }
+  .routine-row .rstat { flex:none; font-size:1.2rem; color:var(--text-subtle); margin-top:2px; line-height:1; }
+  .routine-row.done .rstat { color:var(--success); }
+  .routine-row.done .t { color:var(--text-subtle); text-decoration:line-through; }
+  .routine-row .body:hover .t { color:var(--accent); }
   .routine-row .min { color:var(--text-muted); font-size:var(--text-xs); }
   /* ── Week list ── */
   .week { border-left:3px solid var(--border-strong); padding:var(--space-1) 0 var(--space-1) var(--space-4); margin-bottom:var(--space-3); }
@@ -402,11 +406,17 @@
       <button class="btn ghost sm" id="routineBack">◀ 루틴 목록</button>
       <h3 id="routineRunTitle" style="margin-top:10px"></h3>
       <p class="note" id="routineRunDesc"></p>
-      <div class="vhud" id="routineHud" style="margin-top:6px"></div>
-      <div id="routineBody" style="margin-top:8px;min-height:150px"></div>
-      <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <button class="btn" id="routineDone" disabled><span data-ic="check"></span> 완료하고 돌아가기</button>
-        <span class="note" id="routineGateHint"></span>
+      <div id="routineSetup" style="margin-top:12px">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+          <label class="note">목표 문제 <input type="number" id="routineCfgN" min="1" max="50" style="width:72px"></label>
+          <label class="note">제한 시간 <input type="number" id="routineCfgMin" min="1" max="60" style="width:72px"> 분</label>
+        </div>
+        <p class="note" style="margin-top:8px">제한 시간 안에 목표 문제를 끝내면 <b>자동으로 완료</b>됩니다.</p>
+        <button class="btn" id="routineStartBtn" style="margin-top:12px"><span data-ic="play"></span> 시작</button>
+      </div>
+      <div id="routinePlay" style="display:none">
+        <div class="vhud" id="routineHud" style="margin-top:6px"></div>
+        <div id="routineBody" style="margin-top:8px;min-height:150px"></div>
       </div>
     </div>
   </section>
@@ -1135,18 +1145,14 @@ function renderRoutineList(){
     let detail = desc;
     if(bi===3 && m.info.integrated) detail = m.info.integrated;
     const isDone = doneBlocks.includes(bi);
+    const act = (modeBlocks()[bi]||[])[3] || "warmup";
+    const cfg = routineCfg(act);
     const row = document.createElement("div"); row.className="routine-row"+(isDone?" done":"");
-    row.innerHTML = `<input type="checkbox" class="chk" ${isDone?"checked":""} data-bi="${bi}" title="수동 체크">
+    row.innerHTML = `<span class="rstat">${isDone?svgIcon('check'):svgIcon('play')}</span>
       <div class="body" data-open="${bi}" style="cursor:pointer">
-        <span class="t">${n}</span> <span class="min">· ${mins}분</span>
-        ${isDone?'<span class="tag good">완료 ✓</span>':'<span class="tag info">시작 ▶</span>'}<br>
+        <span class="t">${n}</span>
+        ${isDone?'<span class="tag good">완료 ✓</span>':`<span class="tag info">목표 ${cfg.n}문제 · ${cfg.min}분</span>`}<br>
         <span class="note">${detail}</span></div>`;
-    row.querySelector("input").onchange = (e)=>{
-      const dd = db(); dd.done[day]=dd.done[day]||{blocks:[]};
-      const arr = new Set(dd.done[day].blocks||[]);
-      if(e.target.checked) arr.add(bi); else arr.delete(bi);
-      dd.done[day].blocks=[...arr]; save(dd); renderRoutineList();
-    };
     row.querySelector("[data-open]").onclick = ()=>openRoutine(bi);
     rt.appendChild(row);
   });
@@ -1154,7 +1160,7 @@ function renderRoutineList(){
   document.getElementById("routineOverview").style.display="";
   document.getElementById("routineRun").style.display="none";
 }
-function showRoutineOverview(){ renderRoutineList(); window.scrollTo({top:0,behavior:"smooth"}); }
+function showRoutineOverview(){ clearRoutineTimer(); renderRoutineList(); window.scrollTo({top:0,behavior:"smooth"}); }
 
 function updateRoutineProg(){
   const d=db(); const day=viewDay; const total=modeBlocks().length;
@@ -1170,38 +1176,67 @@ document.getElementById("routineBack").onclick=()=>showRoutineOverview();
 document.getElementById("sessionLen").onchange=renderToday;
 
 //==================== 루틴 학습 러너 (클릭 → 학습 → 자동 체크) ====================
-let routineState=null, routineGateTimer=null;
-const ROUTINE_NEED={ warmup:2, recall:2, vocab:5, input:3, quiz:4, conversation:4, speak:2, write:2, wrap:0 };
+let routineState=null, routineTimer=null;
+const ROUTINE_DEF={ warmup:{n:3,min:5}, recall:{n:3,min:5}, vocab:{n:8,min:8}, input:{n:4,min:8}, quiz:{n:6,min:8}, conversation:{n:5,min:6}, speak:{n:3,min:8}, write:{n:3,min:10}, wrap:{n:1,min:3} };
+function routineCfg(act){ const def=ROUTINE_DEF[act]||{n:5,min:8}; const d=db(); const c=(d.routineCfg&&d.routineCfg[appMode()+":"+act])||{}; return {n:c.n||def.n, min:c.min||def.min}; }
+function clearRoutineTimer(){ if(routineTimer){ clearInterval(routineTimer); routineTimer=null; } }
 function openRoutine(bi){
-  const block=modeBlocks()[bi]; if(!block) return;
-  const act=block[3]||"warmup";
-  clearInterval(routineGateTimer); routineGateTimer=null;
-  routineState={bi, act, done:0, need:(ROUTINE_NEED[act]??2), start:Date.now(), sec:Math.max(40,(ROUTINE_NEED[act]||1)*15), met:false};
-  if(routineState.need===0) routineState.met=true;
+  const block=modeBlocks()[bi]; if(!block) return; const act=block[3]||"warmup"; clearRoutineTimer();
+  routineState={bi, act, done:0};
   document.getElementById("routineOverview").style.display="none";
   document.getElementById("routineRun").style.display="";
   document.getElementById("routineRunTitle").textContent=block[0];
   document.getElementById("routineRunDesc").textContent=block[2];
-  document.getElementById("routineDone").onclick=()=>{ markRoutineDone(routineState.bi); showRoutineOverview(); };
-  routineHudUpd(); renderRoutineAct(act); applyRoutineGate();
-  if(!routineState.met){ routineGateTimer=setInterval(()=>{ if(!routineState||routineState.met){clearInterval(routineGateTimer);routineGateTimer=null;return;}
-    const left=routineState.sec-Math.floor((Date.now()-routineState.start)/1000);
-    if(left<=0){ routineState.met=true; applyRoutineGate(); clearInterval(routineGateTimer); routineGateTimer=null; } else applyRoutineGate(left); },1000); }
+  document.getElementById("routineSetup").style.display="";
+  document.getElementById("routinePlay").style.display="none";
+  const cfg=routineCfg(act);
+  document.getElementById("routineCfgN").value=cfg.n;
+  document.getElementById("routineCfgMin").value=cfg.min;
+  document.getElementById("routineStartBtn").onclick=startRoutineSession;
+}
+function startRoutineSession(){
+  const s=routineState; if(!s) return; const def=routineCfg(s.act);
+  let n=Math.max(1,Math.min(50,parseInt(document.getElementById("routineCfgN").value)||def.n));
+  let min=Math.max(1,Math.min(60,parseInt(document.getElementById("routineCfgMin").value)||def.min));
+  const dd=db(); dd.routineCfg=dd.routineCfg||{}; dd.routineCfg[appMode()+":"+s.act]={n,min}; save(dd);  // 설정 저장
+  s.need=n; s.done=0; s.end=Date.now()+min*60000;
+  document.getElementById("routineSetup").style.display="none";
+  document.getElementById("routinePlay").style.display="";
+  routineHudUpd(); renderRoutineAct(s.act);
+  clearRoutineTimer();
+  routineTimer=setInterval(()=>{ if(!routineState||!routineState.end){ clearRoutineTimer(); return; } routineHudUpd(); if(Date.now()>=routineState.end) finishRoutine(false); },500);
 }
 function markRoutineDone(bi){ const dd=db(); const day=viewDay; dd.done[day]=dd.done[day]||{blocks:[]}; const s=new Set(dd.done[day].blocks||[]); s.add(bi); dd.done[day].blocks=[...s]; save(dd); }
-function routineHudUpd(){ const s=routineState; if(!s)return; document.getElementById("routineHud").innerHTML=`<div><div class="v">${s.done}${s.need?'/'+s.need:''}</div><div class="l">진행</div></div>`; }
-function routineBump(){ const s=routineState; if(!s)return; s.done++; if(s.need&&s.done>=s.need) s.met=true; routineHudUpd(); applyRoutineGate(); }
-function applyRoutineGate(left){ const b=document.getElementById("routineDone"), h=document.getElementById("routineGateHint"); const s=routineState; if(!b||!h||!s)return;
-  if(s.met){ b.disabled=false; h.textContent="완료할 수 있어요 ✓"; return; }
-  b.disabled=true; const t=left!=null?left:s.sec-Math.floor((Date.now()-s.start)/1000);
-  h.textContent=`${Math.max(0,s.need-s.done)}개 더 하거나 ${Math.max(0,t)}초 후 완료 가능`; }
+function routineHudUpd(){ const s=routineState; if(!s||!s.end)return; const over=Date.now()>=s.end;
+  document.getElementById("routineHud").innerHTML=`<div><div class="v" style="${over?'color:var(--danger)':''}">${fmt(s.end-Date.now())}</div><div class="l">남은 시간</div></div>
+    <div><div class="v">${s.done}/${s.need}</div><div class="l">진행</div></div>`; }
+function routineBump(){ const s=routineState; if(!s||!s.end)return; s.done++; routineHudUpd(); if(s.done>=s.need) finishRoutine(true); }
+function finishRoutine(ok){ clearRoutineTimer(); const s=routineState; if(!s||!s.end)return; s.end=null;
+  const body=document.getElementById("routineBody");
+  if(ok){ markRoutineDone(s.bi);
+    body.innerHTML=`<div style="text-align:center;padding:14px 0"><div class="bigscore" style="font-size:var(--text-3xl)">${svgIcon('check')}</div>
+      <p style="font-weight:var(--fw-semibold);margin-top:8px">루틴 완료! ${s.need}문제를 시간 안에 끝냈어요.</p>
+      <button class="btn" id="rDoneBack" style="margin-top:14px">루틴 목록으로 ▶</button></div>`;
+    document.getElementById("rDoneBack").onclick=showRoutineOverview;
+  } else {
+    body.innerHTML=`<div style="text-align:center;padding:14px 0"><div style="font-size:2rem">⏱</div>
+      <p style="font-weight:var(--fw-semibold);margin-top:6px;color:var(--danger-fg)">시간 초과 — ${s.done}/${s.need} 완료</p>
+      <p class="note">제한 시간 안에 목표를 채워야 완료돼요.</p>
+      <div style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn" id="rRetry"><span data-ic="play"></span> 다시 도전</button><button class="btn ghost" id="rBackList">루틴 목록</button></div></div>`;
+    document.getElementById("rRetry").onclick=()=>openRoutine(s.bi);
+    document.getElementById("rBackList").onclick=showRoutineOverview;
+  }
+}
 
 function renderRoutineAct(act){
   const body=document.getElementById("routineBody"); const m=dayMeta(viewDay); const week=m.week;
   const vw=VW[week]||VW[1];
   if(act==="wrap"){ const set=WRAP[m.day%WRAP.length];
     body.innerHTML=`<p>오늘의 마무리 — 원어민식 표현을 소리 내어 읽어보세요.</p>
-      <ul class="clean" style="margin-top:10px"><li><b>표현:</b> ${set[0]}</li><li><b>숙어:</b> ${set[1]}</li><li><b>원어민 문장:</b> ${set[2]}</li></ul>`;
+      <ul class="clean" style="margin-top:10px"><li><b>표현:</b> ${set[0]}</li><li><b>숙어:</b> ${set[1]}</li><li><b>원어민 문장:</b> ${set[2]}</li></ul>
+      <button class="btn" id="rWrapDone" style="margin-top:14px">${svgIcon('check')} 읽었어요</button>`;
+    body.querySelector("#rWrapDone").onclick=()=>routineBump();
     return; }
   if(act==="vocab"){ let queue=shuffle(vw.slice()); const card=document.createElement("div"); card.className="card"; card.style.minHeight="140px"; body.innerHTML=""; body.appendChild(card);
     (function load(){ const it=queue.length?queue.shift():_rand(vw); queue.push(it); const [w,pos,mean,ex]=it;
