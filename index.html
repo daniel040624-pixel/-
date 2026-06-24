@@ -325,7 +325,7 @@
         <button class="btn ghost lg" id="coverDash"><span data-ic="grid"></span> 대시보드</button>
       </div>
       <div class="cover-stats">
-        <div class="cstat"><div class="cstat-v" id="coverDay">1</div><div class="cstat-l">현재 일차 / 84</div></div>
+        <div class="cstat"><div class="cstat-v" id="coverDay">1</div><div class="cstat-l">현재 일차 / <span id="coverTot">84</span></div></div>
         <div class="cstat"><div class="cstat-v" id="coverStreak">0</div><div class="cstat-l">연속 학습</div></div>
         <div class="cstat"><div class="cstat-v" id="coverDone">0</div><div class="cstat-l">완료 세션</div></div>
       </div>
@@ -515,7 +515,7 @@
     <h2>대시보드</h2>
     <p class="sub">진척 현황 한눈에.</p>
     <div class="grid3">
-      <div class="card stat"><div class="v" id="statDay">1</div><div class="l">현재 일차 / 84</div></div>
+      <div class="card stat"><div class="v" id="statDay">1</div><div class="l">현재 일차 / <span id="statTot">84</span></div></div>
       <div class="card stat"><div class="v" id="statDone">0</div><div class="l">완료한 세션</div></div>
       <div class="card stat"><div class="v" id="statStreak">0</div><div class="l">연속 학습일 <span data-ic="flame"></span></div></div>
     </div>
@@ -944,7 +944,7 @@ let viewDay = 1;
 function currentDay(){
   const d = db();
   const n = dayDiff(d.startDate, todayStr())+1;
-  return Math.min(84, Math.max(1, n));
+  return Math.min(totalDays(appMode()), Math.max(1, n));
 }
 
 //==================== 네비게이션 ====================
@@ -1027,6 +1027,7 @@ function renderCover(){
   const d=db();
   const done=Object.values(d.done).filter(x=>x&&x.completed).length;
   document.getElementById("coverDay").textContent=currentDay();
+  const ct=document.getElementById("coverTot"); if(ct) ct.textContent=totalDays(appMode());
   document.getElementById("coverStreak").textContent=(typeof computeStreak==="function"?computeStreak():0);
   document.getElementById("coverDone").textContent=done;
   const m=document.getElementById("coverMotto"); if(m) m.textContent=dailyMotto();
@@ -1060,31 +1061,120 @@ const TRACK_BLOCKS = {
   general: [["워밍업",20,"전날 표현·문장 백지 인출 + 변형 미션","warmup"],["인풋",40,"단계별 듣기/읽기 → 요약 말하기·쓰기로 출력","input"],["어휘·표현 장착",30,"핵심 표현 5~10개, 예문→직접 생성","vocab"],["출력 훈련",50,"말하기(즉흥·의견·묘사) + 쉐도잉","speak"],["쓰기",25,"일기/의견/에세이 → 자기 교정 후 제출","write"],["복습",10,"오늘 배운 것 백지 인출","recall"],["마무리",5,"원어민 표현 1개 + 내 문장 1개","wrap"]],
   opic: [["워밍업",15,"전날 표현 인출 + 발음 쉐도잉","warmup"],["인풋",30,"원어민 답변 샘플 듣고 표현 채집","input"],["표현 장착",30,"콜로케이션·구동사 5~10개 → 문장 생성","vocab"],["말하기",60,"주제별 1~2분 답변 + 녹음·자기 교정","speak"],["롤플레이/돌발",30,"즉흥 대응 연습","conversation"],["복습",15,"오늘 표현 백지 인출","recall"]]
 };
-const GENERAL_STAGES=[
-  {wk:[1,2,3],phase:"STAGE 1 · 문장 생성 자동화",focus:"기본 문형 조립 + 시제·접속사·동사 연결",integrated:"짧은 문장을 접속사로 길게 잇기"},
-  {wk:[4,5],phase:"STAGE 2 · 일상 유창성",focus:"쉬운 인풋 요약 말하기 + 능동 어휘·쉐도잉",integrated:"쉬운 콘텐츠 듣고 요약 말하기"},
-  {wk:[6,7,8],phase:"STAGE 3 · 표현력 도약",focus:"구동사·관용표현·콜로케이션·패러프레이징",integrated:"일반 콘텐츠 자막 없이 듣고 요약"},
-  {wk:[9,10],phase:"STAGE 4 · 고급 사고 표현",focus:"추상 토론·톤 조절·긴 글쓰기",integrated:"추상 주제 의견 글 + 자기 교정"},
-  {wk:[11,12],phase:"STAGE 5 · 원어민 정착",focus:"즉흥 발화·뉘앙스·자기 교정",integrated:"무작위 주제 2분 즉흥 스피치"}
-];
-const GENERAL_TOPICS=["일상","여행","취미","일·직업","음식","문화","기술","건강","교육","환경","뉴스","영화·음악"];
-const OPIC_STAGES=[
-  {wk:[1,2,3],phase:"STAGE 1 · 기본기(자기소개·일상 묘사)",focus:"5~7문장 묘사 + 현재/과거 시제 안정화",integrated:"익숙한 주제를 한 단락으로 말하기"},
-  {wk:[4,5,6],phase:"STAGE 2 · 경험 서술(스토리텔링)",focus:"사건 순서·연결어·구체 묘사",integrated:"경험 하나를 1~2분 이야기하기"},
-  {wk:[7,8,9],phase:"STAGE 3 · 의견·비교(논리)",focus:"의견→이유2→예시, 비교·대조",integrated:"찬반 주제를 근거 들어 1~2분 말하기"},
-  {wk:[10,11,12],phase:"STAGE 4 · 롤플레이·돌발(실전)",focus:"상황극·즉흥 2분 스피치·자기 교정",integrated:"낯선 주제·롤플레이 즉흥 대응"}
-];
-const OPIC_TOPICS=["자기소개","집·동네","취미·여가","직장·학교","여행","외식","영화·음악","운동","쇼핑","명절·기념일","기술·SNS","롤플레이"];
 const TRACK_QKEYS=["articles","tense","plural","clause","preposition","connectors"];
+const MODE_GOAL={ general:"원어민 수준 (CEFR C2)", toefl:"TOEFL 100점+", opic:"OPIc IH 등급" };
+const DEFAULT_WEEKS={ general:24, toefl:16, opic:12 };
+// ── 모드별 완성형 커리큘럼 (각 스테이지 = 목표 도달 경로의 한 단계) ──
+const CURRICULA={
+  general:[
+    {title:"STAGE 1 · 문장 생성 자동화", focus:"SV·SVO·SVC 문형 / 현재·과거·미래 시제 / 접속사(and·but·because·when) / to부정사·동명사",
+      detail:"해석하는 뇌에서 ‘생성하는 뇌’로 전환. 모든 문장을 소리 내어 직접 조립하고, 짧은 문장을 접속사로 이어 길이를 늘린다.",
+      canDo:["일상 주제를 4~5문장으로 막힘없이 말한다","현재·과거·미래 시제를 정확히 구분한다","두 문장을 접속사로 한 문장으로 잇는다"],
+      activities:["단어로 문장 만들기 + 시제 변형","접속사로 문장 잇기(짧은 문장→긴 문장)","어제 일과를 과거형으로 말하기"],
+      topics:["자기소개","가족","하루 일과","취미","음식","날씨"]},
+    {title:"STAGE 2 · 일상 유창성", focus:"이해 가능한 인풋 요약 말하기 / 능동 어휘 1,500~2,000 / 쉐도잉(발음·리듬·억양) / 매일 일기",
+      detail:"쉬운 콘텐츠를 매일 듣고 ‘요약 말하기’로 출력. 핵심어를 직접 문장에 쓰며 능동 어휘로 전환한다.",
+      canDo:["자막 있는 쉬운 콘텐츠를 80% 이해한다","일상 주제를 한 단락으로 말한다","핵심 어휘를 문장에서 능동적으로 쓴다"],
+      activities:["쉬운 듣기 → 3문장 요약 말하기","핵심어 10개로 문장 생성","한 문단 쉐도잉"],
+      topics:["여행","쇼핑","건강","학교·직장","주말","영화·음악"]},
+    {title:"STAGE 3 · 표현력 도약", focus:"구동사·관용표현·콜로케이션 / 패러프레이징 / 자막 없는 일반 콘텐츠 요약 / 의견 말하기·쓰기",
+      detail:"‘맞는 영어’에서 ‘자연스러운 영어’로. 같은 의미를 여러 방식으로 말하고, 원어민이 실제로 쓰는 표현을 장착한다.",
+      canDo:["자막 없이 일반 콘텐츠를 따라간다","관용표현·구동사를 자연스럽게 섞는다","찬반 의견을 근거와 함께 말한다"],
+      activities:["구동사·콜로케이션 10개 → 예문 생성","한 문장 3가지로 패러프레이징","의견 1분 말하기 + 글로 정리"],
+      topics:["기술","환경","사회 이슈","문화","교육","뉴스"]},
+    {title:"STAGE 4 · 고급 사고 표현", focus:"추상·전문 주제 토론 / 격식·비격식 톤 전환 / 긴 글쓰기·자기 교정 / 1.25~1.5배속 듣기",
+      detail:"추상·논리적 주제를 상황에 맞는 톤으로. 가정·추측·반론 구조를 익히고 처리 속도를 끌어올린다.",
+      canDo:["추상 주제를 논리적으로 2분 이상 말한다","이메일·에세이의 톤을 의도대로 조절한다","1.25배속 콘텐츠를 이해한다"],
+      activities:["추상 주제 의견 글(150단어)+자기교정","격식↔비격식 같은 내용 재작성","1.25배속 듣고 쉐도잉"],
+      topics:["철학","경제","과학","역사","예술","심리"]},
+    {title:"STAGE 5 · 정교화·뉘앙스", focus:"동의어 어감 차이 / 함의·완곡 표현 / 수사·비유·유머 / 즉흥 발화 정밀화",
+      detail:"미묘한 차이를 구별하고 사용한다. 같은 뜻 단어의 어감·격식도를 가려 쓰고, 비유와 유머를 의도적으로 활용한다.",
+      canDo:["동의어의 어감 차이를 구별해 쓴다","완곡·함의 표현을 상황에 맞게 쓴다","유머·비유를 자연스럽게 섞는다"],
+      activities:["동의어 세트 비교 후 문장 적용","완곡 표현으로 재작성","즉흥 2분 스피치 + 자기수정"],
+      topics:["뉘앙스","비즈니스","협상","발표","토론","스토리텔링"]},
+    {title:"STAGE 6 · 원어민 정착", focus:"네이티브 콘텐츠 다량 인풋(자막 없이) / 즉흥 발화 / 자기 교정 / 전문·지역 표현 확장",
+      detail:"영어로 사고하고 틀린 것을 ‘느낀다’. 천장 없이 전문 분야 어휘·지역별 표현·고급 수사로 계속 상승한다.",
+      canDo:["뉴스·드라마·강의를 자막 없이 자연 속도로 이해한다","어떤 주제든 막힘없이 자연스럽게 말한다","자기 글·말을 스스로 교정한다"],
+      activities:["네이티브 영상 듣고 요약·비평","무작위 주제 즉흥 2분","영어로 일기(한국어 경유 0)"],
+      topics:["시사","전문 분야","학술","문학","관용·속어","지역 영어"]}
+  ],
+  toefl:[
+    {title:"STAGE 1 · 토대 (목표 ~60)", focus:"문장 뼈대·관사·시제·관계절 / 학술 어휘 입문 / 정확한 문장 산출",
+      detail:"틀리지 않는 문장을 자동화한다. 관사·시제·수일치 등 1순위 오류를 교정하고 학술 어휘 기초를 쌓는다.",
+      canDo:["기본 문장을 문법 오류 없이 만든다","관사·시제를 정확히 쓴다","학술 어휘 기초를 이해한다"],
+      activities:["문법 핵심 퀴즈","학술 어휘 카드 + 예문","짧은 글 읽고 따라 말하기"],
+      topics:["생물","역사","심리","환경","일반 과학","교육"]},
+    {title:"STAGE 2 · Reading·Listening 입문 (목표 ~75)", focus:"학술 지문 독해 전략 / 강의 노트테이킹 / 패러프레이즈 인식",
+      detail:"긴 학술 지문의 구조를 파악하고, 강의를 들으며 핵심을 노트한다. 보기와 지문의 패러프레이즈를 매칭한다.",
+      canDo:["학술 지문의 요지·세부를 파악한다","강의를 들으며 노트테이킹한다","패러프레이즈를 식별한다"],
+      activities:["지문 독해 + 문제","강의 듣기 → 노트 → 재구성","핵심어 패러프레이즈 훈련"],
+      topics:["천문","지질","경제","기술","사회","예술"]},
+    {title:"STAGE 3 · Speaking·Writing 입문 (목표 ~85)", focus:"Speaking 템플릿(독립·통합) / Writing 통합·독립 구조 / 연결어",
+      detail:"45초 말하기·에세이의 골격을 템플릿으로 익히고, 읽고→듣고→말/쓰는 통합형의 기본 흐름을 만든다.",
+      canDo:["독립·통합 말하기를 템플릿으로 수행한다","에세이를 구조에 맞게 쓴다","연결어로 논리를 잇는다"],
+      activities:["말하기 템플릿 적용 답변","통합형 읽고→듣고→쓰기","에세이 개요→본문 작성"],
+      topics:["통합형","의견 제시","요약","비교·대조","원인·결과","예시"]},
+    {title:"STAGE 4 · 통합·정확도 (목표 ~95)", focus:"4영역 통합형 정밀화 / 시간 내 정확도 / 약점 영역 보강",
+      detail:"통합형 과제의 정확도와 일관성을 높이고, 영역별 약점을 데이터로 찾아 집중 보강한다.",
+      canDo:["통합형 과제를 시간 내 정확히 완성한다","약점 영역을 인지하고 보강한다","고난도 어휘를 활용한다"],
+      activities:["통합형 풀세트(부분)","약점 영역 집중 드릴","고난도 어휘·표현 적용"],
+      topics:["학술 종합","논증","데이터 해석","반론","정의·분류","과정 설명"]},
+    {title:"STAGE 5 · 실전 풀세트 (목표 ~100)", focus:"풀세트 시간 관리 / 실전 모의 반복 / 멘탈·페이스 관리",
+      detail:"실제 시험 형식·시간으로 4영역 풀세트를 반복하며 시간 관리와 페이스를 체화한다.",
+      canDo:["풀세트를 시간 내 안정적으로 푼다","실전 페이스를 유지한다","모의 점수가 목표에 수렴한다"],
+      activities:["R/L 풀세트 시간 측정","S/W 풀세트 + 템플릿","종합 모의고사"],
+      topics:["실전 모의","시간 관리","오답 분석","페이스","멘탈","전략"]},
+    {title:"STAGE 6 · 100+ 고득점 정착", focus:"고난도 문항·미세 약점 제거 / 표현 다양성 / 안정적 재현",
+      detail:"마지막 1점까지. 고난도 문항을 정복하고 표현 다양성을 높여 어떤 회차에서도 100+를 재현한다.",
+      canDo:["고난도 문항을 안정적으로 맞힌다","표현 다양성으로 S·W 점수를 높인다","회차와 무관하게 100+를 재현한다"],
+      activities:["고난도 문항 집중","S·W 표현 업그레이드","최종 종합 모의"],
+      topics:["고난도 독해","함축·태도","고급 작문","유창성","정확성","최종 점검"]}
+  ],
+  opic:[
+    {title:"STAGE 1 · 기본기 (IM1)", focus:"자기소개·일상 묘사 / 현재·과거 시제 안정화 / 5~7문장 답변",
+      detail:"익숙한 주제를 끊김 없이. 자기소개·집·동네·취미를 한 단락으로 말하는 틀을 만든다.",
+      canDo:["익숙한 주제를 5~7문장으로 말한다","현재·과거 시제를 안정적으로 쓴다","답변을 끊김 없이 이어간다"],
+      activities:["자기소개 1분 녹음","일상 묘사 한 단락","발음·억양 쉐도잉"],
+      topics:["자기소개","집·동네","취미·여가","직장·학교","가족","일상"]},
+    {title:"STAGE 2 · 묘사 확장 (IM2)", focus:"장소·인물·사물 디테일 묘사 / 빈도·습관 표현 / 연결어",
+      detail:"구체적인 디테일과 빈도 표현으로 답변을 풍부하게. 오감·예시로 묘사를 확장한다.",
+      canDo:["장소·인물을 구체적으로 묘사한다","빈도·습관을 다양하게 표현한다","연결어로 흐름을 만든다"],
+      activities:["장소 디테일 묘사","습관·빈도 표현 적용","연결어로 답변 잇기"],
+      topics:["카페·식당","공원","쇼핑","운동","날씨·계절","교통"]},
+    {title:"STAGE 3 · 경험 서술 (IM3)", focus:"스토리텔링(처음-중간-끝) / 과거·과거진행 / 감정·결과 표현",
+      detail:"과거 경험을 생생하게. 사건을 순서대로 풀고 감정과 결과를 더해 1~2분 이야기로 만든다.",
+      canDo:["경험을 1~2분 이야기로 말한다","사건을 시간 순서로 구성한다","감정·결과를 표현한다"],
+      activities:["경험 스토리텔링 1~2분","과거진행으로 배경 묘사","감정·결말 표현 추가"],
+      topics:["기억에 남는 여행","문제 해결 경험","특별한 날","실수·교훈","처음 경험","최근 사건"]},
+    {title:"STAGE 4 · 의견·비교 (IH 진입)", focus:"의견→이유2→예시 구조 / 비교·대조 / 콤보 세트(묘사+경험+의견)",
+      detail:"논리적으로 의견을 펴고 과거·현재를 비교한다. 한 주제를 묘사+경험+의견 콤보로 길게 끌고 간다.",
+      canDo:["찬반 의견을 근거 들어 말한다","과거와 현재를 비교·대조한다","콤보 세트로 길게 답한다"],
+      activities:["의견 1~2분(이유2+예시)","과거vs현재 비교","콤보 세트 연습"],
+      topics:["기술 변화","장단점","사회 변화","선호","찬반 주제","트렌드"]},
+    {title:"STAGE 5 · 롤플레이·돌발 (IH 정착)", focus:"롤플레이(문의·요청·문제 해결) / 돌발 주제 즉흥 / 자기 수정·필러 관리",
+      detail:"낯선 주제·롤플레이도 자연스럽게. 즉흥 2분 발화와 자기 수정으로 IH의 안정성을 완성한다.",
+      canDo:["롤플레이 상황을 자연스럽게 처리한다","돌발 주제를 즉흥 2분 말한다","막힘·필러를 스스로 관리한다"],
+      activities:["롤플레이 시나리오","돌발 주제 즉흥 2분","자기 답변 듣고 수정"],
+      topics:["전화 문의","예약·변경","문제 해결","불만 제기","약속 잡기","돌발 주제"]}
+  ]
+};
+function curStages(mode){ return CURRICULA[mode]||CURRICULA.toefl; }
+function planWeeks(mode){ const d=db(); const n=(d.plan&&d.plan[mode])||DEFAULT_WEEKS[mode]; return Math.max(4,Math.min(60,n)); }
+function setPlanWeeks(mode,n){ const d=db(); d.plan=d.plan||{}; d.plan[mode]=Math.max(4,Math.min(60,parseInt(n)||DEFAULT_WEEKS[mode])); save(d); }
+function totalDays(mode){ return planWeeks(mode)*7; }
+function planRanges(mode){ const S=curStages(mode).length, T=planWeeks(mode); const base=Math.floor(T/S), rem=T%S; const r=[]; let w=1;
+  for(let i=0;i<S;i++){ const len=base+(i<rem?1:0)||1; r.push({i,start:w,end:w+len-1}); w+=len; } return r; }
+function stageIndexForWeek(mode,week){ const r=planRanges(mode); for(const x of r){ if(week>=x.start&&week<=x.end) return x.i; } return r[r.length-1].i; }
+function vwForWeek(week){ return VW[((Math.max(1,week)-1)%12)+1]||VW[1]; }
 function modeBlocks(){ return TRACK_BLOCKS[appMode()]||BLOCKS; }
 function trackInfo(mode,week){
-  if(mode==="toefl"){ const w=weekInfo(week)||weekInfo(1); return {phase:w.phase,theme:w.theme,topic:w.subject,subject:w.subject,focus:w.grammar,integrated:w.integrated,key:w.key,milestone:w.milestone}; }
-  const stages = mode==="opic"?OPIC_STAGES:GENERAL_STAGES;
-  const topics = mode==="opic"?OPIC_TOPICS:GENERAL_TOPICS;
-  const st = stages.find(s=>s.wk.includes(week)) || stages[stages.length-1];
-  const topic = topics[(week-1)%topics.length];
-  const key = TRACK_QKEYS[(week-1)%TRACK_QKEYS.length];
-  return {phase:st.phase, theme:topic+" — "+st.phase.split("· ")[1], topic, subject:topic, focus:st.focus, integrated:st.integrated, key, milestone:null};
+  const stages=curStages(mode); const idx=stageIndexForWeek(mode,week); const st=stages[idx];
+  const topic=st.topics[(week-1)%st.topics.length];
+  const activity=st.activities[(week-1)%st.activities.length];
+  const key=TRACK_QKEYS[(week-1)%TRACK_QKEYS.length];
+  const ranges=planRanges(mode); const isStageEnd=ranges[idx].end===week;
+  const milestone=(mode==="toefl" && isStageEnd && idx>0)?"mock":null;
+  return {phase:st.title, theme:topic+" — "+st.title.replace(/^.*?· /,""), topic, subject:topic, focus:st.focus, integrated:activity, key, milestone, stageIdx:idx};
 }
 
 function dayMeta(day){
@@ -1111,8 +1201,7 @@ function renderToday(){
   // 마일스톤 / 점검 배너
   const mb = document.getElementById("milestoneBanner");
   if(m.kind==="mock"){
-    const which = {mock1:"①(4주)",mock2:"②(8주)",mock3:"③(12주)"}[m.info.milestone];
-    mb.innerHTML = `<div class="milestone-banner">${svgIcon('flag')} <b>종합 모의고사 ${which}</b> — 실제 시험 형식·시간(약 120분)으로 4영역 풀세트. 끝나면 '진단평가'에 점수 입력!</div>`;
+    mb.innerHTML = `<div class="milestone-banner">${svgIcon('flag')} <b>종합 모의고사 (${m.info.phase.replace(/·.*/,'').trim()} 점검)</b> — 실제 시험 형식·시간으로 4영역 풀세트. 끝나면 '진단평가'에 점수 입력!</div>`;
   } else if(m.kind==="test"){
     const txt = mode==="toefl" ? `<b>${m.week}주차 진척 테스트</b> — 미니 TOEFL(약 40분). 끝나면 '진단평가'에 기록!`
       : mode==="opic" ? `<b>${m.week}주차 점검</b> — 즉흥 2분 답변을 녹음해 전주와 비교해보세요.`
@@ -1169,7 +1258,7 @@ function updateRoutineProg(){
 }
 
 document.getElementById("prevDay").onclick=()=>{ viewDay=Math.max(1,viewDay-1); renderToday(); };
-document.getElementById("nextDay").onclick=()=>{ viewDay=Math.min(84,viewDay+1); renderToday(); };
+document.getElementById("nextDay").onclick=()=>{ viewDay=Math.min(totalDays(appMode()),viewDay+1); renderToday(); };
 document.getElementById("routineMap").onclick=()=>navigate("routine");
 document.getElementById("routineToToday").onclick=()=>navigate("today");
 document.getElementById("routineBack").onclick=()=>showRoutineOverview();
@@ -1177,7 +1266,7 @@ document.getElementById("sessionLen").onchange=renderToday;
 
 //==================== 루틴 학습 러너 (클릭 → 학습 → 자동 체크) ====================
 let routineState=null, routineTimer=null;
-const ROUTINE_DEF={ warmup:{n:3,min:5}, recall:{n:3,min:5}, vocab:{n:8,min:8}, input:{n:4,min:8}, quiz:{n:6,min:8}, conversation:{n:5,min:6}, speak:{n:3,min:8}, write:{n:3,min:10}, wrap:{n:1,min:3} };
+const ROUTINE_DEF={ warmup:{n:5,min:7}, recall:{n:5,min:7}, vocab:{n:12,min:10}, input:{n:6,min:10}, quiz:{n:10,min:10}, conversation:{n:8,min:8}, speak:{n:5,min:10}, write:{n:4,min:12}, wrap:{n:2,min:4} };
 function routineCfg(act){ const def=ROUTINE_DEF[act]||{n:5,min:8}; const d=db(); const c=(d.routineCfg&&d.routineCfg[appMode()+":"+act])||{}; return {n:c.n||def.n, min:c.min||def.min}; }
 function clearRoutineTimer(){ if(routineTimer){ clearInterval(routineTimer); routineTimer=null; } }
 function openRoutine(bi){
@@ -1231,7 +1320,7 @@ function finishRoutine(ok){ clearRoutineTimer(); const s=routineState; if(!s||!s
 
 function renderRoutineAct(act){
   const body=document.getElementById("routineBody"); const m=dayMeta(viewDay); const week=m.week;
-  const vw=VW[week]||VW[1];
+  const vw=allVocabUpTo(Math.min(12,((week-1)%12)+1));  // 누적 어휘로 학습 범위 확대
   if(act==="wrap"){ const set=WRAP[m.day%WRAP.length];
     body.innerHTML=`<p>오늘의 마무리 — 원어민식 표현을 소리 내어 읽어보세요.</p>
       <ul class="clean" style="margin-top:10px"><li><b>표현:</b> ${set[0]}</li><li><b>숙어:</b> ${set[1]}</li><li><b>원어민 문장:</b> ${set[2]}</li></ul>
@@ -1304,6 +1393,7 @@ function computeStreak(){
 function renderDashboard(){
   const d=db(); const cd=currentDay();
   document.getElementById("statDay").textContent=cd;
+  { const st=document.getElementById("statTot"); if(st) st.textContent=totalDays(appMode()); }
   const doneCount=Object.values(d.done).filter(x=>x.completed).length;
   document.getElementById("statDone").textContent=doneCount;
   document.getElementById("statStreak").textContent=computeStreak();
@@ -1334,37 +1424,39 @@ document.getElementById("saveStart").onclick=()=>{
 };
 
 
-//==================== 커리큘럼 (모드별) ====================
+//==================== 커리큘럼 (모드별 · 완성형 + 기간 조정) ====================
 function renderCurriculum(){
-  const mode=appMode(); const c=document.getElementById("curriculumList"); c.innerHTML="";
-  if(mode==="toefl"){
-    let phase="";
-    WEEKS.forEach(wk=>{
-      if(wk.phase!==phase){ phase=wk.phase; c.innerHTML+=`<h3 style="color:var(--brand-700);margin:16px 0 8px">${phase}</h3>`; }
-      const badge = wk.milestone?`<span class="tag bad">종합 모의 ${ {mock1:"①",mock2:"②",mock3:"③"}[wk.milestone] }</span>`:`<span class="tag warn">7일차 진척 테스트</span>`;
-      c.innerHTML+=`<details><summary>${wk.w}주차 · ${wk.theme} ${badge}</summary>
-        <div style="margin-top:8px"><ul class="clean">
-          <li><b>학술 영역:</b> ${wk.subject}</li>
-          <li><b>문법 초점:</b> ${wk.grammar}</li>
-          <li><b>통합형 과제:</b> ${wk.integrated}</li>
-          <li><b>어휘:</b> ${(VW[wk.w]||[]).map(v=>v[0]).join(", ")}</li>
-        </ul></div></details>`;
-    });
-    return;
-  }
-  const stages = mode==="opic"?OPIC_STAGES:GENERAL_STAGES;
-  const topics = mode==="opic"?OPIC_TOPICS:GENERAL_TOPICS;
-  stages.forEach(st=>{
-    c.innerHTML+=`<h3 style="color:var(--brand-700);margin:16px 0 8px">${st.phase}</h3>`;
-    st.wk.forEach(w=>{ const topic=topics[(w-1)%topics.length];
-      c.innerHTML+=`<details><summary>${w}주차 · ${topic} <span class="tag warn">${w%7===0?'주간 점검':'데일리'}</span></summary>
-        <div style="margin-top:8px"><ul class="clean">
-          <li><b>학습 초점:</b> ${st.focus}</li>
-          <li><b>핵심 과제:</b> ${st.integrated}</li>
-          <li><b>오늘 주제:</b> ${topic}</li>
-          <li><b>어휘:</b> ${(VW[w]||[]).map(v=>v[0]).join(", ")}</li>
-        </ul></div></details>`;
-    });
+  const mode=appMode(); const stages=curStages(mode); const ranges=planRanges(mode); const T=planWeeks(mode);
+  const c=document.getElementById("curriculumList"); c.innerHTML="";
+  // 목표 + 기간 조정
+  c.innerHTML=`<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div><span class="tag info">최종 목표</span> <b style="font-size:var(--text-lg)">${MODE_GOAL[mode]}</b></div>
+      <span class="note">${stages.length}단계 · 총 ${T}주 (${T*7}일)</span>
+    </div>
+    <p class="note" style="margin-top:8px">기간은 자유롭게 정하세요. 커리큘럼은 <b>기간과 무관하게 목표를 완벽히 달성</b>하도록 설계되어 있고, 정한 기간에 맞춰 단계가 자동 배분됩니다.</p>
+    <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label class="note">기간 <input type="number" id="planWeeksInput" min="4" max="60" value="${T}" style="width:80px"> 주</label>
+      <button class="btn sm" id="planApply">기간 적용</button>
+      <span class="note">권장 ${DEFAULT_WEEKS[mode]}주 · 4~60주</span>
+    </div>
+  </div>`;
+  document.getElementById("planApply").onclick=()=>{ setPlanWeeks(mode, document.getElementById("planWeeksInput").value); viewDay=Math.min(viewDay,totalDays(mode)); renderCurriculum(); renderToday(); renderDashboard(); renderCover(); };
+  // 단계별 상세
+  stages.forEach((st,i)=>{
+    const r=ranges[i]; const open=i===0?'open':'';
+    c.innerHTML+=`<details ${open} style="border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:10px">
+      <summary style="cursor:pointer;font-weight:var(--fw-bold);color:var(--text-strong)">${st.title} <span class="tag info" style="margin-left:6px">${r.start}~${r.end}주</span></summary>
+      <div style="margin-top:10px">
+        <p style="margin-bottom:8px">${st.detail}</p>
+        <p class="note" style="margin-bottom:6px"><b>학습 초점:</b> ${st.focus}</p>
+        <p class="note" style="margin-bottom:4px"><b>도달 기준 (Can-do)</b></p>
+        <ul class="clean" style="margin-bottom:8px">${st.canDo.map(x=>`<li>${x}</li>`).join("")}</ul>
+        <p class="note" style="margin-bottom:4px"><b>핵심 활동</b></p>
+        <ul class="clean">${st.activities.map(x=>`<li>${x}</li>`).join("")}</ul>
+        <p class="note" style="margin-top:8px"><b>주제:</b> ${st.topics.join(" · ")}</p>
+        ${mode==="toefl" && i>0?'<p class="note" style="margin-top:6px"><span class="tag bad">단계 말 종합 모의고사</span></p>':''}
+      </div></details>`;
   });
 }
 
