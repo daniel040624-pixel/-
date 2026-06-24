@@ -1642,7 +1642,40 @@ const READING_BANK=[
     {q:"Sleep is especially important for ___.",opts:["memory","height","digestion only"],ans:0}]},
   {p:"Volcanoes form when molten rock, called magma, rises to the surface. When it erupts, the magma is known as lava, which cools and hardens into new rock.",qs:[
     {q:"What is magma called after it erupts?",opts:["Lava","Ash","Ice"],ans:0},
-    {q:"What happens to lava as it cools?",opts:["It hardens into rock","It turns to water","It disappears"],ans:0}]}
+    {q:"What happens to lava as it cools?",opts:["It hardens into rock","It turns to water","It disappears"],ans:0}]},
+  {p:"Gravity is the force that pulls objects toward each other. On Earth it gives everything weight, and across the solar system it keeps the planets moving in orbit around the Sun.",qs:[
+    {q:"What does gravity give objects on Earth?",opts:["Weight","Color","Sound"],ans:0},
+    {q:"What keeps the planets in orbit?",opts:["Gravity","Wind","Sunlight"],ans:0}]},
+  {p:"Vaccines train the immune system to recognize harmful germs. They contain a weakened or inactive part of a germ, so the body learns to fight the real disease later without getting sick.",qs:[
+    {q:"What do vaccines train?",opts:["The immune system","The muscles","The eyes"],ans:0},
+    {q:"What do vaccines contain?",opts:["A weakened part of a germ","A strong live disease","Only sugar"],ans:0}]},
+  {p:"In the water cycle, the Sun heats water in oceans and lakes and turns it into vapor. The vapor rises, cools, and forms clouds, which later release the water as rain or snow.",qs:[
+    {q:"What turns water into vapor?",opts:["The Sun's heat","The wind","The Moon"],ans:0},
+    {q:"What do clouds eventually release?",opts:["Rain or snow","Sand","Light"],ans:0}]},
+  {p:"In economics, prices respond to supply and demand. When many people want a scarce product, its price tends to rise; when a product is plentiful but few want it, the price usually falls.",qs:[
+    {q:"When does a price tend to rise?",opts:["High demand, low supply","Low demand, high supply","No demand at all"],ans:0},
+    {q:"What happens when a product is plentiful but unwanted?",opts:["The price falls","The price rises","Nothing changes"],ans:0}]},
+  {p:"Habits form when we repeat an action in the same situation until the brain makes it automatic. Each repetition strengthens the neural pathway behind the behavior, making it easier to do.",qs:[
+    {q:"How do habits form?",opts:["By repeating an action","By avoiding it once","By sleeping more"],ans:0},
+    {q:"What does each repetition strengthen?",opts:["The neural pathway","The bones only","Nothing"],ans:0}]},
+  {p:"Solar and wind power are called renewable because nature replaces them constantly. Unlike coal and oil, they do not run out and they produce very little pollution.",qs:[
+    {q:"Why are solar and wind renewable?",opts:["Nature replaces them","They are man-made","They run out quickly"],ans:0},
+    {q:"How do they compare with coal and oil?",opts:["They pollute less","They pollute more","They are the same"],ans:0}]},
+  {p:"Bees play a key role in nature by pollinating plants. As they move from flower to flower collecting nectar, they carry pollen that helps plants produce fruit and seeds.",qs:[
+    {q:"What key role do bees play?",opts:["Pollinating plants","Eating leaves","Making soil"],ans:0},
+    {q:"What do bees carry between flowers?",opts:["Pollen","Water","Sand"],ans:0}]},
+  {p:"The internet connects millions of computers around the world and lets people share information instantly. At the same time, it raises concerns about privacy and the spread of false news.",qs:[
+    {q:"What does the internet connect?",opts:["Millions of computers","Only phones","One library"],ans:0},
+    {q:"What concern does the passage mention?",opts:["Privacy and false news","Cheaper food","Better weather"],ans:0}]},
+  {p:"Regular exercise strengthens the heart and improves mood. Even a short daily walk can lower stress, boost energy, and help people sleep better at night.",qs:[
+    {q:"What does regular exercise strengthen?",opts:["The heart","The teeth only","Nothing"],ans:0},
+    {q:"What can a short daily walk do?",opts:["Lower stress","Increase illness","Reduce sleep"],ans:0}]},
+  {p:"Recycling turns used materials such as paper, glass, and plastic into new products. It saves energy and reduces the amount of waste sent to landfills.",qs:[
+    {q:"What does recycling do with used materials?",opts:["Turns them into new products","Burns them all","Buries them deeper"],ans:0},
+    {q:"What is one benefit of recycling?",opts:["It saves energy","It wastes energy","It makes more trash"],ans:0}]},
+  {p:"The city library is open from 9 a.m. to 8 p.m. on weekdays and from 10 a.m. to 5 p.m. on Saturdays. It is closed on Sundays and public holidays.",qs:[
+    {q:"When does the library close on weekdays?",opts:["8 p.m.","5 p.m.","Noon"],ans:0},
+    {q:"When is the library closed?",opts:["Sundays and holidays","Every Saturday","Monday mornings"],ans:0}]}
 ];
 const LISTEN_BANK=[
   {s:"She bought three new books yesterday.",d:["She brought three new books yesterday.","She bought three new looks yesterday."]},
@@ -1652,31 +1685,55 @@ const LISTEN_BANK=[
   {s:"Could you please pass me the salt?",d:["Could you please pass me the salad?","Would you mind closing the door?"]},
   {s:"The library is closed on Sundays.",d:["The library is closed on Mondays.","The library is open on Sundays."]},
   {s:"I usually drink coffee without sugar.",d:["I usually drink coffee with sugar.","I rarely drink coffee without sugar."]},
-  {s:"The train was delayed because of heavy rain.",d:["The train was delayed because of heavy snow.","The bus arrived early despite the rain."]}
+  {s:"The train was delayed because of heavy rain.",d:["The train was delayed because of heavy snow.","The bus arrived early despite the rain."]},
+  {s:"I would like to book a table for two.",d:["I would like to book a table for ten.","I would like to cook a meal for two."]},
+  {s:"Turn left at the second traffic light.",d:["Turn right at the second traffic light.","Turn left at the second train station."]},
+  {s:"The package will arrive on Thursday.",d:["The package will arrive on Tuesday.","The package will leave on Thursday."]},
+  {s:"Can I have the bill, please?",d:["Can I have the bell, please?","Can I have a refill, please?"]},
+  {s:"My flight has been delayed by two hours.",d:["My flight has been delayed by two days.","My flight was canceled an hour ago."]},
+  {s:"She works as a software engineer.",d:["She works as a software designer.","She worked as a hardware engineer."]},
+  {s:"We should leave before it gets dark.",d:["We should leave after it gets dark.","We should stay until it gets dark."]},
+  {s:"There is a pharmacy next to the bank.",d:["There is a bakery next to the bank.","There is a pharmacy next to the park."]},
+  {s:"He is allergic to peanuts and shellfish.",d:["He is allergic to peanuts and shrimp.","He is not allergic to peanuts or shellfish."]},
+  {s:"The museum offers free entry on Mondays.",d:["The museum offers free entry on Fridays.","The museum offers cheap entry on Mondays."]},
+  {s:"Please remember to bring your passport.",d:["Please remember to bring your password.","Please forget to bring your passport."]},
+  {s:"I have been learning English for three years.",d:["I have been teaching English for three years.","I have been learning Spanish for three years."]},
+  {s:"The weather will be sunny this afternoon.",d:["The weather will be snowy this afternoon.","The weather was sunny this afternoon."]},
+  {s:"Could you turn down the music a little?",d:["Could you turn up the music a little?","Could you turn down the lights a little?"]}
 ];
 const WRITING_PROMPTS=[
   "어제 한 일을 영어 한 문장으로 써보세요. (과거시제)",
-  "좋아하는 음식과 그 이유를 영어 한 문장으로 써보세요.",
-  "당신의 하루 일과를 영어 한 문장으로 설명해보세요.",
-  "가보고 싶은 나라와 이유를 영어 한 문장으로 써보세요."
+  "좋아하는 음식과 그 이유를 영어로 써보세요.",
+  "당신의 하루 일과를 영어로 설명해보세요.",
+  "가보고 싶은 나라와 이유를 영어로 써보세요.",
+  "어떤 주제에 대한 장점 하나와 단점 하나를 영어로 써보세요.",
+  "최근 읽거나 들은 내용의 요지를 영어 2~3문장으로 요약해보세요.",
+  "찬성 또는 반대 입장을 고르고 이유를 영어로 써보세요.",
+  "오늘 배운 단어 하나를 넣어 영어 문장을 만들어보세요."
 ];
 const SPEAKING_PROMPTS=[
   "Describe your favorite hobby in two sentences.",
   "Talk about what you did last weekend.",
   "Explain why learning English is important to you.",
-  "Describe your hometown briefly."
+  "Describe your hometown briefly.",
+  "Do you prefer studying alone or in a group? Why?",
+  "Describe a place you would like to visit and why.",
+  "Explain a goal you want to achieve this year.",
+  "Talk about a person who has influenced you.",
+  "Describe a typical day in your life.",
+  "What is one change you would like to see in your city?"
 ];
 const SEC_LABEL={Reading:"독해",Listening:"듣기","어휘/문법":"어휘·문법",Writing:"작문",Speaking:"말하기"};
 // 모드별 말하기·쓰기 프롬프트
 const MODE_SPEAK={
   toefl:SPEAKING_PROMPTS,
-  general:["Describe your daily routine.","Talk about what you did last weekend.","What's your favorite movie and why?","Describe your hometown.","Talk about a hobby you enjoy.","What do you usually do after work or school?"],
-  opic:["Tell me about yourself.","Describe your house or apartment.","Talk about your neighborhood.","What do you do in your free time?","Describe a memorable trip you took.","Talk about your favorite restaurant.","Describe a problem you recently solved.","Role-play: ask a friend to help you this weekend."]
+  general:["Describe your daily routine.","Talk about what you did last weekend.","What's your favorite movie and why?","Describe your hometown.","Talk about a hobby you enjoy.","What do you usually do after work or school?","Describe your best friend.","What kind of music do you like and why?","Talk about a skill you want to learn.","Describe your ideal vacation.","What did you eat today? Describe it.","Talk about a book or show you enjoyed recently.","Describe the weather today and how it makes you feel.","What are your plans for the weekend?"],
+  opic:["Tell me about yourself.","Describe your house or apartment.","Talk about your neighborhood.","What do you do in your free time?","Describe a memorable trip you took.","Talk about your favorite restaurant and a dish you order.","Describe a problem you recently solved.","Role-play: ask a friend to help you move this weekend.","Tell me about your daily morning routine.","Describe a hobby and how you got started.","Talk about a holiday your family celebrates.","Role-play: call a store to ask if an item is in stock.","Compare your hometown now with how it was in the past.","Describe a person you admire and why.","Talk about how you usually spend your weekends.","Role-play: explain to a hotel clerk that your room has a problem."]
 };
 const MODE_WRITE={
   toefl:WRITING_PROMPTS,
-  general:["오늘 한 일을 영어로 3문장 써보세요.","좋아하는 음식과 그 이유를 영어로 써보세요.","주말 계획을 영어로 써보세요.","최근에 본 영화/영상을 영어로 소개해보세요."],
-  opic:["자기소개를 영어 3문장으로 써보세요.","당신의 동네를 영어로 묘사해보세요.","최근 경험 하나를 영어로 서술해보세요.","좋아하는 취미와 이유를 영어로 써보세요."]
+  general:["오늘 한 일을 영어로 3문장 써보세요.","좋아하는 음식과 그 이유를 영어로 써보세요.","주말 계획을 영어로 써보세요.","최근에 본 영화/영상을 영어로 소개해보세요.","당신의 취미를 영어로 3문장 설명해보세요.","오늘 기분과 그 이유를 영어로 써보세요.","가장 친한 친구를 영어로 묘사해보세요.","올해 이루고 싶은 목표를 영어로 써보세요."],
+  opic:["자기소개를 영어 3문장으로 써보세요.","당신의 동네를 영어로 묘사해보세요.","최근 경험 하나를 영어로 서술해보세요.","좋아하는 취미와 이유를 영어로 써보세요.","기억에 남는 여행을 영어로 써보세요.","당신의 하루 일과를 영어로 써보세요.","좋아하는 식당과 메뉴를 영어로 소개해보세요.","과거와 현재의 변화를 비교해 영어로 써보세요."]
 };
 
 function examWeek(){ return Math.max(1, Math.min(12, dayMeta(currentDay()).week)); }
@@ -2388,7 +2445,23 @@ const CONVO=[
   {ctx:"수업 토론",q:"Could you give an example?",a:"Sure. For instance, solar energy is renewable.",d:["I am hungry now.","Turn right at the light."]},
   {ctx:"초대",q:"Would you like to join us for dinner?",a:"I'd love to, thank you for inviting me.",d:["It is six o'clock.","My car is red."]},
   {ctx:"진료실",q:"What seems to be the problem?",a:"I've had a sore throat for two days.",d:["I like swimming.","The class starts at nine."]},
-  {ctx:"가격 흥정",q:"That's a bit expensive. Any discount?",a:"I can offer you ten percent off.",d:["I have a cold.","She reads books."]}
+  {ctx:"가격 흥정",q:"That's a bit expensive. Any discount?",a:"I can offer you ten percent off.",d:["I have a cold.","She reads books."]},
+  {ctx:"공항 체크인",q:"Window or aisle seat?",a:"An aisle seat, please.",d:["Yes, two coffees.","It is raining outside."]},
+  {ctx:"부탁 거절",q:"Can you cover my shift tomorrow?",a:"Sorry, I can't. I already have plans.",d:["The sky is blue.","I have two dogs."]},
+  {ctx:"길 안내 감사",q:"Thanks for showing me the way.",a:"My pleasure. Have a good day!",d:["I am a student.","It costs five dollars."]},
+  {ctx:"몸 상태",q:"You look a bit tired today.",a:"Yeah, I didn't sleep well last night.",d:["The store opens at nine.","She is my teacher."]},
+  {ctx:"식당 예약 변경",q:"Could we change our reservation to 8 p.m.?",a:"Sure, let me update that for you.",d:["I like swimming.","It is on the second floor."]},
+  {ctx:"회의 일정",q:"Does Friday work for the meeting?",a:"Friday works for me.",d:["I ate an apple.","The dog is brown."]},
+  {ctx:"칭찬에 응답",q:"Your presentation was excellent!",a:"Thank you, I really appreciate that.",d:["No, it's Monday.","I have a headache."]},
+  {ctx:"교통",q:"How long does it take to get downtown?",a:"About twenty minutes by subway.",d:["I like tea.","She is taller than me."]},
+  {ctx:"날씨 계획",q:"It might rain later. Should we bring umbrellas?",a:"Good idea, let's take them just in case.",d:["I am from Korea.","The book is on the desk."]},
+  {ctx:"전화 메시지",q:"He's not here right now. Can I take a message?",a:"Yes, please tell him to call me back.",d:["I run every morning.","It is very sweet."]},
+  {ctx:"쇼핑 환불",q:"I'd like to return this shirt.",a:"Sure, do you have the receipt?",d:["I am twenty years old.","The bus is late."]},
+  {ctx:"초대 수락",q:"We're having a party on Saturday. Want to come?",a:"I'd love to. What time should I arrive?",d:["I have a brother.","It is cloudy today."]},
+  {ctx:"길 잃음",q:"Excuse me, is this the way to the museum?",a:"Yes, it's just around the corner.",d:["I drink milk.","She sings well."]},
+  {ctx:"음식 주문 추가",q:"Would you like anything else?",a:"Just the check, please.",d:["No, I'm a doctor.","The train left."]},
+  {ctx:"업무 협조",q:"Could you send me the report by tomorrow?",a:"No problem, I'll have it ready by noon.",d:["I like winter.","The cat is sleeping."]},
+  {ctx:"안부 작별",q:"It was great seeing you!",a:"You too! Let's keep in touch.",d:["It is nine o'clock.","I have three pens."]}
 ];
 let matchSel="reading", matchState=null, diagState=null, matchTimer=null;
 function clearMatchTimer(){ if(matchTimer){ clearInterval(matchTimer); matchTimer=null; } }
