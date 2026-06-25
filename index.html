@@ -614,6 +614,29 @@
     <h2><span data-ic="trending"></span> 진단 & 성장</h2>
     <p class="sub">시험을 보면 자동으로 채점되어 그 주차 기록으로 저장되고, 성장 표와 주차별 리포트가 자동으로 만들어집니다. 0일차 진단(Baseline)이 비교 기준이에요.</p>
 
+    <div class="card" id="lumoCard">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <h3 style="margin:0"><span data-ic="activity"></span> AI 정밀 진단 · 모의고사 <span class="tag info" id="lumoModeTag"></span></h3>
+        <span class="note" id="lumoKeyStatus"></span>
+      </div>
+      <p class="note" id="lumoDesc" style="margin:8px 0">세계 최고 수준 기준(CEFR / TOEFL iBT / ACTFL)으로 매번 새로운 문항을 생성하고, 일관된 기준으로 점수·레벨·피드백을 산출합니다. Claude API 키가 필요합니다.</p>
+      <div id="lumoSetup" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn" id="lumoDiag"><span data-ic="edit"></span> AI 진단 시작</button>
+        <button class="btn secondary" id="lumoMock"><span data-ic="flag"></span> AI 모의고사</button>
+        <button class="btn ghost sm" id="lumoKeyBtn">API 키 설정</button>
+      </div>
+      <div id="lumoKeyBox" style="display:none;margin-top:10px">
+        <input type="password" id="lumoKey" placeholder="sk-ant-..." style="width:100%">
+        <div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <select id="lumoModel"><option value="claude-sonnet-4-6">정확 (Sonnet 4.6)</option><option value="claude-haiku-4-5-20251001">빠름 (Haiku)</option></select>
+          <button class="btn sm" id="lumoKeySave">저장</button>
+          <span class="note">키는 이 브라우저에만 저장됩니다.</span>
+        </div>
+      </div>
+      <div id="lumoRun" style="display:none;margin-top:14px"></div>
+      <div id="lumoLast" class="note" style="margin-top:10px"></div>
+    </div>
+
     <div class="card" id="examCard">
       <div id="examIntro">
         <h3><span data-ic="edit"></span> <span id="examKindTitle">진척 테스트</span> &nbsp;<span id="examWeekTag" class="tag info"></span></h3>
@@ -2003,7 +2026,7 @@ function renderWeeklyReports(){
 }
 function renderAssess(){
   const wk=examWeek(); if(weekSel && !weekSel.dataset.init){ weekSel.value=wk; weekSel.dataset.init="1"; }
-  renderExamIntro(); renderGrowth(); renderWeeklyReports(); renderInputTable();
+  renderExamIntro(); renderGrowth(); renderWeeklyReports(); renderInputTable(); if(typeof renderLumo==="function") renderLumo();
 }
 document.getElementById("examStart").onclick=startExam;
 function renderReport(){ renderGrowth(); renderWeeklyReports(); }
@@ -2898,6 +2921,182 @@ function renderProgram(){ const m=appMode(); const el=document.getElementById("p
       else { ta.focus(); ta.select(); try{document.execCommand("copy");}catch(e){} done(); } };
     hydrateIcons(el); }
   const lbl=document.getElementById("coverProgramMode"); if(lbl) lbl.textContent=(MODES.find(x=>x[0]===m)||["","토플"])[1]+" 모드 · 단계별 자기주도 프로그램"; }
+
+//==================== Lumo AI 정밀 진단·모의고사 (Claude API) ====================
+const LUMO_MODE_LABEL={general:"영어 실력 향상",toefl:"TOEFL",opic:"OPIc"};
+const LUMO_PROMPTS={
+  general:{
+    diag:`You are Lumo's English Proficiency Diagnostic Engine. Generate an adaptive diagnostic test measuring overall English ability on the CEFR scale (A1-C2).
+RULES:
+1. Produce EXACTLY 12 items across: grammar, vocabulary, reading, listening (as transcript), writing, speaking.
+2. Items span A1->C2 in roughly increasing difficulty.
+3. Use the given seed and previous_topics so NO topic, sentence, or option repeats. Never reuse previous_topics wording.
+4. grammar/vocabulary/reading/listening: MCQ with exactly 4 options, one correct.
+5. writing/speaking: open-ended, options null.
+6. Tag each item with cefr and a specific sub_skill.
+7. Do NOT reveal correct answers. Output JSON ONLY, no markdown.
+SCHEMA: {"test_id":"string","items":[{"id":"q1","skill":"grammar|vocabulary|reading|listening|writing|speaking","sub_skill":"string","cefr":"A1|A2|B1|B2|C1|C2","type":"mcq|open","passage_or_transcript":"string|null","question":"string","options":["A","B","C","D"]|null}]}`,
+    score:`You are Lumo's Diagnostic Scoring Engine. Score answers and produce a CEFR-based report (Korean feedback).
+RULES:
+1. MCQ: determine correct answer, mark right/wrong.
+2. Open writing/speaking: rate grammatical accuracy, vocabulary range, coherence, task fulfillment (0-5 each).
+3. Compute overall CEFR AND a 0-100 numeric score.
+4. TOP 3 strengths and TOP 3 weaknesses by sub_skill with one concrete example each (in Korean).
+5. Recommend next focus + study path. Tone: precise, encouraging, mastery-oriented. Output JSON ONLY.
+SCHEMA: {"overall_cefr":"B1","numeric_score":0,"skill_breakdown":[{"skill":"grammar","score_pct":0,"cefr":"B1"}],"strengths":[{"sub_skill":"string","evidence":"string"}],"weaknesses":[{"sub_skill":"string","evidence":"string","fix":"string"}],"recommended_focus":["string"],"next_steps":"string"}`,
+    mock:`You are Lumo's Full Proficiency Mock Exam Generator. Build a timed mock exam.
+RULES:
+1. Sections: Reading (5 Q), Listening-as-transcript (5 Q), Use of English/Grammar (6 Q), Writing (1 task), Speaking (2 tasks). Each section: time_limit_min.
+2. All content NEW every run via seed; never reuse previous_topics.
+3. Center difficulty on B1-B2 with a few stretch items. No answer keys. Output JSON ONLY.
+SCHEMA: {"exam_id":"string","sections":[{"name":"reading","time_limit_min":12,"items":[{"id":"r1","passage_or_transcript":"string|null","question":"string","options":["A","B","C","D"]}]},{"name":"listening","time_limit_min":10,"items":[...]},{"name":"use_of_english","time_limit_min":8,"items":[...]},{"name":"writing","time_limit_min":18,"tasks":[{"id":"w1","prompt":"string","min_words":120,"options":null}]},{"name":"speaking","time_limit_min":6,"tasks":[{"id":"sp1","prompt":"string","prep_sec":30,"speak_sec":60,"options":null}]}]}`
+  },
+  toefl:{
+    diag:`You are Lumo's TOEFL iBT Diagnostic Engine. Create a short diagnostic estimating TOEFL iBT band per section (0-30).
+RULES:
+1. Authentic TOEFL formats: Reading = 1 academic passage (~300 words) + 5 questions (factual, inference, vocab-in-context, insertion, summary). Listening = 1 lecture transcript (~250 words) + 4 questions (gist, detail, function, attitude). Speaking = 1 independent + 1 integrated. Writing = 1 integrated (reading+listening) + 1 academic discussion.
+2. Academic register; natural/social sciences, humanities, campus life.
+3. Use seed + previous_topics so passages/lectures/prompts NEVER repeat. No answer keys. Output JSON ONLY.
+SCHEMA: {"diagnostic_id":"string","reading":{"passage":"string","questions":[{"id":"r1","type":"factual|inference|vocab|insertion|summary","question":"string","options":["A","B","C","D"]}]},"listening":{"transcript":"string","questions":[{"id":"l1","type":"gist|detail|function|attitude","question":"string","options":["A","B","C","D"]}]},"speaking":[{"id":"s1","task":"independent","prompt":"string","prep_sec":15,"speak_sec":45},{"id":"s2","task":"integrated","reading_stimulus":"string","listening_stimulus":"string","prompt":"string","prep_sec":30,"speak_sec":60}],"writing":[{"id":"w1","task":"integrated","reading_stimulus":"string","listening_stimulus":"string","prompt":"string"},{"id":"w2","task":"academic_discussion","prompt":"string"}]}`,
+    score:`You are Lumo's TOEFL Scoring Engine. Grade with official-style TOEFL iBT rubrics; output section scores (0-30) and total (0-120). Korean feedback.
+RULES:
+1. Reading & Listening: mark MCQ; convert raw correct to 0-30 scaled estimate.
+2. Speaking: score each task 0-4 (delivery, language use, topic development), scale to 0-30.
+3. Writing: score each task 0-5, scale to 0-30.
+4. Per-task feedback with a specific quoted line from the learner + how to raise one band (Korean).
+5. State distance from 80+ goal and 2 highest-leverage actions. Output JSON ONLY.
+SCHEMA: {"reading_score":0,"listening_score":0,"speaking_score":0,"writing_score":0,"total_projected":0,"goal":80,"gap_to_goal":0,"per_task_feedback":[{"id":"s1","band":3,"evidence":"string","to_improve":"string"}],"highest_leverage_actions":["string","string"]}`,
+    mock:`You are Lumo's TOEFL iBT Mock Test Generator. Produce a compact but authentic timed iBT mock.
+RULES:
+1. Reading: 1 passage + 6 questions (15 min). Listening: 1 lecture + 1 conversation transcript, 5 questions total (12 min). Speaking: 1 independent + 2 integrated (10 min). Writing: integrated + academic discussion (20 min).
+2. All passages/lectures/prompts ORIGINAL and NEW each run (seed; exclude previous_topics). Authentic academic difficulty. No answer keys. Output JSON ONLY following the same nested keys as the TOEFL diagnostic (reading,listening,speaking,writing) plus time_limit_min per area.`
+  },
+  opic:{
+    diag:`You are Lumo's OPIc Diagnostic Engine (ACTFL OPIc format). Given a background survey, generate 5 spoken prompts tailored to it to estimate the test-taker's ACTFL level.
+RULES:
+1. Prompts span: description -> past narration -> role-play -> opinion -> abstract/comparison.
+2. Each prompt: spoken question text, prep_sec, speak_sec, like real OPIc.
+3. Personalize to survey_answers. Vary scenarios with seed; never reuse previous_topics. Output JSON ONLY.
+SCHEMA: {"diagnostic_id":"string","based_on_survey":true,"prompts":[{"id":"o1","function":"description","question":"string","prep_sec":0,"speak_sec":60},{"id":"o2","function":"past_narration","question":"string","prep_sec":0,"speak_sec":90},{"id":"o3","function":"role_play","setup":"string","question":"string","speak_sec":90},{"id":"o4","function":"opinion","question":"string","speak_sec":90},{"id":"o5","function":"abstract_compare","question":"string","speak_sec":120}]}`,
+    score:`You are Lumo's OPIc Rating Engine. Assign an ACTFL level (NL,NM,NH,IL,IM,IH,AL) from transcribed spoken responses. Korean feedback.
+RULES:
+1. Judge each response on ACTFL pillars: global functions, context/content, accuracy, text type (words->sentences->connected paragraphs).
+2. Holistic level = the floor the speaker can SUSTAIN, not the best sentence.
+3. Identify what blocks the next level. Map to OPIc grade. State gap to target. Give 3 targeted drills. Output JSON ONLY.
+SCHEMA: {"opic_level":"IM","actfl_evidence":{"functions":"string","accuracy":"string","text_type":"string"},"ceiling_blocker":"string","target_level":"IH","gap_summary":"string","drills":["string","string","string"]}`,
+    mock:`You are Lumo's OPIc Full Mock Generator. Build a 12-question OPIc session personalized to the survey and self_assessment_level.
+RULES:
+1. Include >=: 3 description, 3 past narration, 2 role-play, 2 opinion, 2 abstract/comparison, in OPIc-like combo sequencing (cluster around topics).
+2. Every prompt original and NEW each run (seed; exclude previous_topics). Output spoken question text + speak_sec.
+3. Output JSON ONLY: {"prompts":[{"id":"o1","function":"string","question":"string","prep_sec":0,"speak_sec":90}]}`
+  }
+};
+let lumoState=null;
+function lumoKeyOk(){ return !!db().apiKey; }
+async function lumoCall(system, payload, maxTokens){
+  const d=db(); if(!d.apiKey) throw new Error("API 키가 필요합니다.");
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+    headers:{"content-type":"application/json","x-api-key":d.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:d.lumoModel||d.apiModel||"claude-sonnet-4-6",max_tokens:maxTokens||3000,system,messages:[{role:"user",content:JSON.stringify(payload)}]})});
+  const j=await res.json(); if(j.error) throw new Error(j.error.message||"API error");
+  let t=(j.content&&j.content[0]&&j.content[0].text)||""; t=t.trim().replace(/^```(json)?/i,"").replace(/```$/,"").trim();
+  const s=t.indexOf("{"), e=t.lastIndexOf("}"); if(s>=0&&e>=0) t=t.slice(s,e+1);
+  return JSON.parse(t);
+}
+// 생성 JSON에서 문항을 평탄화 (id+question/prompt 노드 수집, 지문/스티뮬러스는 컨텍스트로)
+function lumoFlatten(node, ctx, out){ ctx=ctx||{}; out=out||[];
+  if(Array.isArray(node)){ node.forEach(n=>lumoFlatten(n,ctx,out)); return out; }
+  if(node&&typeof node==="object"){ const c2=Object.assign({},ctx);
+    ["passage","transcript","passage_or_transcript","reading_stimulus","listening_stimulus","setup"].forEach(k=>{ if(typeof node[k]==="string"&&node[k]) c2[k]=node[k]; });
+    if((typeof node.question==="string"||typeof node.prompt==="string")&&node.id){
+      out.push({id:node.id, q:node.question||node.prompt, options:Array.isArray(node.options)?node.options:null,
+        ctx:[c2.passage_or_transcript,c2.passage,c2.transcript,c2.reading_stimulus,c2.listening_stimulus,c2.setup].filter(Boolean).join("\n\n"),
+        meta:[node.skill,node.cefr,node.type,node.function,node.task].filter(Boolean).join(" · "),
+        open:!Array.isArray(node.options)}); }
+    Object.keys(node).forEach(k=>{ const v=node[k]; if(v&&typeof v==="object") lumoFlatten(v,c2,out); });
+  } return out;
+}
+function renderLumo(){
+  const m=appMode(); const tag=document.getElementById("lumoModeTag"); if(tag) tag.textContent=LUMO_MODE_LABELS(m);
+  const ks=document.getElementById("lumoKeyStatus"); if(ks) ks.innerHTML=lumoKeyOk()?'<span style="color:var(--success-fg)">● API 연결됨</span>':'<span style="color:var(--danger-fg)">● API 키 필요</span>';
+  const last=db().lumoLast&&db().lumoLast[m];
+  const ll=document.getElementById("lumoLast"); if(ll) ll.innerHTML=last?`최근 결과: <b>${last.summary}</b> <span class="note">(${last.date})</span>`:"";
+}
+function LUMO_MODE_LABELS(m){ return LUMO_MODE_LABEL[m]||"TOEFL"; }
+function lumoStart(kind){ // kind: 'diag' | 'mock'
+  const m=appMode(); if(!lumoKeyOk()){ document.getElementById("lumoKeyBox").style.display=""; return; }
+  const run=document.getElementById("lumoRun"); run.style.display=""; run.innerHTML=`<p class="note">${svgIcon('activity')} ${LUMO_MODE_LABELS(m)} ${kind==='diag'?'진단':'모의고사'} 문항을 생성하고 있어요… (10~30초)</p>`;
+  const d=db(); const seed=Math.floor(Math.random()*1e9); const prev=(d.aiTopics&&d.aiTopics[m])||[];
+  const payload={seed, previous_topics:prev, previous_exam_topics:prev, target_focus:["grammar","vocabulary","reading","listening_transcript","writing_prompt","speaking_prompt"], level_band:"auto",
+    survey_answers:{status:"student",housing:"apartment",leisure:["movies","music","travel"],hobbies:["reading","exercise"]}, self_assessment_level:4};
+  lumoCall(LUMO_PROMPTS[m][kind], payload, kind==='mock'?3500:3000).then(raw=>{
+    const items=lumoFlatten(raw); if(!items.length) throw new Error("문항 파싱 실패");
+    lumoState={m, kind, raw, items, i:0, answers:{}};
+    // 직전 주제 저장(중복 방지)
+    const topics=items.slice(0,6).map(x=>x.q.slice(0,40)); const dd=db(); dd.aiTopics=dd.aiTopics||{}; dd.aiTopics[m]=topics; save(dd);
+    lumoRenderItem();
+  }).catch(e=>{ run.innerHTML=`<p class="feedback show no">${svgIcon('x')} 생성 실패: ${e.message}</p><button class="btn ghost sm" id="lumoRetry">다시</button>`;
+    document.getElementById("lumoRetry").onclick=()=>lumoStart(kind); });
+}
+function lumoRenderItem(){
+  const s=lumoState; const run=document.getElementById("lumoRun");
+  if(s.i>=s.items.length){ return lumoSubmit(); }
+  const it=s.items[s.i];
+  run.innerHTML=`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><b>${s.i+1} / ${s.items.length}</b>${it.meta?`<span class="tag info">${it.meta}</span>`:''}</div>
+    ${it.ctx?`<div class="card" style="background:var(--surface-2);white-space:pre-wrap;max-height:240px;overflow:auto">${it.ctx}</div>`:""}
+    <p class="quiz-q" style="margin-top:10px">${it.q}</p>
+    <div id="lumoOpts" style="margin-top:10px"></div>
+    <div style="margin-top:12px"><button class="btn ghost sm" id="lumoSkip">건너뛰기</button></div>`;
+  const box=run.querySelector("#lumoOpts");
+  if(it.open){ box.innerHTML=`<textarea id="lumoText" placeholder="영어로 답변을 작성하세요 (말하기 문항은 말한 내용을 적어주세요)" style="min-height:120px">${s.answers[it.id]||""}</textarea>
+    <div style="margin-top:10px"><button class="btn" id="lumoNext">다음 ▶</button></div>`;
+    run.querySelector("#lumoNext").onclick=()=>{ s.answers[it.id]=run.querySelector("#lumoText").value; s.i++; lumoRenderItem(); };
+  } else {
+    it.options.forEach((o,oi)=>{ const b=document.createElement("button"); b.className="opt"; if(s.answers[it.id]===o) b.classList.add("correct"); b.textContent=o;
+      b.onclick=()=>{ s.answers[it.id]=o; s.i++; lumoRenderItem(); }; box.appendChild(b); });
+  }
+  run.querySelector("#lumoSkip").onclick=()=>{ s.answers[it.id]=s.answers[it.id]||""; s.i++; lumoRenderItem(); };
+}
+async function lumoSubmit(){
+  const s=lumoState; const run=document.getElementById("lumoRun");
+  run.innerHTML=`<p class="note">${svgIcon('activity')} 답변을 세계 표준 기준으로 채점하고 있어요…</p>`;
+  const learner_answers=Object.keys(s.answers).map(id=>({id, answer:s.answers[id]}));
+  const payload={ test_items:s.raw.items||s.raw, test_content:s.raw, prompts:s.raw, learner_answers, transcribed_responses:learner_answers.map(a=>({id:a.id,transcript:a.answer})) };
+  try{ const r=await lumoCall(LUMO_PROMPTS[s.m].score, payload, 2000); lumoRenderReport(r); lumoSaveResult(s.m,r); }
+  catch(e){ run.innerHTML=`<p class="feedback show no">${svgIcon('x')} 채점 실패: ${e.message}</p><button class="btn ghost sm" id="lumoRetry2">처음으로</button>`; document.getElementById("lumoRetry2").onclick=()=>{ run.style.display="none"; }; }
+}
+function lumoRenderReport(r){
+  const s=lumoState, m=s.m, run=document.getElementById("lumoRun"); let h=`<h3 style="display:flex;align-items:center;gap:8px">${svgIcon('check')} 정밀 평가 결과</h3>`;
+  if(m==="toefl"){ h+=`<div class="bigscore" style="margin:8px 0">${r.total_projected??"-"}<span style="font-size:1rem;color:var(--text-muted)"> / 120</span></div>
+    <p class="note">목표 ${r.goal||80} 까지 <b>${r.gap_to_goal!=null?r.gap_to_goal+"점":"-"}</b></p>
+    <table style="margin-top:10px"><tr><th>영역</th><th class="num">점수(0~30)</th></tr>
+      <tr><td>Reading</td><td class="num"><b>${r.reading_score??"-"}</b></td></tr><tr><td>Listening</td><td class="num"><b>${r.listening_score??"-"}</b></td></tr>
+      <tr><td>Speaking</td><td class="num"><b>${r.speaking_score??"-"}</b></td></tr><tr><td>Writing</td><td class="num"><b>${r.writing_score??"-"}</b></td></tr></table>
+      ${(r.per_task_feedback||[]).map(f=>`<p class="note" style="margin-top:8px"><b>${f.id} (밴드 ${f.band})</b><br>근거: ${f.evidence||""}<br>개선: ${f.to_improve||""}</p>`).join("")}
+      <p class="note" style="margin-top:8px"><b>가장 효과 큰 행동:</b><br>${(r.highest_leverage_actions||[]).map(x=>"• "+x).join("<br>")}</p>`;
+  } else if(m==="opic"){ h+=`<div class="bigscore" style="margin:8px 0">${r.opic_level||"-"}</div>
+    <p class="note">목표 <b>${r.target_level||"IH"}</b> · ${r.gap_summary||""}</p>
+    <p class="note" style="margin-top:8px"><b>ACTFL 근거</b><br>기능: ${r.actfl_evidence?.functions||""}<br>정확성: ${r.actfl_evidence?.accuracy||""}<br>텍스트 유형: ${r.actfl_evidence?.text_type||""}</p>
+    <p class="note" style="margin-top:8px"><b>다음 레벨을 막는 것:</b> ${r.ceiling_blocker||""}</p>
+    <p class="note" style="margin-top:8px"><b>추천 드릴</b><br>${(r.drills||[]).map(x=>"• "+x).join("<br>")}</p>`;
+  } else { h+=`<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:baseline;margin:8px 0"><div class="bigscore">${r.overall_cefr||"-"}</div><div><b style="font-size:var(--text-2xl)">${r.numeric_score??"-"}</b><span class="note"> / 100</span></div></div>
+    <table style="margin-top:6px"><tr><th>영역</th><th class="num">%</th><th>CEFR</th></tr>${(r.skill_breakdown||[]).map(b=>`<tr><td>${b.skill}</td><td class="num">${b.score_pct}</td><td>${b.cefr}</td></tr>`).join("")}</table>
+    <p class="note" style="margin-top:8px"><b>강점</b><br>${(r.strengths||[]).map(x=>`• ${x.sub_skill}: ${x.evidence}`).join("<br>")}</p>
+    <p class="note" style="margin-top:6px"><b>약점·교정</b><br>${(r.weaknesses||[]).map(x=>`• ${x.sub_skill}: ${x.evidence} → <b>${x.fix||""}</b>`).join("<br>")}</p>
+    <p class="note" style="margin-top:6px"><b>다음 단계:</b> ${r.next_steps||""}</p>`; }
+  h+=`<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="lumoAgain">${svgIcon('play')} 새 진단</button><button class="btn ghost" id="lumoClose2">닫기</button></div>`;
+  run.innerHTML=h;
+  document.getElementById("lumoAgain").onclick=()=>lumoStart(s.kind);
+  document.getElementById("lumoClose2").onclick=()=>{ run.style.display="none"; };
+}
+function lumoSaveResult(m,r){ const d=db(); d.lumoLast=d.lumoLast||{};
+  const summary = m==="toefl"?`TOEFL ${r.total_projected??"-"}/120` : m==="opic"?`OPIc ${r.opic_level||"-"}` : `CEFR ${r.overall_cefr||"-"} · ${r.numeric_score??"-"}/100`;
+  d.lumoLast[m]={summary, date:todayStr(), data:r}; d.lumoHistory=d.lumoHistory||[]; d.lumoHistory.push({m,date:todayStr(),summary}); save(d); renderLumo();
+}
+document.getElementById("lumoDiag").onclick=()=>lumoStart("diag");
+document.getElementById("lumoMock").onclick=()=>lumoStart("mock");
+document.getElementById("lumoKeyBtn").onclick=()=>{ const b=document.getElementById("lumoKeyBox"); b.style.display=b.style.display==="none"?"":"none"; const d=db(); document.getElementById("lumoKey").value=d.apiKey||""; document.getElementById("lumoModel").value=d.lumoModel||"claude-sonnet-4-6"; };
+document.getElementById("lumoKeySave").onclick=()=>{ const d=db(); d.apiKey=document.getElementById("lumoKey").value.trim(); d.lumoModel=document.getElementById("lumoModel").value; save(d); document.getElementById("lumoKeyBox").style.display="none"; renderLumo(); };
 
 //==================== 초기화 ====================
 viewDay=currentDay();
