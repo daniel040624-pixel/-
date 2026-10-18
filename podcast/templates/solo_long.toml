@@ -1,0 +1,31 @@
+# 혼자 말하기 · 가로 롱폼 (5~15분 에세이형). 하이라이트 쇼츠 2개 자동 생성.
+name = "solo_long"
+format = "solo"
+kind = "long"
+width = 1920
+height = 1080
+fit = "fit"
+max_seconds = 0
+
+[silence]
+cut = true
+threshold_db = -36
+min_silence = 0.7
+pad = 0.15
+
+[subtitles]
+size = 56
+y = 0.90
+max_chars = 30
+
+[title]
+show = true
+seconds = 8
+size = 56
+
+[extras]
+progress_bar = false
+cta = ""
+watermark = true
+clips = 2
+clip_template = "dialogue_short"

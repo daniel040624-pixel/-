@@ -59,7 +59,8 @@ shorts = true                   # 9:16 쇼츠 하이라이트도 함께 생성
 
 [upload]
 youtube = true
-privacy = "private"             # private | unlisted | public — 처음엔 private 로 확인 후 공개 권장
+privacy = "private"             # AI 팟캐스트(run) 업로드 공개 범위 — 처음엔 private 로 확인 후 공개 권장
+daily_privacy = "public"        # 직접 찍은 영상(publish/watch) 즉시 업로드 시 공개 범위 (예약 업로드는 예약 시각에 공개)
 category_id = "27"              # 27 = Education, 22 = People & Blogs
 playlist_id = ""                # 지정하면 업로드 후 재생목록에 추가
 made_for_kids = false
@@ -74,3 +75,59 @@ author = "다니엘"
 email = ""
 image_url = ""
 category = "Society & Culture"
+
+# ═════════════════════════════════════════════
+#  매일 촬영 → 자동 편집 → 예약/즉시 업로드 설정
+#  (전략 근거: strategy/growth-playbook.md, 톤앤매너: strategy/brand-guide.md)
+# ═════════════════════════════════════════════
+
+[brand]
+handle = "@생각의온도"           # 영상 하단 워터마크 · 쇼츠 CTA 에 표시
+promise = "매일 한 가지, 스스로 생각하게 만드는 질문"
+cta_short = "매일 한 가지 생각, 구독으로 받아보세요"
+cta_clip = "전체 대화는 채널에서 ▶"
+timezone = "Asia/Seoul"
+
+# 시기(구독자 수)별 운영 규칙. `python -m studio stage` 가 내 채널 구독자 수로 현재 시기를 판단합니다.
+# slots = 직접 찍은 쇼츠 업로드 시각, clip_slots = 롱폼에서 잘라낸 클립 쇼츠 시각, long_slot = 롱폼 요일·시각
+# (한국 20~30대 시청이 몰리는 점심·퇴근 후 시간대)
+[[stages]]
+name = "1단계 씨앗 (0~100)"
+min = 0
+shorts_per_day = 1
+long_per_week = 1
+slots = ["19:00"]
+clip_slots = ["12:10"]
+long_slot = "일 20:00"
+
+[[stages]]
+name = "2단계 발아 (100~1천)"
+min = 100
+shorts_per_day = 1
+long_per_week = 2
+slots = ["19:00"]
+clip_slots = ["12:10"]
+long_slot = "수,일 20:00"
+
+[[stages]]
+name = "3단계 성장 (1천~1만)"
+min = 1000
+shorts_per_day = 2
+long_per_week = 2
+slots = ["19:00"]
+clip_slots = ["12:10", "16:30"]
+long_slot = "수,일 20:00"
+
+[[stages]]
+name = "4단계 확장 (1만~10만)"
+min = 10000
+shorts_per_day = 2
+long_per_week = 3
+slots = ["19:00"]
+clip_slots = ["12:10", "16:30"]
+long_slot = "월,수,금 20:00"
+
+[footage]
+inbox = "inbox"                 # 찍은 영상을 넣는 폴더 (watch 모드가 감시)
+output = "daily"                # 편집 결과물이 쌓이는 폴더
+whisper_model = "small"         # 자막 받아쓰기 모델: tiny | base | small | medium (클수록 정확·느림)

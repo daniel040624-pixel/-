@@ -1,0 +1,30 @@
+# 혼자 말하기 · 세로 쇼츠/릴스/틱톡 (매일 영상의 기본 포맷)
+# 찍는 법: 세로로, 눈높이 카메라, 첫 문장은 바로 '훅'부터. 30~60초.
+name = "solo_short"
+format = "solo"
+kind = "short"
+width = 1080
+height = 1920
+fit = "crop"                 # crop: 화면 꽉 채움 | blurpad: 원본 전체 + 흐린 배경 | fit: 검은 여백
+max_seconds = 59
+
+[silence]                    # 말 사이 공백 자동 삭제 (점프컷)
+cut = true
+threshold_db = -35
+min_silence = 0.45
+pad = 0.12
+
+[subtitles]
+size = 74
+y = 0.66                     # 화면 위에서부터 위치 비율 (얼굴 아래·UI 위)
+max_chars = 14               # 한 줄 글자 수 (쇼츠는 짧게 끊어야 잘 읽힘)
+
+[title]                      # 상단 고정 제목 (오늘의 훅/질문)
+show = true
+seconds = 0                  # 0 = 영상 내내 표시
+size = 64
+
+[extras]
+progress_bar = true          # 하단 진행 바 (끝까지 보게 만드는 장치)
+cta = "cta_short"            # 마지막 2.5초에 표시할 [brand] 문구
+watermark = true

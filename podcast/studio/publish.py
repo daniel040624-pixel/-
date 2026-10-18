@@ -53,7 +53,7 @@ def metadata(ep: Episode, script: dict | None, tl: dict) -> dict:
     return meta
 
 
-def _youtube(ep: Episode):
+def youtube_client(cfg: dict):
     try:
         from google.auth.transport.requests import Request
         from google.oauth2.credentials import Credentials
@@ -61,7 +61,7 @@ def _youtube(ep: Episode):
         from googleapiclient.discovery import build
     except ImportError as e:
         raise StudioError("pip install google-api-python-client google-auth-oauthlib 가 필요합니다.") from e
-    up = ep.cfg["upload"]
+    up = cfg["upload"]
     secrets, token = ROOT / up["client_secrets"], ROOT / up["token_file"]
     creds = Credentials.from_authorized_user_file(str(token), SCOPES) if token.exists() else None
     if creds and creds.expired and creds.refresh_token:
@@ -76,17 +76,23 @@ def _youtube(ep: Episode):
     return build("youtube", "v3", credentials=creds)
 
 
-def _upload_video(yt, ep: Episode, path: Path, title: str, description: str, tags: list[str]) -> str:
+def upload_video(yt, cfg: dict, path: Path, title: str, description: str, tags: list[str],
+                 synthetic: bool, publish_at: datetime | None = None) -> str:
+    """publish_at 을 주면 비공개로 올린 뒤 그 시각에 유튜브가 자동 공개한다(예약 업로드)."""
     from googleapiclient.http import MediaFileUpload
-    up = ep.cfg["upload"]
+    up = cfg["upload"]
+    status = {"privacyStatus": up.get("privacy", "private"),
+              "selfDeclaredMadeForKids": up.get("made_for_kids", False),
+              "containsSyntheticMedia": synthetic}  # AI 음성 사용 고지
+    if publish_at:
+        status["privacyStatus"] = "private"
+        status["publishAt"] = publish_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     body = {
         "snippet": {"title": title, "description": description, "tags": tags,
                     "categoryId": str(up.get("category_id", "27")),
-                    "defaultLanguage": ep.cfg["channel"].get("language", "ko"),
-                    "defaultAudioLanguage": ep.cfg["channel"].get("language", "ko")},
-        "status": {"privacyStatus": up.get("privacy", "private"),
-                   "selfDeclaredMadeForKids": up.get("made_for_kids", False),
-                   "containsSyntheticMedia": uses_tts(ep)},  # AI 음성 사용 고지
+                    "defaultLanguage": cfg["channel"].get("language", "ko"),
+                    "defaultAudioLanguage": cfg["channel"].get("language", "ko")},
+        "status": status,
     }
     req = yt.videos().insert(part="snippet,status", body=body,
                              media_body=MediaFileUpload(str(path), chunksize=8 * 1024 * 1024, resumable=True))
@@ -98,13 +104,13 @@ def _upload_video(yt, ep: Episode, path: Path, title: str, description: str, tag
     return resp["id"]
 
 
-def _captions(yt, ep: Episode, video_id: str, srt: Path) -> None:
+def upload_captions(yt, cfg: dict, video_id: str, srt: Path) -> None:
     from googleapiclient.http import MediaFileUpload
     if not srt.exists() or srt.stat().st_size == 0:
         return
     yt.captions().insert(
         part="snippet",
-        body={"snippet": {"videoId": video_id, "language": ep.cfg["channel"].get("language", "ko"),
+        body={"snippet": {"videoId": video_id, "language": cfg["channel"].get("language", "ko"),
                           "name": "한국어", "isDraft": False}},
         media_body=MediaFileUpload(str(srt), mimetype="application/octet-stream"),
     ).execute()
@@ -121,9 +127,10 @@ def upload(ep: Episode, meta: dict, rendered: dict, force: bool = False) -> dict
         log("upload", f"이미 업로드됨: https://youtu.be/{state['video_id']} (다시 올리려면 --force)")
         return state
 
-    yt = _youtube(ep)
+    yt = youtube_client(ep.cfg)
     from googleapiclient.http import MediaFileUpload
-    vid = _upload_video(yt, ep, Path(rendered["video"]), meta["title"], meta["description"], meta["tags"])
+    vid = upload_video(yt, ep.cfg, Path(rendered["video"]), meta["title"], meta["description"], meta["tags"],
+                       uses_tts(ep))
     state["video_id"] = vid
     write_json(state_path, state)
     log("upload", f"본편 업로드 완료: https://youtu.be/{vid} ({up.get('privacy', 'private')})")
@@ -134,7 +141,7 @@ def upload(ep: Episode, meta: dict, rendered: dict, force: bool = False) -> dict
         log("upload", f"썸네일 설정 실패(채널 전화번호 인증 필요할 수 있음): {e}")
     if up.get("upload_captions", True):
         try:
-            _captions(yt, ep, vid, ep.path("subtitles.srt"))
+            upload_captions(yt, ep.cfg, vid, ep.path("subtitles.srt"))
         except Exception as e:
             log("upload", f"자막 업로드 실패: {e}")
     if up.get("playlist_id"):
@@ -145,12 +152,13 @@ def upload(ep: Episode, meta: dict, rendered: dict, force: bool = False) -> dict
     for i, s in enumerate(rendered.get("shorts", []), 1):
         desc = f"전체 에피소드 ▶ https://youtu.be/{vid}\n\n{meta['title']}\n\n#shorts " + \
                " ".join("#" + t.replace(" ", "") for t in meta["tags"][:3])
-        sid = _upload_video(yt, ep, Path(s["video"]), f"{s['title']} #shorts"[:100], desc, meta["tags"])
+        sid = upload_video(yt, ep.cfg, Path(s["video"]), f"{s['title']} #shorts"[:100], desc, meta["tags"],
+                           uses_tts(ep))
         state["shorts"].append(sid)
         write_json(state_path, state)
         if up.get("upload_captions", True):
             try:
-                _captions(yt, ep, sid, ep.path(f"short{i}.srt"))
+                upload_captions(yt, ep.cfg, sid, ep.path(f"short{i}.srt"))
             except Exception as e:
                 log("upload", f"쇼츠 자막 업로드 실패: {e}")
         log("upload", f"쇼츠 업로드 완료: https://youtube.com/shorts/{sid}")

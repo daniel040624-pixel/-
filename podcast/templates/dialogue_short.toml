@@ -1,0 +1,29 @@
+# 대화 클립 · 세로 쇼츠 (가로로 찍은 대화를 세로로: 원본 전체 + 흐린 배경)
+name = "dialogue_short"
+format = "dialogue"
+kind = "short"
+width = 1080
+height = 1920
+fit = "blurpad"
+max_seconds = 59
+
+[silence]
+cut = true
+threshold_db = -38
+min_silence = 0.6
+pad = 0.15
+
+[subtitles]
+size = 68
+y = 0.70
+max_chars = 15
+
+[title]
+show = true
+seconds = 0
+size = 62
+
+[extras]
+progress_bar = true
+cta = "cta_clip"
+watermark = true

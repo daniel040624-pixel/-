@@ -2,3 +2,8 @@ episodes/*/build/
 secrets/
 __pycache__/
 *.pyc
+daily/
+inbox/*
+!inbox/.gitkeep
+research/
+plan/channel.json

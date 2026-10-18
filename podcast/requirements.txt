@@ -3,4 +3,5 @@ edge-tts>=7.0                  # 무료 한국어 TTS
 Pillow>=10.0                   # 배경·썸네일 이미지
 google-api-python-client>=2.0  # YouTube 업로드
 google-auth-oauthlib>=1.0      # YouTube OAuth 로그인
-# faster-whisper>=1.0          # (선택) 직접 녹음한 음성에 자막을 자동 생성할 때
+faster-whisper>=1.0            # 찍은 영상 받아쓰기 자막 (첫 실행 때 모델 다운로드)
+tzdata; sys_platform == 'win32'    # Windows 시간대 정보

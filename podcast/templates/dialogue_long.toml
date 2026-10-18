@@ -1,0 +1,32 @@
+# 대화 담기 · 가로 롱폼 (게스트/친구와의 대화 10~30분). 자동으로 쇼츠 클립도 잘라냅니다.
+# 찍는 법: 가로로, 두 사람이 한 화면에(또는 카메라 2대 중 1대 사용), 핀마이크 권장.
+name = "dialogue_long"
+format = "dialogue"
+kind = "long"
+width = 1920
+height = 1080
+fit = "fit"
+max_seconds = 0              # 0 = 길이 제한 없음
+
+[silence]                    # 대화의 호흡은 살리고 긴 침묵만 삭제
+cut = true
+threshold_db = -40
+min_silence = 1.2
+pad = 0.3
+
+[subtitles]
+size = 54
+y = 0.90
+max_chars = 30
+
+[title]
+show = true
+seconds = 8                  # 처음 8초만 제목 표시
+size = 56
+
+[extras]
+progress_bar = false
+cta = ""
+watermark = true
+clips = 3                    # 하이라이트 쇼츠 자동 생성 개수 (Claude 가 구간 선택)
+clip_template = "dialogue_short"

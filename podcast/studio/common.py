@@ -62,16 +62,20 @@ class Episode:
 
     @property
     def font(self) -> str:
-        configured = self.cfg["video"].get("font")
-        if configured:
-            return configured
-        for f in FONT_CANDIDATES:
-            if Path(f).exists():
-                return f
-        raise StudioError(
-            "한글 폰트를 찾지 못했습니다. config.toml [video] font 에 경로를 지정하거나 "
-            "'sudo apt install fonts-noto-cjk' 로 설치하세요."
-        )
+        return find_font(self.cfg)
+
+
+def find_font(cfg: dict) -> str:
+    configured = cfg["video"].get("font")
+    if configured:
+        return configured
+    for f in FONT_CANDIDATES:
+        if Path(f).exists():
+            return f
+    raise StudioError(
+        "한글 폰트를 찾지 못했습니다. config.toml [video] font 에 경로를 지정하거나 "
+        "'sudo apt install fonts-noto-cjk' 로 설치하세요."
+    )
 
 
 def load_config(path: Path | None = None) -> dict:
