@@ -1,0 +1,6 @@
+anthropic>=1.15.0              # 대본 생성 (Claude API)
+edge-tts>=7.0                  # 무료 한국어 TTS
+Pillow>=10.0                   # 배경·썸네일 이미지
+google-api-python-client>=2.0  # YouTube 업로드
+google-auth-oauthlib>=1.0      # YouTube OAuth 로그인
+# faster-whisper>=1.0          # (선택) 직접 녹음한 음성에 자막을 자동 생성할 때

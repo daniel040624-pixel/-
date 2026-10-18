@@ -1,0 +1,4 @@
+episodes/*/build/
+secrets/
+__pycache__/
+*.pyc

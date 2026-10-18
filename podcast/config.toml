@@ -1,0 +1,76 @@
+# ─────────────────────────────────────────────
+#  채널 전체 설정 — 한 번만 채워두면 모든 에피소드에 적용됩니다.
+# ─────────────────────────────────────────────
+
+[channel]
+name = "생각의 온도"                       # 채널 이름 (영상·썸네일·설명란에 표시)
+tagline = "한 가지 주제, 두 개의 시선, 하나의 깨달음"
+mission = """
+채널 주인의 생각을 솔직하게 세상에 내놓고,
+반대 관점과 정면으로 토론하며,
+듣는 사람이 스스로 생각할 거리와 실천할 한 가지를 얻어가게 한다.
+"""
+language = "ko"
+hashtags = ["팟캐스트", "토론", "인사이트", "생각"]
+
+# 출연자: 필요한 만큼 [[hosts]] 블록을 추가하세요. 첫 번째가 채널 주인(나)입니다.
+# voice 는 edge-tts 음성 이름 (`edge-tts --list-voices | grep ko-KR` 로 확인)
+[[hosts]]
+id = "me"
+name = "다니엘"
+role = "채널 주인이자 진행자. 이번 주제에 대한 '나의 생각'을 1인칭으로 분명하게 주장한다."
+voice = "ko-KR-InJoonNeural"
+color = "#FFD166"
+
+[[hosts]]
+id = "critic"
+name = "서연"
+role = "반론자. 가장 강력한 반대 논리를 공정하게(steelman) 제시하고, 허술한 주장은 날카롭게 짚는다."
+voice = "ko-KR-SunHiNeural"
+color = "#7FDBFF"
+
+[script]
+model = "claude-opus-5-5"
+effort = "high"                 # low | medium | high | xhigh | max
+chars_per_minute = 330          # 한국어 TTS 기준 1분당 글자 수 (길이 계산용)
+
+[voice]
+provider = "edge"               # edge(무료 TTS) | mock(오프라인 테스트용 무음/톤)
+rate = "+5%"                    # 말하기 속도
+line_gap = 0.35                 # 대사 사이 쉼(초)
+section_gap = 1.2               # 섹션 사이 쉼(초)
+
+[audio]
+bgm = ""                        # assets/ 안의 배경음악 파일명 (비우면 없음)
+bgm_volume = 0.08
+intro = ""                      # 인트로 징글 (선택)
+outro = ""                      # 아웃트로 징글 (선택)
+loudness = -16                  # 팟캐스트 표준 LUFS
+
+[video]
+width = 1920
+height = 1080
+fps = 30
+background = ""                 # assets/ 안의 배경 이미지 (비우면 자동 생성)
+accent = "#FFD166"
+font = ""                       # 한글 폰트 경로 (비우면 자동 탐색)
+waveform = true
+shorts = true                   # 9:16 쇼츠 하이라이트도 함께 생성
+
+[upload]
+youtube = true
+privacy = "private"             # private | unlisted | public — 처음엔 private 로 확인 후 공개 권장
+category_id = "27"              # 27 = Education, 22 = People & Blogs
+playlist_id = ""                # 지정하면 업로드 후 재생목록에 추가
+made_for_kids = false
+upload_captions = true
+client_secrets = "secrets/client_secret.json"
+token_file = "secrets/youtube_token.json"
+
+[rss]
+enabled = false                 # 스포티파이/애플 팟캐스트용 RSS 피드 생성
+base_url = ""                   # mp3 를 올려둘 공개 URL (예: https://cdn.example.com/podcast)
+author = "다니엘"
+email = ""
+image_url = ""
+category = "Society & Culture"
