@@ -124,6 +124,13 @@ pip install -r requirements.txt
 export ANTHROPIC_API_KEY=sk-ant-...         # https://console.anthropic.com 에서 발급
 ```
 
+설치가 끝나면 점검부터 하세요:
+
+```bash
+python -m studio doctor     # 빠진 것(ffmpeg·폰트·패키지·API 키·유튜브 인증·오늘 계획)을 ✅/⚠️/❌ 로 알려줌
+python -m studio selftest   # 키 없이 시험 영상으로 편집 → 하이라이트 쇼츠 → 예약 시간 배정까지 실제로 돌려봄 (약 2분)
+```
+
 그다음 `config.toml` 을 열어 **채널 이름, 사명, 출연자(이름·역할·목소리)** 를 내 채널에 맞게 고치세요.
 첫 번째 출연자가 "나"이고, 대본은 항상 이 사람의 관점을 중심으로 쓰입니다.
 

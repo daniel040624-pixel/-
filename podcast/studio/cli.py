@@ -7,7 +7,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from . import edit, footage, plan, publish, render, research, schedule, script, voice
+from . import doctor, edit, footage, plan, publish, render, research, schedule, script, voice
 from .common import ROOT, StudioError, load_config, load_episode, log, read_json
 
 STAGES = ["script", "voice", "edit", "render", "upload"]
@@ -142,6 +142,10 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("listen", help="내 영상 성과·댓글 수집 (다음 기획에 반영)")
     p.add_argument("--videos", type=int, default=20)
 
+    sub.add_parser("doctor", help="설치·키·설정 점검 (무엇이 빠졌는지 알려줌)")
+    p = sub.add_parser("selftest", help="키 없이 편집→하이라이트→예약 흐름 전체 시험 실행")
+    p.add_argument("--keep", action="store_true", help="시험 결과물 남기기 (daily/_selftest)")
+
     args = ap.parse_args(argv)
 
     def cfg():
@@ -183,6 +187,10 @@ def main(argv: list[str] | None = None) -> int:
             print(research.benchmark(cfg(), args.keywords, args.min_subs, args.ai))
         elif args.cmd == "listen":
             research.listen(cfg(), args.videos)
+        elif args.cmd == "doctor":
+            return doctor.doctor(cfg())
+        elif args.cmd == "selftest":
+            return doctor.selftest(cfg(), args.keep)
         elif args.cmd == "run":
             run_pipeline(args.episode, args.start, args.until, set(args.force), args.config)
         else:
